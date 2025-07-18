@@ -1,0 +1,38 @@
+.sidebar{
+    .sidebar__group{
+        margin-bottom:$spacing-xxl;
+        .group__heading{
+            margin-bottom:$spacing-m;
+            font-size:$fs-l;
+            color:$black-60;
+            .link{
+                margin-left:$spacing-xs;
+            }
+        }
+        h4{
+            color:$dark-gray;
+        }
+        .list__title{
+            margin-bottom:$spacing-xs;
+            .link{
+                margin-left:$spacing-xs;
+            }
+        }
+        .filters--form{
+            margin-bottom:$spacing-m;
+            &:last-child{
+                margin-bottom:0;
+            }
+        }
+        &:last-child{
+            margin-bottom:0;
+        }
+        .ratings__wrapper{
+            vertical-align: middle;
+            transform: translateY(-1px);
+            &::after{
+                display:none;
+            }
+        }
+    }
+}

@@ -1,0 +1,324 @@
+.btn{
+    display:inline-block;
+    padding-right:$spacing-m;
+    padding-left:$spacing-m;
+    border:none;
+    outline:none;
+    border-radius:3px;
+    font-size:$fs-s;
+    text-decoration:none;
+    text-align: center;
+    border:1px solid rgba(0,0,0,0.15);
+    box-sizing: border-box;
+    position:relative;
+    color:$white;
+    font-weight:bold;
+    vertical-align: middle;
+    background-color:$gray;
+    transition:all 0.1s ease-in-out;
+    &:hover{
+        box-shadow: inset 0 -2px 0 $black-20;
+        cursor:pointer;
+    }
+    &:active{
+        box-shadow: inset 0 1px 3px $black-20;
+        &::before{
+            opacity:1;
+        }
+    }
+    &.btn--s{
+        height:32px;
+        padding-right:$spacing-s;
+        padding-left:$spacing-s;
+        font-size:$fs-xs;
+    }
+    &.btn--m{
+        height:40px;
+    }
+    &.btn--l{
+        height:48px;
+    }
+    &.btn--primary{
+        background-color:$brand;
+        &:active{
+            background-color:$dark-brand;
+        }
+    }
+    &.btn--secondary{
+        background-color:$gray;
+        &:active{
+            background-color:$dark-gray;
+        }
+    }
+    &.btn--tertiary{
+        border-width:2px;
+        color:$brand;
+        background-color:transparent;
+        &:hover{
+            border-color:$brand;
+            box-shadow:none;
+            background-color:$light-brand;
+        }
+        &:active{
+            background-color:$gray;
+        }
+        &.is--neg{
+            border:2px solid $negative;
+            background-color:transparent;
+            .icon{
+                color:$negative;
+            }
+        }
+    }
+    &.btn--link{
+        background-color:transparent;
+        border:none;
+    }
+    &.btn--circle{
+        border-radius:50%;
+    }
+    &.is--pos{
+        background-color:$accent;
+        &:active{
+            background-color:$dark-accent;
+        }
+    }
+    &.is--neg{
+        background-color:$negative;
+        &:active{
+            background-color:$dark-negative;
+        }
+    }
+    &.is--added {
+        @extend .is--pos;
+        &:hover {
+            box-shadow: none;
+            cursor: default;
+        }
+        &:active {
+            background-color:$accent !important;
+        }
+    }
+    &.btn--toggle {
+        &:before {
+            content: attr(data-before);
+        }
+        &.is--pos {
+            &:before {
+                content: attr(data-after);
+            }
+        }
+    }
+    &.btn--reversed{
+        &.btn--primary{
+            border-color:$black-80;
+            color:$brand;
+            background-color:$white;
+            &:hover{
+                box-shadow: 0 0 4px $black;
+            }
+        }
+        &.btn--secondary{
+            border-color:$black-80;
+            color:$white;
+            background-color:$white-20;
+            &:hover{
+                box-shadow: 0 0 4px $black;
+                background-color:$white-40;
+            }
+        }
+        &.btn--tertiary{
+            border-color:$gray;
+            color:$white;
+            &:hover{
+                border-color:$white;
+                background-color:transparent;
+            }
+        }
+    }
+    &.btn--dir{
+        &::before, &::after{
+            width:0;
+            display:inline-block;
+            opacity:0;
+            transition:all 0.1s ease-in-out;
+        }
+        &.is--prev{
+            &::before{
+                content:'\2190';
+                transform:translateX($spacing-s);
+            }
+            &:hover{
+                padding-right:$spacing-s;
+                padding-left:$spacing-l;
+                &::before{
+                    opacity:1;
+                    transform:translateX(-$spacing-m);
+                }
+            }
+        }
+        &.is--next{
+            &::after{
+                content:'\2192';
+                transform:translateX(-$spacing-s);
+            }
+            &:hover{
+                padding-right:$spacing-l;
+                padding-left:$spacing-s;
+                &::after{
+                    opacity:1;
+                    transform:translateX($spacing-xs);
+                }
+            }
+        }
+    }
+    &.btn--icon{
+        padding:0;
+        &.btn--s{
+            width:32px;
+        }
+        &.btn--m{
+            width:40px;
+        }
+        &.btn--l{
+            width:48px;
+        }
+    }
+    &.btn--block{
+        display:block;
+        width:100%;
+    }
+    &.is--disabled{
+        color:$black-40;
+        &:hover{
+            box-shadow: none;
+            cursor:default;
+        }
+        &.btn--primary{
+            background-color: $dark-brand;
+        }
+        &.btn--secondary{
+            background-color: $light-gray;
+        }
+        &.btn--tertiary{
+            &:hover{
+                border-color:$gray;
+                background-color:transparent;
+            }
+        }
+        .icon{
+            background-color:$black-40 !important;
+        }
+    }
+    &.has--badge{
+        &::after{
+            content:attr(data-badge);
+            display:block;
+            width:28px;
+            padding:5px 0;
+            position:absolute;
+            top:0;
+            right:0;
+            transform: translate(40%,-40%);
+            border:3px solid $white;
+            border-radius:50%;
+            color:$white;
+            text-align: center;
+            font-size:12px;
+            line-height:12px;
+            font-weight:bold;
+            background-color:$accent;
+        }
+        &.badge--s{
+            &::after{
+                width:$spacing-s;
+                height:$spacing-s;
+                padding:0;
+            }
+        }
+    }
+    .popover{
+        top:125%;
+    }
+}
+
+.btn__group{
+    display:inline-block;
+    overflow:hidden;
+    .btn{
+        display:inline-block;
+        float:left;
+        border-right:none;
+        border-radius:0;
+        margin:0;
+        position:relative;
+        &:first-child{
+            border-radius:3px 0 0 3px;
+        }
+        &:last-child{
+            border-radius:0 3px 3px 0;
+        }
+        &.btn--primary, &.btn--secondary{
+            &:last-child{
+                border-right:1px solid rgba(0,0,0,0.15);
+            }
+        }
+        &.btn--tertiary{
+            &:not(:last-child){
+                &::after{
+                    content:'';
+                    width:calc(100% + 2px);
+                    height:calc(100% + 4px);
+                    display:block;
+                    position:absolute;
+                    top:-2px;
+                    left:0;
+                    z-index: 1;
+                    border-right:2px solid $brand;
+                    opacity:0;
+                    transition:all 0.1s ease-in-out;
+                }
+                &:hover{
+                    &::after{
+                        opacity:1;
+                    }
+                }
+            }
+            &:last-child{
+                border-right:2px solid rgba(0,0,0,0.15);
+            }
+            &:hover{
+                &:last-child{
+                    border-right-color:$brand;
+                }
+            }
+        }
+    }
+}
+
+a.btn{
+    position:relative;
+    &.btn--s{
+        padding-top:5px;
+        .loader{
+            transform: translateY(-3px);
+        }
+    }
+    &.btn--m{
+        padding-top:9px;
+        .loader{
+            transform: translateY(-3px);
+        }
+        .checkmark{
+            left:50%;
+            top:50%;
+            transform:translate(-53%,-48%)
+        }
+    }
+    &.btn--l{
+        padding-top:12px;
+        .loader{
+            transform: translateY(-3px);
+        }
+    }
+}

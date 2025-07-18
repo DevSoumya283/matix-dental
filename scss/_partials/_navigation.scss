@@ -1,0 +1,111 @@
+.link--dropdown{
+    position:relative;
+    .popover{
+        max-height:0;
+        opacity:0;
+        transition:all 0.1s ease-in-out;
+        transform:translate(-50%, 8px);
+        z-index:-1;
+    }
+    &:hover {
+        .popover{
+            overflow:visible;
+            max-height:9999em;
+            opacity:1;
+            transform:translate(-50%, -4px);
+            z-index:1;
+        }
+    }
+}
+
+.nav{
+    &.nav__top{
+        height:48px;
+        background-color:$brand;
+        .list{
+            margin-bottom:0;
+        }
+    }
+    &.nav__main{
+        height:112px;
+        padding-top:$spacing-l;
+        position:relative;
+        z-index:3;
+        box-sizing: border-box;
+        border-bottom:1px solid $light-gray;
+        box-shadow:0 0 5px $black-10;
+        .logo{
+            display:block;
+            padding-right:$spacing-m;
+            border-right:1px solid $light-gray;
+            img{
+                width:calc(100%-$spacing-m);
+            }
+        }
+        .link--dropdown{
+            transform:translateY(3px);
+        }
+        #shopButtons{
+            display:inline-block;
+            margin-left:$spacing-m;
+            .btn{
+                margin-right:$spacing-xs;
+                &:last-child{
+                    margin-right:0;
+                }
+            }
+        }
+    }
+}
+
+#browseDropdown{
+    max-height:0;
+    padding:0;
+    overflow:hidden;
+    background-color:$lightest-gray;
+    opacity:0;
+    transition:all 0.2s ease-in-out;
+    &.is--open{
+        max-height:500px;
+        padding:$spacing-xl 0;
+        opacity:1;
+    }
+}
+
+.multi__menu{
+    width: 95%;
+    height: 390px;
+    max-width: 1152px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    .multi__menu--state{
+        display:none;
+        &.is--active{
+            display:block;
+        }
+        .link{
+            display:block;
+            white-space: nowrap;
+            text-overflow:ellipsis;
+            overflow: hidden;
+        }
+    }
+    .cat__types{
+        width:25%;
+    }
+    .cat__items{
+        width:75%;
+    }
+}
+
+.cat-separator a {
+    color: black;
+    text-decoration: none;
+}
+
+.cat-separator a:hover {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    cursor: default;
+}

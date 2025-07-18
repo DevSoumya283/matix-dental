@@ -1,0 +1,92 @@
+#reportsContent{
+    padding-left:$spacing-xxl;
+    #reportAccount,
+    #reportOrders,
+    #reportProduct,
+    #reportTax{
+        display:none;
+    }
+    &.snapshot{
+        #reportAccount{
+            display:block;
+        }
+    }
+    &.orders{
+        #reportOrders{
+            display:block;
+        }
+    }
+    &.purchases{
+        #reportProduct{
+            display:block;
+        }
+    }
+    &.tax{
+        #reportTax{
+            display:block;
+        }
+    }
+}
+
+.report{
+    margin:$spacing-m 0;
+    .row{
+        margin-bottom:$spacing-s;
+        &:last-child{
+            margin-bottom:0;
+        }
+    }
+    .table{
+        border-color:$gray;
+        box-shadow:0 0 5px $black-20;
+        background-color:$white;
+    }
+}
+
+.report__panel{
+    border:1px solid $gray;
+    border-radius:4px;
+    overflow:hidden;
+    background-color:$white;
+    box-shadow:0 0 5px $black-20;
+    transition: all 0.1s ease-in-out;
+    &.panel--stat{
+        padding:$spacing-m 0;
+        border-radius:4px;
+        border-top:4px solid $accent;
+        text-align:center;
+    }
+    .panel__title{
+        overflow: hidden;
+        margin-bottom:0;
+        padding:$spacing-xs $spacing-s;
+        border-bottom:1px solid $light-gray;
+        color:$darkest-gray;
+        background-color:$lightest-gray;
+    }
+    .panel__content{
+        padding:$spacing-s;
+    }
+    .chart{
+        width:100%;
+    }
+    &.is--link{
+        &:hover{
+            box-shadow:0 0 8px $black-20;
+            transform:translateY(-$spacing-xxs);
+        }
+    }
+}
+
+.stat__group{
+    .stat__title{
+        display:block;
+        font-size:$fs-s;
+        font-weight:bold;
+        color:$dark-gray;
+    }
+    .stat__value{
+        display:block;
+        font-size:18px;
+    }
+}

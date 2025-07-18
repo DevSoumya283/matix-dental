@@ -1,0 +1,191 @@
+.location__map{
+    min-height:120px;
+    display:block;
+    overflow: hidden;
+    position:relative;
+    background-color:$light-gray;
+    img{
+        width:100%;
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.location{
+    margin-bottom:$spacing-m;
+    transition:all 0.1s ease-in-out;
+    background-color:$white;
+    &:hover{
+        box-shadow:0 0 3px $black-10;
+    }
+    .location__map{
+        display:none;
+    }
+    .location__info{
+        width:40%;
+        .item{
+            max-width:300px;
+        }
+    }
+    .location__more{
+        .item--stat{
+            &:first-child{
+                padding-left:$spacing-m;
+                border-left:1px solid $light-gray;
+            }
+        }
+    }
+    .location__link{
+        font-size:$fs-m;
+        font-weight: bold;
+    }
+    &:last-child{
+        margin-bottom:0;
+    }
+}
+
+.is--grid-view{
+    display:flex;
+    flex-wrap:wrap;
+    .location{
+        width:23%;
+        display:inline-block;
+        margin-top:0;
+        margin-right:2.666%;
+        padding:0;
+        position:relative;
+        &:nth-child(4n+4){
+            margin-right:0;
+        }
+        .location__map{
+            max-height:200px;
+            display:block;
+            overflow: hidden;
+            background-color:$light-gray;
+            img{
+                position: static;
+                vertical-align: top;
+                transform: translate(0,0);
+            }
+        }
+        .location__info{
+            width:100%;
+            display:block;
+            padding:$spacing-s;
+            border-top:1px solid $light-gray;
+            .location__requests{
+                display:block;
+                margin:0;
+                padding:0;
+                border-right:none;
+                position:absolute;
+                top:$spacing-s;
+                right:$spacing-s;
+                z-index:1;
+            }
+            .item{
+                max-width:230px;
+                .line--main{
+                    font-size:18px;
+                }
+            }
+        }
+        .location__more{
+            display:none;
+        }
+        .location__spend{
+            width:100%;
+            padding:$spacing-s $spacing-s $spacing-xxs $spacing-s;
+            border-radius:4px 4px 0 0;
+            position:absolute;
+            top:0;
+            left:0;
+            text-align: left;
+            box-shadow:0 0 3px $black-10;
+            background-color:$white;
+            .list--stats{
+                text-align: left;
+            }
+            .text__group{
+                .line--sub{
+                    transform:translateY(-2px);
+                }
+            }
+            .select{
+                transform:translateY(-2px);
+            }
+        }
+    }
+}
+
+
+/*============================
+    SINGLE LOCATION
+============================*/
+
+#locationContent{
+    #tabDetails,
+    #tabRequests,
+    #tabInventory,
+    #tabUsers,
+    #tabSettings{
+        display:none;
+    }
+    &.details{
+        #tabDetails{
+            display:block;
+        }
+    }
+    &.requests{
+        #tabRequests{
+            display:block;
+        }
+    }
+    &.inventory{
+        #tabInventory{
+            display:block;
+        }
+    }
+    &.users{
+        #tabUsers{
+            display:block;
+        }
+    }
+    &.settings{
+        #tabSettings{
+            display:block;
+        }
+    }
+}
+
+/*============================
+    ADD USERS MODAL
+============================*/
+
+#assignUsersModal {
+    .modal__header {
+        padding-top: $spacing-xxl;
+        border-bottom: 1px solid $light-gray;
+    }
+    .modal__content {
+        padding-top: $spacing-s;
+        padding-bottom: $spacing-s;
+    }
+    .modal__footer {
+        border-top: 1px solid $light-gray;
+    }
+}
+.add-users {
+    max-height: 240px;
+    padding: $spacing-s;
+    overflow-y: auto;
+}
+.user {
+    border-bottom: 1px dashed $light-gray;
+    cursor: pointer;
+    &:last-child {
+        border-bottom: none;
+    }
+}

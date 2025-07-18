@@ -1,0 +1,52 @@
+.banner{
+    width:100%;
+    padding:$spacing-xs $spacing-s;
+    text-align:center;
+    box-sizing: border-box;
+    border-top:1px solid $black-20;
+    border-bottom:1px solid $black-20;
+    overflow: hidden;
+    transition: all 0.1s ease-in-out;
+    .banner__text{
+        display:inline-block;
+        transform: translateY(2px);
+    }
+    .banner__action{
+        margin-left:$spacing-xs;
+        font-size:$fs-s;
+        font-weight: bold;
+    }
+    .dismiss--banner{
+        float:right;
+        margin-top:14px;
+    }
+    &.is--pos{
+        border-color:$black-20;
+        background-color: $light-accent;
+    }
+    &.is--warning{
+        color:$black-60;
+        background-color: $light-tertiary;
+    }
+    &.is--neg{
+        background-color: $light-negative;
+    }
+    &.banner--img{
+
+    }
+    &.banner--s{
+        height:240px;
+    }
+    &.banner--m{
+        height:480px;
+    }
+    &.banner--l{
+        height:720px;
+    }
+    &.banner--teal{
+        background-image:url('../img/banner-teal.png');
+        background-position: center;
+        background-size:cover;
+        color:$white;
+    }
+}

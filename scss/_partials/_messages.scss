@@ -1,0 +1,36 @@
+.message{
+    position:relative;
+    &.is--unread{
+        border-left:4px solid $accent;
+    }
+    &:hover{
+        cursor:pointer;
+    }
+    .message__meta{
+        padding-bottom:$spacing-xxs;
+        margin-bottom:$spacing-xs;
+        border-bottom:1px dashed $light-gray;
+    }
+    .message__timestamp{
+        font-size:$fs-xs;
+        font-weight:bold;
+    }
+}
+
+#messagesReceived,
+#messagesSent{
+    display:none;
+}
+
+#messageList{
+    &.is--received{
+        #messagesReceived{
+            display:block;
+        }
+    }
+    &.is--sent{
+        #messagesSent{
+            display:block;
+        }
+    }
+}

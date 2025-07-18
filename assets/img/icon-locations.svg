@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-locations</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon-locations">
+            <g id="Outline_Icons" stroke-linecap="round" stroke="#2893FF" stroke-linejoin="round">
+                <g id="Group">
+                    <path d="M14.309,4.136 C14.309,6.143 10.672,10.5 10.672,10.5 C10.672,10.5 7.036,6.144 7.036,4.136 C7.036,2.128 8.663,0.5 10.672,0.5 C12.681,0.5 14.309,2.128 14.309,4.136 Z" id="Shape"></path>
+                    <circle id="Oval" cx="10.672" cy="4.136" r="1.364"></circle>
+                    <path d="M22.945,10.772 C22.945,12.581 19.672,16.5 19.672,16.5 C19.672,16.5 16.4,12.582 16.4,10.772 C16.4,8.965 17.864,7.5 19.672,7.5 C21.479,7.5 22.945,8.965 22.945,10.772 Z" id="Shape"></path>
+                    <circle id="Oval" cx="19.672" cy="10.772" r="1.227"></circle>
+                    <g transform="translate(0.000000, 10.000000)">
+                        <path d="M8.761,5.319 C8.393,7.519 4.67,11.269 4.67,13.5 C4.67,11.269 1.048,7.879 0.58,5.319 C0.115,2.778 1.695,0.5 4.67,0.5 C7.646,0.5 9.195,2.731 8.761,5.319 Z" id="Shape"></path>
+                        <circle id="Oval" cx="4.67" cy="4.407" r="1.873"></circle>
+                    </g>
+                    <path d="M11.59,12 L16.496,15.27" id="Shape"></path>
+                    <path d="M7.225,22.31 L17.172,17.667" id="Shape"></path>
+                </g>
+            </g>
+            <g id="invisible_shape">
+                <rect id="Rectangle-path" x="0" y="0" width="24" height="24"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

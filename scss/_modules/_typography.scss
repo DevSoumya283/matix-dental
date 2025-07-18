@@ -1,0 +1,127 @@
+////////////////////////////////
+// Font Setup                 //
+////////////////////////////////
+
+@font-face {
+  font-family: 'HarmoniaSans';
+  src: url('../fonts/HarmoniaSansProCyr-Regular.eot?#iefix') format('embedded-opentype'),  url('../fonts/HarmoniaSansProCyr-Regular.otf')  format('opentype'),
+	     url('../fonts/HarmoniaSansProCyr-Regular.woff') format('woff'), url('../fonts/HarmoniaSansProCyr-Regular.ttf')  format('truetype'), url('../fonts/HarmoniaSansProCyr-Regular.svg#HarmoniaSansProCyr-Regular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'HarmoniaSans';
+  src: url('../fonts/HarmoniaSansProCyr-Bold.eot?#iefix') format('embedded-opentype'),  url('../fonts/HarmoniaSansProCyr-Bold.otf')  format('opentype'),
+	     url('../fonts/HarmoniaSansProCyr-Bold.woff') format('woff'), url('../fonts/HarmoniaSansProCyr-Bold.ttf')  format('truetype'), url('../fonts/HarmoniaSansProCyr-Bold.svg#HarmoniaSansProCyr-Bold') format('svg');
+  font-weight: bold;
+  font-style: normal;
+}
+
+
+////////////////////////////////
+// Typography                 //
+////////////////////////////////
+
+code.il{
+    padding:$spacing-xxs $spacing-xs;
+    border:1px solid $light-gray;
+    background-color:$lightest-gray;
+    border-radius:3px;
+    box-sizing: border-box;
+    color:$code;
+}
+
+body{
+    font-family: $primary-font;
+    color: $darkest-gray;
+}
+
+h1{
+    font-size:$fs-xxl;
+    line-height:$lh-xxl;
+    font-weight:normal;
+    margin-bottom:24px;
+}
+
+h2{
+    font-size:$fs-xl;
+    line-height:$lh-xl;
+    font-weight:normal;
+    margin-bottom:16px;
+}
+
+h3{
+    font-size:$fs-l;
+    line-height:$lh-l;
+    font-weight:normal;
+    margin-bottom:16px;
+}
+
+h4{
+    font-size:$fs-m;
+    line-height:$lh-m;
+    font-weight:bold;
+    margin-bottom:16px;
+}
+
+p{
+    font-size:$fs-m;
+    line-height:$lh-m;
+    margin-bottom:16px;
+    code.il{
+        font-size:$fs-xs;
+    }
+}
+
+h1, h2, h3, h4, h5, h6{
+    .icon{
+        vertical-align: middle;
+        transform:translateY(-2px);
+    }
+}
+
+small{
+    font-size:$fs-s;
+    line-height:$lh-xs !important;
+}
+
+.text__group{
+    margin-bottom:$spacing-s;
+    .line--main, .line--sub{
+        display:block;
+    }
+    .line--main{
+        font-weight:bold;
+        &:not(:first-child){
+            margin-top:$spacing-xxs;
+            font-weight:normal;
+            color:$dark-gray;
+        }
+    }
+    .line--sub{
+        font-size:$fs-xs;
+        color:$dark-gray;
+    }
+    &:last-child{
+        margin-bottom:0;
+    }
+    &.has--icon{
+        .icon{
+            display:inline-block;
+            vertical-align: middle;
+        }
+        h1,h2,h3,h4,h5,h6,p{
+            display:inline-block;
+            transform:translateY(2px);
+        }
+    }
+}
+
+h5.title{
+    border-bottom:1px solid $light-gray;
+    margin-bottom:$spacing-s;
+    &.title--dark{
+        border-color:$gray;
+    }
+}

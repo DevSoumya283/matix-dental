@@ -1,0 +1,11 @@
+
+RewriteEngine On
+ 
+# Redirect subdomains like x.iqdental.com to local path
+RewriteCond %{HTTP_HOST} ^([^.]+)\.iqdental\.com$ [NC]
+RewriteRule ^(.*)$ http://localhost/matix-dental/%1 [R=301,L]
+ 
+# Remove index.php from URL
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L,QSA]

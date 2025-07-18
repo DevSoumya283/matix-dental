@@ -1,0 +1,118 @@
+.table{
+    width:100%;
+    border:1px solid $light-gray;
+    border-radius:4px;
+    border-collapse:separate;
+    thead{
+        tr{
+            th{
+                padding:$spacing-xs $spacing-s;
+                border-right:1px solid $black-10;
+                text-align: left;
+                background-color:$light-gray;
+                &:first-child{
+                    .control__indicator{
+                        margin-right:0;
+                    }
+                }
+                &:last-child{
+                    border-right:none;
+                }
+            }
+        }
+    }
+    tr{
+        td{
+            padding:$spacing-xs $spacing-s;
+            border-right:1px solid $light-gray;
+            border-bottom:1px solid $light-gray;
+            font-size:$fs-s;
+            vertical-align: middle;
+            &:first-child{
+                .control__indicator{
+                    margin-right:0;
+                }
+            }
+            &:last-child{
+                border-right:none;
+            }
+        }
+        &:nth-child(even){
+            td{
+                background-color:$lightest-gray;
+            }
+        }
+        &:last-child{
+            td{
+                border-bottom:none;
+            }
+        }
+    }
+    &.table--horizontal{
+        tr{
+            td{
+                &:first-child{
+                    background-color:$lightest-gray;
+                }
+            }
+            td:nth-child(2){
+                background-color:transparent;
+            }
+        }
+    }
+    &.table--addable{
+        tbody{
+            tr{
+                &:first-child{
+                    .delete--row{
+                        visibility: hidden;
+                    }
+                }
+            }
+        }
+    }
+    &.table--align-lr{
+        tr{
+            td{
+                &:last-child{
+                    text-align: right;
+                }
+            }
+        }
+    }
+    &.table--payments{
+        .payment__method{
+            td{
+                &:last-child{
+                    text-align: center;
+                }
+            }
+            &.is--expired{
+                color:$negative;
+                font-weight: bold;
+            }
+            &:hover{
+                cursor:pointer;
+                td{
+                    border-right-color:$black-10;
+                    background-color:$light-gray;
+                }
+            }
+        }
+    }
+    tfoot{
+        tr{
+            td{
+                border-top:2px solid $light-gray;
+                background-color:$light-gray;
+            }
+        }
+    }
+}
+
+.contextual__controls{
+    .link{
+        font-size:$fs-s;
+        font-weight:bold;
+    }
+}

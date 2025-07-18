@@ -1,0 +1,100 @@
+.is--link:hover{
+    cursor:pointer;
+}
+
+a.card{
+    display: block;
+}
+
+.link{
+    display:inline-block;
+    position:relative;
+    text-decoration:none;
+    color:$brand;
+    &::before{
+        content:'';
+        width:100%;
+        height:1px;
+        border-bottom:1px dashed $black-40;
+        position:absolute;
+        bottom:5px;
+        left:0;
+        opacity:0;
+        transition:all 0.1s ease-in-out;
+    }
+    &:hover{
+        cursor: pointer;
+        &::before{
+            bottom:1px;
+            opacity:1;
+        }
+    }
+    &:active{
+        &::before{
+            bottom:4px;
+        }
+    }
+    &.link__warning{
+        color:$negative;
+    }
+    &.link--icon{
+        position:relative;
+        padding-left:24px;
+        opacity:0.6;
+        transition:all 0.1s ease-in-out;
+        &::after{
+            display:none;
+        }
+        &::before{
+            display:none;
+        }
+        &:hover{
+            opacity:1;
+        }
+        .icon{
+            position:absolute;
+            top:50%;
+            left:0;
+            transform:translateY(-60%);
+        }
+    }
+    &.link--dropdown{
+        color:$darkest-gray;
+        &::after{
+            content:'\25BC';
+            display:inline-block;
+            margin-left:$spacing-xxs;
+            font-size:8px;
+            color:$brand;
+            transform: translateY(-1px);
+        }
+    }
+    &.is--neg{
+        color:$negative;
+        &.has--badge{
+            color:$brand;
+            &::after{
+                background-color:$negative;
+            }
+        }
+    }
+    &.has--badge{
+        &::after{
+            content:attr(data-badge);
+            display:inline-block;
+            width:19px;
+            margin-left:$spacing-xs;
+            padding:7px 0 3px 0;
+            box-sizing: border-box;
+            border-radius:50%;
+            color:$white;
+            text-align: center;
+            font-size:10px;
+            line-height:9px;
+            font-weight:bold;
+            background-color:$accent;
+            transform:translateY(1px);
+            position:absolute;
+        }
+    }
+}

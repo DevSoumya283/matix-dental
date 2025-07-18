@@ -1,0 +1,20 @@
+/*============================
+    SINGLE CLASS
+============================*/
+
+#classContent{
+    #tabStudents,
+    #tabPending{
+        display:none;
+    }
+    &.students{
+        #tabStudents{
+            display:block;
+        }
+    }
+    &.pending{
+        #tabPending{
+            display:block;
+        }
+    }
+}

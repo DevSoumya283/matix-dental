@@ -1,0 +1,25 @@
+.invoice{
+    padding:$spacing-m;
+    border:1px solid $gray;
+    border-radius:4px;
+    background-color:$white;
+    box-shadow:0 0 5px $black-10;
+    .inv__head{
+        padding-top:$spacing-s;
+        padding-bottom:$spacing-s;
+    }
+    .inv__logo{
+        width:100%;
+    }
+    .inv__contact{
+        margin-top:$spacing-s;
+        margin-bottom:$spacing-m;
+        padding:$spacing-s 0 $spacing-s $spacing-s;
+        border-top:1px solid $light-gray;
+        border-bottom:1px solid $light-gray;
+    }
+    .inv__totals{
+        margin-top:$spacing-m;
+        padding:$spacing-s;
+    }
+}

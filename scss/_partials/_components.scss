@@ -1,0 +1,281 @@
+// Elements
+
+hr{
+    width:100%;
+    height:1px;
+    margin:32px 0;
+    border-bottom:1px dashed $gray;
+    border-top:none;
+    border-left:none;
+    &.small{
+        width:64px;
+    }
+    &.centered{
+        margin-left:auto;
+        margin-right:auto;
+    }
+}
+
+.cf{
+    &::after{
+        content:'';
+        visibility:hidden;
+        display:block;
+        height:0;
+        clear:both;
+    }
+}
+
+.wrapper{
+    width:100%;
+    height:100%;
+    display:table;
+    &.wrapper--fixed{
+        width:95%;
+        max-width:1152px;
+        margin:0 auto;
+    }
+    .wrapper__inner{
+        display:table-cell;
+        vertical-align: middle;
+        &.has--icon{
+            width:$spacing-m;
+            &:first-child{
+                padding-right:$spacing-xs;
+            }
+            .icon{
+                transform:translateY(2px);
+                color: $dark-gray;
+            }
+        }
+    }
+}
+
+.is--alert{
+    .wrapper__inner.has--icon{
+        .icon{
+            background-color:$negative;
+        }
+    }
+}
+
+.well{
+    $well-padding: $spacing-m;
+    // margin:32px 0;
+    border:1px solid $light-gray;
+    border-radius:3px;
+    box-sizing: border-box;
+    padding: $well-padding;
+    overflow-x: auto;
+    &.well--tall{
+        padding-top:$spacing-xl !important;
+        padding-bottom:$spacing-xl !important;
+    }
+    &.well--tight{
+        .well__row{
+            .well__section{
+                padding:$spacing-s;
+            }
+        }
+    }
+    &.well--sectioned{
+        padding:0;
+        .well__row{
+            .well__section{
+                display:block;
+                overflow:auto;
+                &.scroll--s{
+                    max-height:120px;
+                }
+                &.scroll--m{
+                    max-height:240px;
+                }
+                &.scroll--l{
+                    max-height:360px;
+                }
+            }
+        }
+    }
+    .well__section{
+        padding: $well-padding;
+        border-bottom:1px solid $light-gray;
+        &:last-child{
+            border-bottom:none;
+        }
+    }
+    .well__row{
+        width:100%;
+        display:table;
+        border-bottom:1px solid $light-gray;
+        &:last-child{
+            border-bottom:none;
+        }
+        .well__section{
+            display:table-cell;
+            border-bottom:none;
+            border-right:1px solid $light-gray;
+            &:last-child{
+                border:none;
+            }
+            &.is-halved{
+                width:50%;
+            }
+            &.is-thirds{
+                width:33.333333%;
+            }
+            &.is-quartered{
+                width:25%;
+            }
+        }
+        .well--code{
+            padding:0;
+            code{
+                border-top:1px solid $light-gray;
+                padding:$spacing-s !important;
+                background-color:$lightest-gray;
+            }
+        }
+    }
+    .list{
+        &:last-child{
+            margin:0;
+        }
+    }
+    &.well--dark{
+        border-color:$black-60;
+        .well__section{
+            border-color:$white-20;
+        }
+    }
+}
+
+.heading__group{
+    padding-bottom:$spacing-s;
+    margin-bottom:$spacing-l;
+    border-bottom:1px solid $light-gray;
+    h1, h2, h3, h4, h5, h6{
+        margin-bottom:0;
+        color:$dark-gray;
+    }
+}
+
+.box__group{
+    margin-bottom:$spacing-s;
+    &:last-child{
+        margin-bottom:0;
+    }
+    .box__title{
+        margin-bottom:$spacing-xs;
+    }
+    .list{
+        margin-left:$spacing-s;
+    }
+    .tab__panel{
+        margin-top:$spacing-s;
+    }
+}
+
+.footer__group{
+    margin-top:$spacing-s;
+    padding-top:$spacing-s;
+    border-top:1px solid $light-gray;
+}
+
+.contextual__controls{
+    .is--on{
+        display:inline-block !important;
+    }
+    .is--off{
+        display:none !important;
+    }
+}
+
+.panel__wrapper{
+    height:100%;
+}
+
+/* Progress Bar*/
+.progress{
+    overflow:hidden;
+    font-size:$fs-s;
+    .progress__title{
+        float:left;
+        font-weight:bold;
+    }
+    .progress__percentage{
+        float:right;
+    }
+    .progress__bar{
+        width:100%;
+        height:$spacing-s;
+        margin-top:$spacing-xxs;
+        overflow:hidden;
+        border-radius:$spacing-xs;
+        background-color:$light-gray;
+        .progress__inner{
+            width:0;
+            height:100%;
+            border-radius:$spacing-xs;
+            background-color:$accent;
+        }
+    }
+}
+
+/* Radio Text Buttons */
+.list--text {
+    .item {
+        margin-bottom: $spacing-xs;
+    }
+    .control {
+        p {
+            display: inline-block;
+            position: relative;
+            top: 2px;
+        }
+    }
+}
+
+.card{
+    border:1px solid $gray;
+    border-radius:4px;
+    box-shadow:0 0 5px $black-10;
+    background-color:$white;
+    &.is--pos{
+        border-top:4px solid $accent;
+    }
+    &.is--neutral{
+        border-top:4px solid $dark-gray;
+    }
+    &.is--neg{
+        border-top:4px solid $negative;
+    }
+    &.card--img{
+        overflow: hidden;
+        img{
+            width:100%;
+        }
+        .card__label{
+            display: block;
+            padding:$spacing-xs;
+        }
+    }
+    &.is--link{
+        text-decoration:none;
+        transition:all 0.1s ease-in-out;
+        .card__label{
+            color:$darkest-gray;
+            font-weight:700;
+        }
+        &:hover{
+            box-shadow:0 0 10px $black-20;
+            transform:translateY(-2px);
+        }
+    }
+}
+
+.percentage{
+    height:10px;
+    display:inline-block;
+    vertical-align: baseline;
+    background-color:$tertiary;
+}

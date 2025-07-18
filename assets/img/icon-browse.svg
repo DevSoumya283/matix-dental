@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-browse</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon-browse">
+            <g id="Outline_Icons" stroke="#2893FF">
+                <g id="Group">
+                    <polyline id="Shape" stroke-linecap="round" stroke-linejoin="round" points="6.5 15.5 0.5 15.5 0.5 4.5 14.5 4.5 14.5 6.5"></polyline>
+                    <polygon id="Shape" stroke-linecap="round" stroke-linejoin="round" points="14.5 4.5 0.5 4.5 4.5 0.5 10.5 0.5"></polygon>
+                    <path d="M7.5,0.5 L7.5,4.5" id="Shape" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <circle id="Oval" cx="15" cy="15" r="5.5"></circle>
+                    <path d="M23.5,23.5 L18.889,18.889" id="Shape" stroke-linecap="round"></path>
+                </g>
+            </g>
+            <g id="Invisible_Shape">
+                <rect id="Rectangle-path" x="0" y="0" width="24" height="24"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,2 @@
+ALTER TABLE `user_autosaves` ADD `location_id` INT(11) NOT NULL DEFAULT '0' AFTER `organization_id`;
+ALTER TABLE `user_autosaves` DROP INDEX `user_autosaves_user_organization_index`, ADD UNIQUE `user_autosaves_user_organization_index` (`user_id`, `organization_id`, `location_id`) USING BTREE;

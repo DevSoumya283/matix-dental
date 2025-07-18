@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="25px" height="23px" viewBox="0 0 25 23" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-users</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon-users" transform="translate(0.000000, -1.000000)">
+            <g id="Outline_Icons_1_" transform="translate(0.000000, 1.000000)" stroke="#2893FF" stroke-linejoin="round">
+                <g id="Outline_Icons">
+                    <g id="Group">
+                        <path d="M17.521,3.5 L23.521,3.5" id="Shape" stroke-linecap="round"></path>
+                        <path d="M20.5,0.5 L20.5,6.516" id="Shape" stroke-linecap="round"></path>
+                        <g transform="translate(0.000000, 6.000000)" id="Shape">
+                            <path d="M6,9.323 L6,11.367 L2.059,12.779 C1.115,13.117 0.5,14.012 0.5,15.012 L0.5,16.5 L15.5,16.5 L15.5,15.012 C15.5,14.012 14.884,13.117 13.941,12.779 L10,11.367 L10,9.322"></path>
+                            <path d="M11.947,5.236 C11.947,7.854 10.179,9.977 8,9.977 C5.819,9.977 4.053,7.854 4.053,5.236 C4.053,2.621 5.819,0.5 8,0.5 C10.18,0.5 11.947,2.621 11.947,5.236 Z"></path>
+                            <path d="M11.916,4.811 C11.784,4.829 11.675,4.817 11.542,4.844 C10.197,5.102 9.334,4.615 8.593,3.319 C8.15,4.171 6.762,4.844 5.621,4.844 C5.059,4.844 4.576,4.729 4.093,4.475"></path>
+                        </g>
+                        <g transform="translate(14.000000, 6.000000)" id="Shape" stroke-linecap="round">
+                            <path d="M0,0.5 C2.18,0.5 3.947,2.621 3.947,5.236 C3.947,7.854 2.179,9.977 0,9.977"></path>
+                            <path d="M3.916,4.811 C3.784,4.829 3.675,4.817 3.542,4.844 C2.197,5.102 1.334,4.615 0.593,3.319"></path>
+                            <path d="M4.031,16.5 L7.5,16.5 L7.5,15.012 C7.5,14.012 6.884,13.117 5.941,12.779 L2,11.367 L2,9.322"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+            <g id="Invisible_Shape">
+                <rect id="Rectangle-path" x="0" y="0" width="24" height="24"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

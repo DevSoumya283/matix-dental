@@ -1,0 +1,25 @@
+.footer{
+    width:100%;
+    &.footer__main{
+        padding-top:$spacing-xxxl;
+        padding-bottom:$spacing-xxxl;
+        color:$white;
+        background-color: $darkest-gray;
+    }
+    &.footer__bottom{
+        height:48px;
+        padding-top:12px;
+        text-align: center;
+        color:$white;
+        box-sizing: border-box;
+        background-color: $black;
+        .list--divided{
+            li.item:not(:first-child){
+                margin-right:0;
+                padding-right:0;
+                border-right:none;
+                transform:translateY(-2px);
+            }
+        }
+    }
+}

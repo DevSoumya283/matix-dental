@@ -1,0 +1,111 @@
+.ratings__wrapper{
+    height:24px;
+    display:inline-block;
+    .ratings{
+        width:116px;
+        height:100%;
+        display:inline-block;
+        position:relative;
+        background-color:$gray;
+        .stars{
+            height:24px;
+            background-color:$tertiary;
+        }
+        &::before{
+            content:'';
+            width:100%;
+            height:100%;
+            position:absolute;
+            display:block;
+            background-image:url('../img/ratings-white.png');
+            background-size:100%;
+            background-position: center;
+            background-repeat:no-repeat;
+        }
+    }
+    &.show--qty{
+        &::after{
+            content:attr(data-raters);
+            display:inline-block;
+            height:12px;
+            padding:5px $spacing-xxs;
+            border-radius:5px;
+            border-left:1px solid $black-60;
+            border-right:1px solid $black-60;
+            font-size:$fs-xs;
+            line-height:4px;
+            transform:translate(2px, -7px);
+        }
+    }
+    &.has--title{
+        margin-left:-$spacing-xxs;
+    }
+    &.ratings--m{
+        height:16px;
+        .ratings{
+            width:80px;
+                mask-size:auto 100%;
+            .stars{
+                height:16px;
+            }
+        }
+        &::after {
+          font-size: 10px;
+          transform: translate(-4px, -4px);
+        }
+    }
+    &.ratings--s{
+        height:12px;
+        .ratings{
+            width:58px;
+            .stars{
+                height:12px;
+            }
+        }
+        &::after{
+            display:none;
+        }
+    }
+}
+
+.ratings__box{
+    .ratings__wrapper{
+        vertical-align: middle;
+    }
+    .link{
+        margin-left:$spacing-xs;
+        font-weight: bold;
+        vertical-align: middle;
+        transform:translateY(2px);
+    }
+}
+
+//----- Star Rating -----//
+.star-rating {
+  > {
+    input {
+      display: none;
+    }
+    label {
+      float: right;
+      height: 24px;
+      width: 24px;
+      mask-image: url(../img/icons/star.svg);
+      background-color: $gray;
+    }
+  }
+  &:not(:checked) > label:hover {
+    background-color: $tertiary !important;
+    cursor: pointer;
+    ~ label {
+      background-color: $tertiary !important;
+      cursor: pointer;
+    }
+  }
+  > {
+    input:checked + label:hover, label:hover ~ input:checked ~ label, input:checked ~ label:hover ~ label {
+      background-color: $tertiary !important;
+      cursor: pointer;
+    }
+  }
+}

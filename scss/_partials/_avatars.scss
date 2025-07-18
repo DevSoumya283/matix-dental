@@ -1,0 +1,66 @@
+$avatar-xs: 16px;
+$avatar-s: 24px;
+$avatar-m: 48px;
+$avatar-l: 72px;
+
+.avatar{
+    height:0;
+    overflow:hidden;
+    border-radius:50%;
+    box-sizing: content-box;
+    background-size:cover;
+    background-position:center;
+    box-shadow:0 0 3px $black-40;
+    border:3px solid $white;
+    background-image:url('../assets/img/avatar-default.png');
+    &.avatar--xs{
+        width:$avatar-xs;
+        padding-top:$avatar-xs;
+        border:2px solid $white;
+    }
+    &.avatar--s{
+        width:$avatar-s;
+        padding-top:$avatar-s;
+    }
+    &.avatar--m{
+        width:$avatar-m;
+        padding-top:$avatar-m;
+    }
+    &.avatar--l{
+        width:$avatar-l;
+        padding-top:$avatar-l;
+    }
+}
+
+.entity__group{
+    display:inline-block;
+    .avatar, .text__group{
+        display:inline-block;
+        vertical-align: middle;
+    }
+    .avatar{
+        margin-right:$spacing-s;
+        &.avatar--xs, &.avatar--s{
+            margin-right:$spacing-xs;
+            transform:translateY(-2px);
+        }
+    }
+    &.entity--m{
+        .text__group{
+            width:calc(100% - 80px);
+        }
+    }
+    .vendor__logo{
+        display:inline-block;
+        margin-right:$spacing-s;
+        padding:$spacing-xs;
+        background-color:$white;
+        border-radius:4px;
+        box-shadow:0 0 5px $black-20;
+        border:1px solid $gray;
+        vertical-align: middle;
+        img{
+            width:100%;
+        }
+    }
+}

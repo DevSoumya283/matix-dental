@@ -1,0 +1,11 @@
+{
+    "name": "ci_bootstrap_3",
+    "require": {
+        "elasticsearch/elasticsearch": "~5.0",
+        "firebase/php-jwt": "^3.0",
+        "google/recaptcha": "~1.1",
+        "league/csv": "^7.0",
+        "mailgun/mailgun-php": "1.8.*",
+        "stripe/stripe-php": "^5.7"
+    }
+}

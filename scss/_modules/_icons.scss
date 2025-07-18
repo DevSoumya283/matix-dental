@@ -1,0 +1,43 @@
+.icon{
+    width:24px;
+    height:24px;
+    display:inline-block;
+    fill: currentColor;
+    &.icon--l{
+        width:40px;
+        height: 40px;
+    }
+}
+
+// Credit Cards
+
+.icon--cc{
+    width:27px;
+    height:19px;
+    margin-right:$spacing-xs;
+    vertical-align: middle;
+    transform: translateY(-2px);
+    background-color:transparent;
+    background-image:url('../img/icons/credit-cards.png');
+    &.icon--amex{
+        background-position:0 0;
+    }
+    &.icon--discover{
+        background-position:-27px 0;
+    }
+    &.icon--visa{
+        background-position:-54px 0;
+    }
+    &.icon--mastercard{
+        background-position:-81px 0;
+    }
+    &.icon--paypal{
+        background-position:-108px 0;
+    }
+    &.icon--undefined, &.icon--{
+        background-position:-135px 0;
+    }
+    &.icon--bank{
+        background-position:-162px 0;
+    }
+}

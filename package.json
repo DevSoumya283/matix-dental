@@ -1,0 +1,37 @@
+{
+  "name": "Matix Dental",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/waifung0207/ci_bootstrap_3"
+  },
+  "author": [
+    "Michael Chan <waifung.hk>"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "browser-sync": "*",
+    "del": "*",
+    "gulp": "*",
+    "gulp-changed": "*",
+    "gulp-clean-css": "*",
+    "gulp-concat": "*",
+    "gulp-imagemin": "*",
+    "gulp-notify": "*",
+    "gulp-sass": "^2.3.1",
+    "gulp-sequence": "*",
+    "gulp-sourcemaps": "*",
+    "gulp-uglify": "*",
+    "gulp-watch": "*",
+    "require-dir": "*",
+    "gulp-autoprefixer": "^4.0.0",
+    "gulp-debug": "^3.1.0"
+  },
+  "dependencies": {
+
+  }
+}

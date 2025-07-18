@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `default_payment_method` VARCHAR(40) NULL DEFAULT NULL AFTER `stripe_id`;

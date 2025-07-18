@@ -1,0 +1,111 @@
+.row{
+    &.row--full-height{
+        height:100%;
+        .col{
+            height:100%;
+        }
+    }
+}
+
+.content__wrapper{
+    width:100%;
+    display:flex;
+    position:relative;
+    .content__main{
+        width:95%;
+        max-width:1152px;
+        margin:0 auto;
+    }
+    &::before, &::after{
+        content:'';
+        flex-grow:1;
+    }
+    &.has--sidebar-l{
+        &::before{
+            background-color:$lightest-gray;
+        }
+        .sidebar{
+            border-right:1px solid $light-gray;
+            background-color:$lightest-gray;
+        }
+    }
+    &.has--sidebar-r{
+        &::after{
+            background-color:$lightest-gray;
+        }
+        .sidebar{
+            border-left:1px solid $light-gray;
+            box-shadow:1px 0 0 $lightest-gray;
+            background-color:$lightest-gray;
+            .sidebar__group{
+                margin-left:$spacing-xl;
+            }
+        }
+        .content__main{
+            border-right: 1px solid $lightest-gray;
+        }
+    }
+    &.sidebar--no-fill{
+        &::before, &::after{
+            background:transparent;
+        }
+        .content__main{
+            border-right: none;
+        }
+    }
+    .sidebar, .content{
+        padding-top:$spacing-xxxl;
+        padding-bottom: 72px;
+    }
+}
+
+.overlay__wrapper{
+    position:relative;
+    .overlay{
+        content:'';
+        display: block;
+        position:absolute;
+        top:0;
+        right:0;
+        bottom: 100%;
+        left:0;
+        z-index:2;
+        background-color:rgba(73,81,101,0.8);
+        opacity:0;
+        transition:all 0.2s ease-in-out;
+    }
+    &.has--overlay{
+        .overlay{
+            bottom:0;
+            opacity:1;
+        }
+    }
+}
+
+.bar{
+    border-bottom:1px solid $light-gray;
+}
+
+.scroll{
+    width:100%;
+    height:100%;
+    padding-right:$spacing-s;
+    overflow:hidden;
+    &.scroll--y{
+        overflow-y: auto;
+    }
+    &.scroll--x{
+        overflow-x: auto;
+    }
+}
+
+// .content__block{
+//     padding-bottom:$spacing-m;
+//     margin-bottom:$spacing-m;
+//     border-bottom:1px solid $light-gray;
+//     &:last-child{
+//         padding-bottom:0;
+//         margin-bottom:0;
+//         border:none;
+//     }
+// }

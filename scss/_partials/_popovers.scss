@@ -1,0 +1,107 @@
+.popover{
+    position:absolute;
+    left:50%;
+    z-index:1000;
+    transform: translateX(-50%);
+    border-radius:6px;
+    box-shadow:0 0 10px $black-20;
+    box-sizing: border-box;
+    text-align: left;
+    overflow:hidden;
+    &::after{
+        content:'';
+        display:block;
+        border:solid;
+        position:absolute;
+        left:50%;
+        transform:translateX(-50%);
+        z-index:1;
+        border-color: $white transparent;
+        border-width: 0 6px 6px 6px;
+        top:-6px;
+    }
+    .popover__inner{
+        width:100%;
+        padding:$spacing-s;
+        overflow:hidden;
+        overflow-y:auto;
+        border-radius:4px 4px 0 0;
+        background-color:$white;
+        .list{
+            margin-bottom:0;
+        }
+    }
+    .popover__bottom{
+        width:100%;
+        border-top:1px solid $light-gray;
+        padding:$spacing-xs $spacing-s $spacing-xxs;
+        background-color:$lightest-gray;
+        &.is--link{
+            &:hover{
+                background-color:$light-gray;
+            }
+        }
+    }
+    &.popover--dark{
+        border-color:$black;
+        background-color:$darkest-gray;
+        .popover__inner{
+            background-color:$darkest-gray;
+        }
+    }
+    &.popover__overflow{
+        width:240px;
+        max-width:240px;
+        .popover__inner{
+            .list{
+                .link.has--badge{
+                    width: calc(100% - 8px);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    display: inline-block;
+                    text-overflow: ellipsis;
+                    padding-left: 28px;
+                    margin-right:0;
+                    &::before{
+                        width: calc(100% - 30px);
+                        left:30px;
+                    }
+                    &::after{
+                        margin-left:0;
+                        left:0;
+                        top:1px;
+                    }
+                }
+            }
+        }
+    }
+    .list{
+        font-size:$fs-m;
+        .item{
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-weight: normal;
+        }
+    }
+    &.popover--left{
+        &::after{
+            left:auto;
+            top:$spacing-s;
+            right:0;
+            transform:translateX(100%);
+            border-color: transparent $white;
+            border-width: 6px 0 6px 6px;
+        }
+    }
+    .link{
+        &.has--badge{
+            margin-right:$spacing-l;
+            &::after{
+                padding-top:5px;
+                padding-bottom:5px;
+                padding-right:1px;
+                transform:translateY(1px);
+            }
+        }
+    }
+}

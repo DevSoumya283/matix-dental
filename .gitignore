@@ -1,0 +1,13 @@
+/nbproject/private/
+.idea
+composer.lock
+/node_modules
+/bower_components
+.DS_Store
+/vendor/
+/application/logs/*
+.vagrant
+/application/config/local/*
+/debuglogs/*.log
+/assets/img/heros
+/assets/img/logos

@@ -1,0 +1,98 @@
+.has--tip{
+    position:relative;
+    &::before{
+        content:attr(data-tip);
+        display:none;
+        padding:0 $spacing-xs;
+        position:absolute;
+        z-index:1;
+        top:0;
+        left:50%;
+        transform:translate(-50%, 0);
+        border-radius:4px;
+        white-space: nowrap;
+        font-size:$fs-xs;
+        color:$white;
+        background-color:$black-60;
+        transition:all 0.1s ease-in-out;
+    }
+    &::after{
+        display:none;
+        border: solid;
+        border-color: $black-60 transparent;
+        border-width: 4px 4px 0 4px;
+        top:-8px;
+        content: "";
+        left: 50%;
+        position: absolute;
+        z-index: 1;
+    }
+    &:hover{
+        &::before, &::after{
+            display:inline-block;
+        }
+        &::before{
+            top: calc(-100% + 8px);
+            transform:translate(-50%, 0);
+        }
+    }
+    &[data-tip-position="right"]{
+        &::before, &::after{
+            top:50%;
+            transform:translate(0, -50%);
+        }
+        &::before{
+            left:90%;
+        }
+        &::after{
+            right:-8px;
+            border-color: transparent $black-60 transparent transparent;
+            border-width: 4px 4px 4px 0;
+        }
+        &:hover{
+            &::before{
+                left:calc(100% + 8px);
+            }
+        }
+    }
+    &[data-tip-position="bottom"]{
+        &::before, &::after{
+            top:auto;
+            left:50%;
+            transform:translate(-50%, 0);
+        }
+        &::before{
+            bottom:-50%;
+        }
+        &::after{
+            bottom:-8px;
+            border-color: transparent transparent $black-60 transparent;
+            border-width: 0 4px 4px 4px;
+        }
+        &:hover{
+            &::before{
+                bottom:calc(-100% + 8px);
+            }
+        }
+    }
+    &[data-tip-position="left"]{
+        &::before, &::after{
+            top:50%;
+            left:auto;
+            transform:translate(0, -50%);
+        }
+        &::before{
+            right:90%;
+        }
+        &::after{
+            left:-8px;
+            border-color: transparent transparent transparent $black-60;
+            border-width: 4px 0 4px 4px;
+        }
+        &:hover{
+            &::before{
+                right:calc(100% + 8px);
+            }
+        }
+    }
+}

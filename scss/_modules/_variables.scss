@@ -1,0 +1,85 @@
+////////////////////////////////
+// Colors                     //
+////////////////////////////////
+
+$lightest-gray:     #FAFBFC;
+$light-gray:        #E7EAF1;
+$gray:              #C1C9D7;
+$dark-gray:         #8F9DAF;
+$darkest-gray:      #495165;
+
+$white:             #FFFFFF;
+$white-80:          rgba($white, 0.8);
+$white-60:          rgba($white, 0.6);
+$white-40:          rgba($white, 0.4);
+$white-20:          rgba($white, 0.2);
+$white-10:          rgba($white, 0.1);
+
+$black:             #223346;
+$black-80:          rgba($black, 0.8);
+$black-60:          rgba($black, 0.6);
+$black-40:          rgba($black, 0.4);
+$black-20:          rgba($black, 0.2);
+$black-15:          rgba($black, 0.15);
+$black-10:          rgba($black, 0.1);
+
+$light-brand:       #E9F4FF;
+$brand:             #2893FF;
+$dark-brand:        #317ED0;
+
+$light-accent:      #E7F9F5;
+$accent:            #13C4A3;
+$dark-accent:       #23A08F;
+
+$light-tertiary:    #FDF7E5;
+$tertiary:          #FFBC00;
+$dark-tertiary:     #D1A019;
+
+$light-negative:    #FCEDEE;
+$negative:          #E74E59;
+$dark-negative:     #BF4E5B;
+
+$code:              #00979D;
+
+$box-shadow: 		0px 0px 5px 0px $black-15;
+
+$overlay:           rgba($darkest-gray, .9);
+
+////////////////////////////////
+// Typography                 //
+////////////////////////////////
+
+$primary-font: 'HarmoniaSans';
+
+// Font Sizes
+$fs-xxl: 42px;
+$lh-xxl: 56px;
+
+$fs-xl: 32px;
+$lh-xl: 42px;
+
+$fs-l: 22px;
+$lh-l: 32px;
+
+$fs-m: 16px;
+$lh-m: 24px;
+
+$fs-s: 14px;
+$lh-s: 24px;
+
+$fs-xs: 12px;
+$lh-xs: 16px;
+
+
+////////////////////////////////
+// Spacing                    //
+////////////////////////////////
+
+$spacing-xxs: 4px;
+$spacing-xs: 8px;
+$spacing-s: 16px;
+$spacing-m: 24px;
+$spacing-l: 32px;
+$spacing-xl: 40px;
+$spacing-xxl: 48px;
+$spacing-xxxl: 56px;

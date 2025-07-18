@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 43.2 (39069) - http://www.bohemiancoding.com/sketch -->
+    <title>icon-checkout</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon-checkout">
+            <g id="Outline_Icons" stroke-linejoin="round" stroke="#2893FF">
+                <g id="Group">
+                    <g transform="translate(13.000000, 13.000000)">
+                        <polyline id="Shape" stroke-linecap="round" points="8 4 5 7 3 5"></polyline>
+                        <circle id="Oval" cx="5.5" cy="5.5" r="5"></circle>
+                    </g>
+                    <g stroke-linecap="round">
+                        <circle id="Oval" cx="8" cy="19" r="1.5"></circle>
+                        <polyline id="Shape" points="0.5 0.502 4 0.502 8 17.502 12 17.502"></polyline>
+                        <polyline id="Shape" points="21.984 11.047 23.5 6.502 5.412 6.502"></polyline>
+                        <path d="M7.294,14.502 L11.975,14.502" id="Shape"></path>
+                    </g>
+                </g>
+            </g>
+            <g id="Invisible_Shape">
+                <rect id="Rectangle-path" x="0" y="0" width="24" height="24"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

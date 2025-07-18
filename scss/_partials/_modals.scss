@@ -1,0 +1,110 @@
+//----- Modal Sizes -----//
+.modal--l {
+	.modal__wrapper {
+		width: 744px;
+	}
+}
+.modal--m {
+	.modal__wrapper {
+		width: 552px;
+	}
+}
+
+//----- Modals -----//
+.modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	visibility: hidden;
+	z-index: 10000;
+	&.is-visible {
+		visibility: visible;
+		.modal-overlay {
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+	}
+}
+.has-modal {
+	overflow: hidden;
+	.modal {
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+}
+.modal__overlay {
+	position: fixed;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: $overlay;
+	visibility: hidden;
+	opacity: 0;
+	transition: visibility 0s linear 0.3s, opacity 0.3s;
+}
+.modal {
+	&.is-visible {
+		.modal__overlay {
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+	}
+}
+.modal__wrapper {
+	position: absolute;
+	left: 50%;
+	margin-top: $spacing-xxl;
+	padding-top: $spacing-xxl;
+	padding-bottom: $spacing-xxl;
+	background-color: $white;
+	box-shadow: $box-shadow;
+	box-sizing: border-box;
+	border-radius: $spacing-xxs;
+	z-index: 9999;
+	box-sizing: border-box;
+}
+.modal__wrapper--transition {
+	transition: all 0.3s 0.12s;
+	transform: translate(-50%,20%);
+	opacity: 0;
+}
+.modal {
+	&.is-visible {
+		.modal__wrapper--transition {
+			transform: translate(-50%,0);
+			opacity: 1;
+		}
+	}
+}
+.modal__close {
+	position: absolute;
+	top: $spacing-s;
+	right: $spacing-s;
+	color: $gray;
+	z-index: 99;
+	&:hover {
+		color: $dark-gray;
+	}
+}
+.modal__header, .modal__body {
+	max-width: 600px;
+	box-sizing: border-box;
+	p {
+		color: $dark-gray;
+	}
+}
+
+//----- Modal Specific -----//
+
+/* Accept Request Modal */
+
+#instructions {
+	height: 30vh;
+	background-color: $white;
+}

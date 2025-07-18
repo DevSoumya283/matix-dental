@@ -1,0 +1,119 @@
+.accordion__group{
+    margin-bottom:$spacing-xxl;
+    &:last-child{
+        margin-bottom:0;
+    }
+    .accordion__section{
+        .accordion__title{
+            margin-bottom:$spacing-s;
+            border-bottom:1px dashed $light-gray;
+            h1, h2, h3, h4, h5, h6{
+                margin-bottom:0;
+                color:$dark-gray;
+            }
+            .link--expand{
+                font-size:$fs-s;
+                font-weight:bold;
+            }
+        }
+        .accordion__content{
+            .accordion__preview{
+                overflow:hidden;
+                opacity:1;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .accordion__edit{
+                max-height:0;
+                overflow: hidden;
+                border-radius:4px;
+                border:1px solid $light-gray;
+                opacity:0;
+                background-color:$lightest-gray;
+                transition: opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
+            }
+        }
+        &.is--expanded{
+            .accordion__preview{
+                max-height:0;
+                opacity:0;
+            }
+            .accordion__content{
+                .accordion__edit{
+                    overflow:visible;
+                    max-height:9999px;
+                    padding:$spacing-s;
+                    opacity:1;
+                }
+            }
+        }
+    }
+}
+
+// Simple Accordions
+
+.accordion__wrapper{
+    overflow: hidden;
+    border-radius:4px;
+    border:1px solid $light-gray;
+}
+
+.accordion{
+    transform: translateZ(0);
+    box-shadow: 0 1px 1px $lightest-gray;
+    // background: #fff;
+}
+
+.accordion > .accordion-toggle{
+    position: absolute;
+    opacity: 0;
+    display: none;
+}
+
+.accordion > label{
+    position: relative;
+    display: block;
+    height: 64px;
+    line-height: 64px;
+    padding:0 $spacing-m;
+    font-size: 18px;
+    border-top: 1px solid $light-gray;
+    cursor: pointer;
+}
+.accordion:first-child > label{
+    border-top:none;
+}
+
+.accordion > label:after {
+    content: '+';
+    position: absolute;
+    top: 0px;
+    right: 20px;
+    transform: rotate(0deg);
+    transition: .3s transform;
+    color:$brand;
+    font-size:24px;
+}
+
+.accordion > section{
+    max-height: 0;
+    transition: .3s all;
+    overflow: hidden;
+    padding:0 $spacing-l;
+}
+
+.accordion > .accordion-toggle:checked ~ label:after{
+    transform: rotate(45deg);
+}
+
+.accordion > .accordion-toggle:checked ~ section{
+    max-height: 400px;
+    overflow-y:auto;
+}
+
+.accordion > section p {
+  color:$black-60;
+}
+
+.accordion > section .list {
+  color:$black-60;
+}

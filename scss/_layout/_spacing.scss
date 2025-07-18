@@ -1,0 +1,113 @@
+//----- Padding ----- //
+
+.padding--xxs{
+    padding: $spacing-xxs;
+}
+.padding--xs{
+    padding: $spacing-xs;
+}
+.padding--s{
+    padding: $spacing-s;
+}
+.padding--m{
+    padding: $spacing-m;
+}
+.padding--l{
+    padding: $spacing-l;
+}
+.padding--xl{
+    padding: $spacing-xl;
+}
+.padding--xxl{
+    padding: $spacing-xxl;
+}
+.padding--xxxl{
+    padding: $spacing-xxxl;
+}
+
+//No Padding
+.no--pad{
+    padding:0 !important;
+}
+.no--pad-t{
+    padding-top: 0 !important;
+}
+.no--pad-r{
+    padding-right: 0 !important;
+}
+.no--pad-b{
+    padding-bottom: 0 !important;
+}
+.no--pad-l{
+    padding-left: 0 !important;
+}
+.no--pad-lr{
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+.no--pad-tb{
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+//----- Margins -----//
+
+.margin--xxs{
+    margin: $spacing-xxs;
+}
+.margin--xs{
+    margin: $spacing-xs;
+}
+.margin--s{
+    margin: $spacing-s;
+}
+.margin--m{
+    margin: $spacing-m;
+}
+.margin--l{
+    margin: $spacing-l;
+}
+.margin--xl{
+    margin: $spacing-xl;
+}
+
+//No Margins
+.no--margin{
+    margin:0 !important;
+}
+.no--margin-t{
+    margin-top: 0 !important;
+}
+.no--margin-r{
+    margin-right: 0 !important;
+}
+.no--margin-b{
+    margin-bottom: 0 !important;
+}
+.no--margin-l{
+    margin-left: 0 !important;
+}
+.no--margin-lr{
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.no--margin-tb{
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+//----- Pull Up -----//
+.pull--up-xxs{transform:translateY(-$spacing-xxs);}
+.pull--up-xs{transform:translateY(-$spacing-xs);}
+.pull--up-s{transform:translateY(-$spacing-s);}
+.pull--up-m{transform:translateY(-$spacing-m);}
+.pull--up-l{transform:translateY(-$spacing-l);}
+.pull--up-xl{transform:translateY(-$spacing-xl);}
+
+//----- Pull Down -----//
+.pull--down-xxs{transform:translateY($spacing-xxs);}
+.pull--down-xs{transform:translateY($spacing-xs);}
+.pull--down-s{transform:translateY($spacing-s);}
+.pull--down-m{transform:translateY($spacing-m);}
+.pull--down-l{transform:translateY($spacing-l);}
+.pull--down-xl{transform:translateY($spacing-xl);}

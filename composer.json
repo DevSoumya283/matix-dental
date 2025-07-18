@@ -1,0 +1,9 @@
+{
+    "name": "blend/matix",
+    "description": "A dental supply marketplace.",
+    "type": "project",
+    "require-dev": {
+        "laravel/homestead": "^4"
+    },
+    "license": "Proprietary"
+}

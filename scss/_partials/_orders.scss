@@ -1,0 +1,55 @@
+.order{
+    margin-top:$spacing-m;
+    &:first-child{
+        margin-top:0;
+    }
+    .order__logo{
+        width:100%;
+        height:0;
+        padding-top:100%;
+        border-radius:4px;
+        background-position:center;
+        background-size: contain;
+    }
+}
+
+#ordersContent{
+    #tabHistory,
+    #tabReturns,
+    #tabRecurring,
+    #tabFeedback{
+        display:none;
+    }
+    &.history{
+        #tabHistory{
+            display:block;
+        }
+    }
+    &.returns{
+        #tabReturns{
+            display:block;
+        }
+    }
+    &.recurring{
+        #tabRecurring{
+            display:block;
+        }
+    }
+    &.feedback{
+        #tabFeedback{
+            display:block;
+        }
+    }
+}
+
+.well{
+    .order{
+        margin:$spacing-s 0;
+        &:first-child{
+            margin-top:0;
+        }
+        &:last-child{
+            margin-bottom:0;
+        }
+    }
+}

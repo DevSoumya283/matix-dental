@@ -1,0 +1,28 @@
+.method__forms{
+    position:relative;
+    .method__form{
+        margin-top:$spacing-s;
+        display:none;
+        .well{
+            margin-top:0;
+        }
+    }
+    &.is--cc{
+        #methodCreditCard{
+            display:block;
+        }
+    }
+    &.is--paypal{
+        #methodPaypal{
+            display:block;
+        }
+        .footer__group{
+            display:none;
+        }
+    }
+    &.is--bank{
+        #methodBank{
+            display:block;
+        }
+    }
+}

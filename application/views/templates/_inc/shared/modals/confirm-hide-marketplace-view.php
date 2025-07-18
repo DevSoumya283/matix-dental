@@ -1,0 +1,26 @@
+<!-- Confirm Product Activation Modal -->
+<div id="confirmHideMarketplaceModal" class="modal modal--m">
+    <form action="<?php echo base_url(); ?>VendorProductAction-display" method="post">
+        <div class="modal__wrapper modal__wrapper--transition padding--l">
+            <a href="javascript:void(0);" class="modal__close modal--toggle icon icon--x"><svg class="icon icon--x"><use xlink:href="#icon-x"></use></svg></a>
+            <div class="modal__header center center--h align--left">
+                <h2>Hide Selected Products From <span id="store-name"><?php echo $siteInfo->name; ?></span>?</h2>
+                <p class="margin--m no--margin-r no--margin-t no--margin-l">You will be not listed as a vendor for these product(s).</p>
+            </div>
+            <div class="modal__body center center--h align--left cf">
+                <div class="modal__content">
+                    <div class="footer__group border--dashed">
+                        <input type="hidden" name="product_id" value="" id="product_id">
+                        <input type="hidden" name="vendor_id" value="<?php echo $vendorId; ?>" id="vendor_id">
+                        <input type="hidden" name="site_id" value="<?php echo $siteId; ?>" id="site_id">
+
+                        <input type="hidden" name="select" value="1">
+                        <button class="btn btn--m btn--block btn--primary default--action">Toggle Selected</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="modal__overlay modal--toggle"></div>
+</div>
+<!-- /Confirm Product Activation Modal -->

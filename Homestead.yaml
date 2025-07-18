@@ -1,0 +1,33 @@
+---
+ip: "192.168.10.10"
+memory: 2048
+cpus: 1
+hostname: matix-dental
+name: matix-dental
+provider: virtualbox
+
+authorize: ~/.ssh/id_rsa.pub
+
+keys:
+    - ~/.ssh/id_rsa
+
+folders:
+    - map: "/home/waffles/Projects/Business/Blend/matix-dental"
+      to: "/home/vagrant/matix-dental"
+
+sites:
+    - map: matix.app
+      to: "/home/vagrant/matix-dental"
+
+databases:
+    - dentomatix_development
+
+# blackfire:
+#     - id: foo
+#       token: bar
+#       client-id: foo
+#       client-token: bar
+
+ports:
+   - send: 3320
+     to: 3306

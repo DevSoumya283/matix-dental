@@ -1,0 +1,372 @@
+////////////////////////////////
+// Universal                  //
+////////////////////////////////
+.starts--hidden{
+    display:none;
+}
+.is--hidden{
+    display:none !important;
+}
+.is--visible{
+    display:block !important;
+}
+
+.disp--block{
+    display:block !important;
+}
+.disp--ib{
+    display:inline-block !important;
+}
+.disp--inline{
+    display:inline !important;
+}
+
+//Percentage Width
+.width--100{
+    width:100% !important;
+}
+.width--50{
+    width:50% !important;
+}
+.width--30{
+    width:30% !important;
+}
+.width--25{
+    width:25% !important;
+}
+.width--20{
+    width:20% !important;
+}
+.width--15{
+    width:15% !important;
+}
+
+//Fixed Width
+.width--fixed-75{
+    width:75px !important;
+}
+
+////////////////////////////////
+// Background Colors          //
+////////////////////////////////
+
+// Brand
+.bg--light-brand{
+    background-color: $light-brand !important;
+};
+.bg--brand{
+    background-color: $brand !important;
+};
+.bg--dark-brand{
+    background-color:$dark-brand !important;
+};
+
+// Accent
+.bg--light-accent{
+    background-color: $light-accent !important;
+};
+.bg--accent{
+    background-color: $accent !important;
+};
+.bg--dark-accent{
+    background-color:$dark-accent !important;
+};
+
+// Tertiary
+.bg--light-tertiary{
+    background-color: $light-tertiary !important;
+};
+.bg--tertiary{
+    background-color: $tertiary !important;
+};
+.bg--dark-tertiary{
+    background-color:$dark-tertiary !important;
+};
+
+// Negative
+.bg--light-negative{
+    background-color: $light-negative !important;
+};
+.bg--negative{
+    background-color: $negative !important;
+};
+.bg--dark-negative{
+    background-color:$dark-negative !important;
+};
+
+// Gray
+.bg--lightest-gray{
+    background-color: $lightest-gray !important;
+};
+.bg--light-gray{
+    background-color: $light-gray !important;
+};
+.bg--gray{
+    background-color:$gray !important;
+};
+.bg--dark-gray{
+    background-color: $dark-gray !important;
+};
+.bg--darkest-gray{
+    background-color: $darkest-gray !important;
+};
+.bg--black{
+    background-color: $black !important;
+};
+
+// White
+.bg--white{
+    background-color: $white !important;
+};
+.bg--white-80{
+    background-color: $white-80 !important;
+};
+.bg--white-60{
+    background-color: $white-60 !important;
+};
+.bg--white-40{
+    background-color: $white-40 !important;
+};
+.bg--white-20{
+    background-color: $white-20 !important;
+};
+.bg--white-10{
+    background-color: $white-10 !important;
+};
+
+// Black
+.bg--black{
+    background-color: $black !important;
+};
+.bg--black-80{
+    background-color: $black-80 !important;
+};
+.bg--black-60{
+    background-color: $black-60 !important;
+};
+.bg--black-40{
+    background-color: $black-40 !important;
+};
+.bg--black-20{
+    background-color: $black-20 !important;
+};
+.bg--black-10{
+    background-color: $black-10 !important;
+};
+
+
+////////////////////////////////
+// Text Colors                //
+////////////////////////////////
+
+// Brand
+.textColor--light-brand{
+    color: $light-brand !important;
+}
+.textColor--brand{
+    color: $brand !important;
+}
+.textColor--dark-brand{
+    color:$dark-brand !important;
+}
+
+// Accent
+.textColor--light-accent{
+    color: $light-accent !important;
+}
+.textColor--accent{
+    color: $accent !important;
+}
+.textColor--dark-accent{
+    color:$dark-accent !important;
+}
+
+// Tertiary
+.textColor--light-tertiary{
+    color: $light-tertiary !important;
+}
+.textColor--tertiary{
+    color: $tertiary !important;
+}
+.textColor--dark-tertiary{
+    color:$dark-tertiary !important;
+}
+
+// Negative
+.textColor--light-negative{
+    color: $light-negative !important;
+}
+.textColor--negative{
+    color: $negative !important;
+}
+.textColor--dark-negative{
+    color:$dark-negative !important;
+}
+
+// Gray
+.textColor--white{
+    color: $white !important;
+}
+.textColor--lightest-gray{
+    color: $lightest-gray !important;
+}
+.textColor--light-gray{
+    color: $light-gray !important;
+}
+.textColor--gray{
+    color:$gray !important;
+}
+.textColor--dark-gray{
+    color: $dark-gray !important;
+}
+.textColor--darkest-gray{
+    color: $darkest-gray !important;
+}
+.textColor--black{
+    color: $black !important;
+}
+
+
+////////////////////////////////
+// Text Sizes                 //
+////////////////////////////////
+
+.fontSize--xs{
+    font-size: $fs-xs !important;
+    line-height: $lh-xs !important;
+}
+.fontSize--s{
+    font-size: $fs-s !important;
+    line-height: $lh-s !important;
+}
+.fontSize--m{
+    font-size: $fs-m !important;
+    line-height: $lh-m !important;
+}
+.fontSize--l{
+    font-size: $fs-l !important;
+    line-height: $lh-l !important;
+}
+.fontSize--xl{
+    font-size: $fs-xl !important;
+    line-height: $lh-xl !important;
+}
+.fontSize--xxl{
+    font-size: $fs-xxl !important;
+    line-height: $lh-xxl !important;
+}
+
+
+////////////////////////////////
+// Text Styles                //
+////////////////////////////////
+
+// Text Styles
+.textStyle--caps{
+    text-transform: uppercase !important;
+}
+
+// Font Weights
+.fontWeight--1{
+    font-weight:normal !important;
+}
+.fontWeight--2{
+    font-weight:bold !important;
+}
+
+
+////////////////////////////////
+// Borders                    //
+////////////////////////////////
+
+//No Border
+.no--border {
+    border:none !important;
+}
+
+// Border Widths
+.border--1{
+    border-width:1px;
+}
+.border--2{
+    border-width:2px;
+}
+
+// Border Styles
+.border--solid{
+    border-style:solid !important;
+}
+.border--dashed{
+    border-style:dashed !important;
+}
+
+// Border Colors
+.border--lightest{
+    border-color:$black-10 !important;
+}
+.border--light{
+    border-color:$black-20 !important;
+}
+.border--medium{
+    border-color:$black-40 !important;
+}
+.border--dark{
+    border-color:$black-60 !important;
+}
+.border--darkest{
+    border-color:$black-80 !important;
+}
+.border--brand{
+    border-color:$brand !important;
+}
+.border--accent{
+    border-color:$accent !important;
+}
+.border--tertiary{
+    border-color:$tertiary !important;
+}
+.border--negative{
+    border-color:$negative !important;
+}
+
+// Border Sides
+.border--t{
+    border-bottom:none !important;
+    border-right:none !important;
+    border-left:none !important;
+}
+.border--r{
+    border-bottom:none !important;
+    border-left:none !important;
+    border-top:none !important;
+}
+.border--b{
+    border-left:none !important;
+    border-top:none !important;
+    border-right:none !important;
+}
+.border--l{
+    border-top:none !important;
+    border-right:none !important;
+    border-bottom:none !important;
+}
+.border--tb{
+    border-left:none !important;
+    border-right:none !important;
+}
+.border--lr{
+    border-top:none !important;
+    border-bottom:none !important;
+}
+
+
+////////////////////////////////
+// SHADOWS                    //
+////////////////////////////////
+
+.shadow--m{
+    box-shadow:0 0 5px $black-10;
+}
+.shadow--l{
+    box-shadow:0 0 24px $black-80;
+}

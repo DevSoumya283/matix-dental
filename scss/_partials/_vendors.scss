@@ -1,0 +1,22 @@
+#vendorOrdersContent{
+    #tabOrders,
+    #tabReturns,
+    #tabComplete{
+        display:none;
+    }
+    &.orders{
+        #tabOrders{
+            display:block;
+        }
+    }
+    &.returns{
+        #tabReturns{
+            display:block;
+        }
+    }
+    &.complete{
+        #tabComplete{
+            display:block;
+        }
+    }
+}

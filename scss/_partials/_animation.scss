@@ -1,0 +1,88 @@
+/*============================
+    LOADER
+============================*/
+
+.loader{
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    display:inline-block;
+    margin-left:$spacing-xxs;
+    -webkit-animation: darkTyping 1s linear infinite alternate;
+    -moz-animation: darkTyping 1s linear infinite alternate;
+    animation: darkTyping 1s linear infinite alternate;
+    position: relative;
+    &.loader--light{
+        -webkit-animation: lightTyping 1s linear infinite alternate;
+        -moz-animation: lightTyping 1s linear infinite alternate;
+        animation: lightTyping 1s linear infinite alternate;
+    }
+}
+@keyframes darkTyping{
+   0%{
+        background-color: rgba(34,51,70, 1);
+        box-shadow: 6px 0px 0px 0px rgba(34,51,70,0.2),
+                    12px 0px 0px 0px rgba(34,51,70,0.2);
+      }
+    25%{
+        background-color: rgba(34,51,70, 0.4);
+        box-shadow: 6px 0px 0px 0px rgba(34,51,70,2),
+                    12px 0px 0px 0px rgba(34,51,70,0.2);
+    }
+    75%{ background-color: rgba(34,51,70, 0.4);
+        box-shadow: 6px 0px 0px 0px rgba(34,51,70,0.2),
+                    12px 0px 0px 0px rgba(34,51,70,1);
+      }
+}
+@keyframes lightTyping{
+   0%{
+        background-color: rgba(255,255,255, 1);
+        box-shadow: 6px 0px 0px 0px rgba(255,255,255,0.2),
+                    12px 0px 0px 0px rgba(255,255,255,0.2);
+      }
+    25%{
+        background-color: rgba(255,255,255, 0.4);
+        box-shadow: 6px 0px 0px 0px rgba(255,255,255,2),
+                    12px 0px 0px 0px rgba(255,255,255,0.2);
+    }
+    75%{ background-color: rgba(255,255,255, 0.4);
+        box-shadow: 6px 0px 0px 0px rgba(255,255,255,0.2),
+                    12px 0px 0px 0px rgba(255,255,255,1);
+      }
+}
+
+
+/*============================
+    CHECKMARK
+============================*/
+
+.checkmark {
+    // width: 9px;
+    // height: 14px;
+    display: block;
+    position: relative;
+    &::after {
+        width: 9px;
+        height: 14px;
+        transform: scaleX(-1) rotate(135deg);
+        transform-origin: left top;
+        border-right: 3px solid $white;
+        border-top: 3px solid $white;
+        border-radius:2px;
+        content: '';
+        display: inline-block;
+        position: absolute;
+        animation: check 0.6s;
+    }
+}
+@keyframes check {
+    0% {
+        width: 0;
+        height: 0;
+    }
+
+    33.3333% {
+        width: 9px;
+        height: 0;
+    }
+}
