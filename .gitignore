@@ -8,6 +8,9 @@ composer.lock
 /application/logs/*
 .vagrant
 /application/config/local/*
+/application/config/*
+/application/vendor/*
+
 /debuglogs/*.log
 /assets/img/heros
 /assets/img/logos
