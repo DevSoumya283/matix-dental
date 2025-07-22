@@ -21,23 +21,23 @@
 <!-- /Bottom Footer -->
 
 <!-- Vendor Modals -->
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/confirm-qty-change.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/cancel-order.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/accept-request.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/deny-request.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/create-new-product.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/create-new-code.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/edit-existing-code.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/delete-confirmation.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/create-shipping-method.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/edit-shipping-method.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/bulk-edit-pricing.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/invite-new-user.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/edit-user.php'); ?>
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/delete-user.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/confirm-qty-change.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/cancel-order.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/accept-request.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/deny-request.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/create-new-product.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/create-new-code.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/edit-existing-code.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/delete-confirmation.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/create-shipping-method.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/edit-shipping-method.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/bulk-edit-pricing.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/invite-new-user.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/edit-user.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/delete-user.php'); ?>
 
 <!-- Universal Modals -->
-<?php include(INCLUDE_PATH.'/_inc/shared/modals/help-shopping-mode.php'); ?>
+<?php  $this->load->view('templates/_inc/shared/modals/help-shopping-mode.php'); ?>
 
 <!-- Scripts & Libraries -->
 <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>-->

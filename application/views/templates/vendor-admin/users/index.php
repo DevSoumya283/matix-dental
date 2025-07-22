@@ -122,6 +122,7 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
+<?php $this->load->view('templates/_inc/shared/modals/invite-new-user.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/delete-user.php'); ?>
 
 <?php

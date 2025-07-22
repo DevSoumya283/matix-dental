@@ -111,10 +111,8 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/delete-shipping-method.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?> 
 
-<?php $this->load->view('templates/_inc/shared/modals/delete-shipping-method.php'); ?>
-<?php $this->load->view('templates/_inc/shared/modals/create-shipping-method.php'); ?>
-<?php $this->load->view('templates/_inc/shared/modals/edit-shipping-method.php'); ?>
-<?php $this->load->view('templates/_inc/footer-vendor.php'); ?>
+
+<?php //$this->load->view('templates/_inc/shared/modals/delete-shipping-method.php'); ?>
+<?php //$this->load->view('templates/_inc/shared/modals/create-shipping-method.php'); ?>
+<?php //$this->load->view('templates/_inc/shared/modals/edit-shipping-method.php'); ?>

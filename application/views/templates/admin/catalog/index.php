@@ -78,7 +78,7 @@
                     <!-- /Filters -->
 
                     <!-- Product List -->
-                     <div class="sidebar col col--2-of-12" style="padding: 12px;">
+                        <div style="overflow:scroll;"> 
                     <table class="table" data-controls="#controlsCatalog">
                         <thead>
                             <tr>
@@ -161,6 +161,8 @@
                      </div>
                     <?php echo $this->pagination->create_links(); ?>
                     <!-- /Product List -->
+                     </div>
+
                 </div>
                 <!-- /Content Area -->
             </div>

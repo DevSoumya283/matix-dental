@@ -6,7 +6,7 @@
         <title><?php echo $this->config->item('name'); ?></title>
         <?php define('ROOT_PATH', '/'); ?>
         <!-- Icons -->
-        <?php include(INCLUDE_PATH . '/_inc/icons.php'); ?>
+        <?php  $this->load->view('templates/_inc/icons.php'); ?>
         <!-- build:css css/main.min.css -->
         <link href="<?php echo base_url(); ?>assets/css/main.css" rel="stylesheet" type="text/css">
         <!-- custom overrides -->
@@ -125,6 +125,27 @@
             }
         }
 
+        @media screen and (max-width: 700px) {
+                .sidebar {
+                    width: auto !important;
+                }
+                .modal--m .modal__wrapper {
+                    width: 90vw;
+                }
+                .footer.footer__bottom{
+                    height: 65px;
+                }
+                .col--2-of-12 {
+                    width: 100%;
+                }
+
+                .col--push-1-of-12 {
+                    margin-left: 0%;
+                }
+                .col--3-of-4, .col--6-of-8, .col--9-of-12 {
+                    width: 100%;
+                }
+            }
         </style>
         <!-- endbuild -->
         <!-- Libraries -->

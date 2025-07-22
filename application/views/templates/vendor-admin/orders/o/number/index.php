@@ -1,4 +1,3 @@
-<?php include(INCLUDE_PATH . '/_inc/header-vendor.php'); ?>
 <!-- Content Section -->
 <div class="overlay__wrapper">
     <div class="overlay overlay__browse" data-target="#browseDropdown"></div>
@@ -346,13 +345,11 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/process-order.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/add-note.php'); ?>
 
-<?php //include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?>
+
 
 <?php $this->load->view('templates/_inc/shared/modals/process-order.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/add-note.php'); ?>
-<?php $this->load->view('templates/_inc/footer-vendor.php'); ?>
+<?php //$this->load->view('templates/_inc/footer-vendor.php'); ?>
 
 

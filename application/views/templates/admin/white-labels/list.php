@@ -9,7 +9,7 @@
             <div class="row row--full-height">
 
                 <!-- Sidebar -->
-                <div class="sidebar col col--2-of-12">
+                <div class="sidebar col col--2-of-12" style="padding: 12px;">
                     <?php //include(INCLUDE_PATH . '/' . (User_model::can($_SESSION['user_permissions'], 'is-admin') ? 'admin' : 'vendor-admin') . '/_inc/nav.php'); ?>
                     <?php
                         $folder = User_model::can($_SESSION['user_permissions'], 'is-admin') ? 'admin' : 'vendor-admin';
@@ -18,7 +18,7 @@
                     ?>
                 </div>
                 <!-- /Sidebar -->
-                <div class="sidebar col col--2-of-12" style="padding: 12px;">
+                <div class="col col--9-of-12 col--push-1-of-12" style="overflow:scroll">
                     <div class="heading__group border--dashed">
                         <div class="wrapper">
                         <div class="col col--10-of-12">
@@ -29,6 +29,7 @@
                             <a class="link modal--toggle editLink align--right" data-user_id="" data-target="#addWhiteLabelModal" >Add Site</a>
                         </div>
                         <?php } ?>
+                        <div style="">
                         <div style="overflow: hidden; overflow-x: scroll;">
                         <table class="table" data-controls="#controlsTable">
                             <thead>
@@ -72,7 +73,7 @@
                             </div>
                             <?php } ?>
                             <div style="overflow: hidden; overflow-x: scroll;">
-                            <table class="table" data-controls="#controlsTable">
+                                <table class="table" data-controls="#controlsTable">
                                 <thead>
                                     <tr>
                                         <th>Logo</th>
@@ -104,7 +105,9 @@
                     <?php } ?>
                 </div>
             </div>
+         </div>
         </div>
+    </div>
     </section>
 </div>
 <!--
@@ -114,4 +117,4 @@
 <?php //include(INCLUDE_PATH . '/_inc/footer-' . $userType . '.php'); ?>
 
 <?php $this->load->view('templates/_inc/shared/modals/add-white-label.php'); ?>
-<?php $this->load->view('templates/_inc/footer-' . $userType . '.php'); ?>
+<?php //$this->load->view('templates/_inc/footer-' . $userType . '.php'); ?>

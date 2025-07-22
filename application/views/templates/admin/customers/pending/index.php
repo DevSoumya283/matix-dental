@@ -51,6 +51,7 @@
                         </div>
                     </div>
                     <div class="overlay__wrapper" style="overflow: scroll;">
+                    <div style="overflow: hidden; overflow-x: scroll;">
                     <table class="table" data-controls="#controlsTable">
                         <thead>
                             <tr>
@@ -118,6 +119,7 @@
                     </div>
                     <!-- /Customers -->
                     <?php echo $this->pagination->create_links(); ?>
+                    </div>
                 </div>
                 <!-- /Content Area -->
 

@@ -4,12 +4,12 @@
 <div class="overlay__wrapper">
     <div class="overlay overlay__browse" data-target="#browseDropdown"></div>
 
-    <section class="content__wrapper has--sidebar-l">
+    <section class="content__wrapper has--sidebar-l" >
         <div class="content__main">
             <div class="row row--full-height">
 
                 <!-- Sidebar -->
-                <div class="sidebar col col--2-of-12">
+                <div class="sidebar col col--2-of-12" style="padding:12px">
                     <?php //include(INCLUDE_PATH . '/' . (User_model::can($_SESSION['user_permissions'], 'is-admin') ? 'admin' : 'vendor-admin') . '/_inc/nav.php'); ?>
                     <?php
                         $folder = User_model::can($_SESSION['user_permissions'], 'is-admin') ? 'admin' : 'vendor-admin';
@@ -53,6 +53,7 @@
                             } ?>
                             </table>
                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -77,7 +78,8 @@
                                     </select>
                                 </div>
                             <?php } ?>
-                                <table class="table" data-controls="#controlsTable">
+                                <div style="overflow: hidden; overflow-x: scroll;">
+                                    <table class="table" data-controls="#controlsTable">
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -100,6 +102,7 @@
                                 <?php }
                                 } ?>
                                 </table>
+                                </div>
                         </div>
                     </div>
                     <?php } ?>

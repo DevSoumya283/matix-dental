@@ -15,7 +15,121 @@
         <link href="<?php echo base_url(); ?>lib/bootstrap-timepicker/bootstrap-timepicker.css" rel="stylesheet" type="text/css">
         <link href="<?php echo base_url(); ?>lib/animate-css/animate.css " rel="stylesheet" type="text/css">
         <script src="<?php echo base_url(); ?>assets/js/jquery.min.js"></script>
-        <style>
+       <style>
+            .nav__top{ background-color: #<?php echo $this->config->item('bg-color'); ?> !important; }
+            .navbar{ background-color: #<?php echo $this->config->item('bg-color'); ?> !important; }
+            .btn--primary{ background-color: #<?php echo $this->config->item('btn-color-2'); ?> !important; }
+            .btn.is--pos{ background-color: #<?php echo $this->config->item('btn-color-1'); ?> !important; }
+                
+            /* Flex container for top nav */
+            .nav-top-flex {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Sidebar toggle button */
+            .sidebar-toggle {
+                background: #2893ff;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                font-size: 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: none; /* hidden by default */
+            }
+
+            /* Mobile styles */
+            @media (max-width: 991px) {
+                .sidebar {
+                    position: fixed;
+                    z-index: 999;
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 260px;
+                    background: #fff;
+                    transform: translateX(-100%);
+                    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+                    overflow-y: auto;
+                    transition: transform 0.3s ease;
+                }
+
+                .sidebar.sidebar--open {
+                    transform: translateX(0);
+                }
+
+                .sidebar-toggle {
+                    display: inline-block;
+                }
+
+                #sidebarOverlay {
+                    display: none;
+                    position: fixed;
+                    top: 0; left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background-color: rgba(0, 0, 0, 0.4);
+                    z-index: 998;
+                }
+
+                #sidebarOverlay.active {
+                    display: block;
+                }
+            }
+
+            @media (min-width: 992px) {
+                .sidebar-toggle {
+                    display: none;
+                }
+
+                #sidebarOverlay {
+                    display: none !important;
+                }
+            }
+            @media screen and (max-width: 700px) {
+            .row {
+                margin-left: 0px !important;
+            }
+
+            .row.row--full-height .col {
+                height: 100%;
+                width: 100%;
+            }
+
+            .content__wrapper .sidebar,
+            .content__wrapper .content {
+                padding-top: 56px;
+                padding-bottom: 72px;
+
+            }
+            .col--push-1-of-12 {
+                margin-left: 0%;
+            }
+
+            .col {
+                margin-right: 0em;
+                padding-left: 0px;
+            }
+
+            .footer.footer__bottom{
+                height: 65px;
+            }
+            .sidebar {
+                width: auto !important;
+            }
+
+            .table-scroll{
+                overflow: hidden;
+                overflow-x: scroll;
+            }
+
+            .content__block{
+                margin-left: 10px;
+            }
+            }
+
             @media screen and (max-width: 700px) {
                 .sidebar {
                     width: auto !important;
@@ -26,8 +140,18 @@
                 .footer.footer__bottom{
                     height: 65px;
                 }
+                .col--2-of-12 {
+                    width: 100%;
+                }
+
+                .col--push-1-of-12 {
+                    margin-left: 0%;
+                }
+                .col--3-of-4, .col--6-of-8, .col--9-of-12 {
+                    width: 100%;
+                }
             }
-        </style>
+    </style>
  
     </head>
     <body>

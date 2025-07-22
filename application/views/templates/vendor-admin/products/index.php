@@ -193,14 +193,6 @@
 <script src="<?php echo base_url(); ?>assets/js/adminVendor.js"></script>
 
 <!-- Modals -->
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/filter-vendor-products.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-product-activation.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-product-deactivation.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-hide-marketplace-view.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-show-marketplace-view.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-products1-toggle.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/confirm-products2-toggle.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?>
 
 <?php $this->load->view('templates/_inc/shared/modals/filter-vendor-products.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/confirm-product-activation.php'); ?>
@@ -209,4 +201,3 @@
 <?php $this->load->view('templates/_inc/shared/modals/confirm-show-marketplace-view.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/confirm-products1-toggle.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/confirm-products2-toggle.php'); ?>
-<?php $this->load->view('templates/_inc/footer-vendor.php'); ?>

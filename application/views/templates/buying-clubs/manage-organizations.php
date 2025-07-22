@@ -9,7 +9,7 @@
             <div class="row row--full-height">
 
                 <!-- Sidebar -->
-                <div class="sidebar col col--2-of-12">
+                <div class="sidebar col col--2-of-12" style="padding:12px">
                     <?php include(INCLUDE_PATH . '/' . (User_model::can($_SESSION['user_permissions'], 'is-admin') ? 'admin' : 'vendor-admin') . '/_inc/nav.php'); ?>
                 </div>
                 <!-- /Sidebar -->
@@ -21,7 +21,8 @@
                         </div>
                     </div>
 
-                    <table class="table" data-controls="#controlsTable">
+                    <div style="overflow: hidden; overflow-x: scroll;">
+                        <table class="table" data-controls="#controlsTable">
                         <thead>
                             <tr>
                                 <th>Organization Name</th>
@@ -35,6 +36,7 @@
                         </tr>
                     <?php } ?>
                     </table>
+                    </div>
                 </div>
                 <br>
             </div>
