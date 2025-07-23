@@ -21,7 +21,7 @@
                 <div class="content col col--9-of-12 col--push-1-of-12">
 
                     <?php if($vendorId){ ?>
-                    <div class="heading__group border--dashed">
+                    <div class="heading__group border--dashed" style="overflow: scroll;">
                         <div class="wrapper">
                             <div class="col col--9-of-12">
                                 <h3>My Pricing Scales <img src="/assets/img/icons/help.svg" title="A Vendor may set different pricing tiers for it's preferred customers"/></h3>
@@ -29,7 +29,6 @@
                             <div class="col col--3-of-12 ">
                                 <a class="link modal--toggle editLink" data-user_id="<?php echo $role->id; ?>" data-target="#addPricingScaleModal" >Add Pricing Scale</a>
                             </div>
-                            <div style="overflow: hidden; overflow-x: scroll;">
                             <table class="table" data-controls="#controlsTable">
                                 <thead>
                                     <tr>
@@ -51,7 +50,7 @@
                                 </tr>
                             <?php } ?>
                             </table>
-                            </div>
+                            
                         </div>
                     </div>
                     <?php } else { ?>

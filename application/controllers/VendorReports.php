@@ -953,7 +953,10 @@ class VendorReports extends MW_Controller {
             $data['start_date'] = $startDate;
             $data['end_date'] = $endDate;
             $data['vendorOrderFilter'] = "VendorShippingFilter";
+            $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/reports/shipping-rep/index.php', $data);
+            $this->load->view('/templates/_inc/footer-vendor.php');
+
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');

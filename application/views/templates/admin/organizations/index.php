@@ -37,8 +37,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="sidebar col col--2-of-12" style="padding: 12px;">
-                    <table class="table">
+                     <div style="overflow:scroll;"> 
+                        <table class="table">
                         <thead>
                             <tr>
                                 <th>
@@ -91,7 +91,7 @@
             </div>
         </div>
     </section>
-</div>
+                        </div>
 <!-- /Content Section -->
 
 <!-- Modals -->

@@ -235,4 +235,4 @@
 </script>
 <?php $this->load->view('templates/_inc/shared/modals/config-report-vendor-orders.php'); ?>
 <?php
-$this->load->view('templates/_inc/footer-vendor.php');?>
+//$this->load->view('templates/_inc/footer-vendor.php');?>

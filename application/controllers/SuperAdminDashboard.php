@@ -1322,7 +1322,12 @@ class SuperAdminDashboard extends MW_Controller {
         $headerRow = array('id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords', 'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code','arch', 'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location', 'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet', 'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade', 'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish', 'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions', 'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness', 'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type', 'stone_separation_time', 'setting_time', 'band_thickness', 'contents','returnable', 'tax_per_state', 'average_rating');
         $random_name = rand(1, 10000000000);
         $filename = $random_name . '.xlsx';
-        $file_path = 'uploads/' . $filename; //set file path to download
+        $uploadPath = FCPATH . 'assets/uploads/';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0775, true);
+        }
+
+        $file_path = 'assets/uploads/' . $filename; //set file path to download
         $writer = WriterFactory::create(Type::XLSX);
         $writer->openToFile($file_path);
         $firstSheet = $writer->getCurrentSheet();
@@ -1430,26 +1435,44 @@ class SuperAdminDashboard extends MW_Controller {
     public function import() {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
-        if ($this->elasticsearch->status() == null) {
+        $elasticsearch_enabled = false;
+        if ($elasticsearch_enabled && $this->elasticsearch->status() == null) {
             $this->session->set_flashdata('error', 'Error uploading the products. Please contact your website administrator.');
             header("location: product-catalog");
         } else {
-            $start_time = microtime(true);
-            $vendor_id = $this->input->post('vendor_id');
-            $aFile = explode(".", $_FILES["productCatalogFile"]["name"]);
-            $random_name = rand(1, 10000000000) . "." . $aFile[(count($aFile) - 1)];
-            $fileName = $_FILES["productCatalogFile"]["name"];
-            $config['upload_path'] = 'uploads/';
-            $config['allowed_types'] = $aFile[(count($aFile) - 1)];
-            $config['file_name'] = $random_name;
+            // File upload validation
+            if (empty($_FILES["productCatalogFile"]["name"])) {
+                $this->session->set_flashdata('error', 'No file selected.');
+                redirect("product-catalog");
+                return;
+            }
+            // Set upload path
+            $uploadPath = FCPATH . 'assets/uploads/';
+            if (!is_dir($uploadPath) && !mkdir($uploadPath, 0775, true)) {
+                $this->session->set_flashdata('error', 'Failed to create upload folder.');
+                redirect("product-catalog");
+                return;
+            }
+
+            // Upload configuration
+            $config = [
+                'upload_path' => $uploadPath,
+                'allowed_types' => 'xlsx|xls',
+                'file_name' => bin2hex(random_bytes(8)) . '.xlsx',
+                'max_size' => 10240
+            ];
+
             $this->load->library('upload', $config);
             $this->upload->initialize($config);
-            $file_upload_start = microtime(true);
-            $output = $this->upload->do_upload('productCatalogFile');
-            $file_upload_end = microtime(true);
+            if (!$this->upload->do_upload('productCatalogFile')) {
+                $this->session->set_flashdata('error', 'Upload failed: ' . $this->upload->display_errors());
+                redirect("product-catalog");
+                return;
+            }
+
             $file_uploaded = $this->upload->data();
+            $file_path = $file_uploaded['full_path'];
             if ($file_uploaded != null) {
-                $file_path = "uploads/" . $random_name;
                 // $file_path = $file_uploaded['full_path']; //local server file read
                 $reader = ReaderFactory::create(Type::XLSX); //set Type file xlsx
                 $reader->open($file_path); //open the file
@@ -1573,7 +1596,6 @@ class SuperAdminDashboard extends MW_Controller {
                                     'average_rating' => "",
                                     'returnable' => $row[21],
                                 ];
-
                                 if ($existing_product == null) {
                                     $product_data['created_at'] = date('Y-m-d H:i:s');
 
@@ -1604,8 +1626,10 @@ class SuperAdminDashboard extends MW_Controller {
                                             for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
                                                 $price_array[$current_loop_counter]['product_id'] = $insert_id;
                                                 $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
-                                                $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
-                                                $current_loop_counter += 1;
+                                                if ($elasticsearch_enabled) {
+                                                        $this->elasticsearch->add("products", $insert_id, $product_data);
+                                                    }  
+                                                    $current_loop_counter += 1;
                                             }
                                             $this->db->insert_batch('product_pricings', $price_array);
                                             $price_array = [];
@@ -1624,7 +1648,7 @@ class SuperAdminDashboard extends MW_Controller {
                                     $active = (is_string($row[5])) ? 0 : 1;
                                     Debugger::debug($product_data, '$product_data');
 
-                                    if ($row[4] != "") {
+                                    if ($elasticsearch_enabled && $row[4] != "") {
                                         $product = $this->elasticsearch->get("products", $existing_product->id);
                                         $product_info = $product['_source'];
 
@@ -1734,12 +1758,13 @@ class SuperAdminDashboard extends MW_Controller {
 
                 $this->session->set_flashdata('success', 'Products Uploaded successfully. ');
                 if (count($empty_rows) > 0) {
-                    $this->session->set_flashdata('success', 'Products Uploaded successfully, And the following rows on the excel could not be uploaded because the MPNs were blank. ' . join(", ", $empty_rows));
+                    $this->session->set_flashdata('success', 'Products Uploaded successfully, And the following rows on the excel could not be uploaded because the MPNs were blank.');
                 }
             }
-            $path = "uploads/" . $random_name;
-
+            $path = $file_path;
             if (file_exists($path)) {
+                    $reader->close(); 
+
                 unlink($path) or die('failed deleting: ' . $path);
             }
             header("location: product-catalog");

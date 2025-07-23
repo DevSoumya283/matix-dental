@@ -17,7 +17,7 @@
                     ?>
                 </div>
                 <!-- /Sidebar -->
-                <div class="content col col--9-of-12 col--push-1-of-12">
+                <div class="content col col--9-of-12 col--push-1-of-12" style="overflow:scroll">
                     <div class="heading__group border--dashed">
                         <div class="wrapper">
                             <div class="col col--9-of-12">
@@ -55,7 +55,7 @@
                             </div>
                             </div>
                         </div>
-                    </div>
+                    
 
                     <?php if(User_model::can($_SESSION['user_permissions'], 'is-vendor') || User_model::can($_SESSION['user_permissions'], 'is-admin')){ ?>
                     <div class="heading__group border--dashed">
@@ -104,6 +104,7 @@
                                 </table>
                                 </div>
                         </div>
+                    </div>
                     </div>
                     <?php } ?>
                 </div>

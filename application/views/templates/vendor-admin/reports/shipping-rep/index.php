@@ -1,4 +1,3 @@
-<?php$this->load->view('templates/_inc/header-vendor.php'); ?>
 
 <!-- Content Section -->
 <div class="overlay__wrapper">
@@ -10,7 +9,7 @@
 
                 <!-- Sidebar -->
                 <div class="sidebar col col--2-of-12">
-                    <?php$this->load->view('templates/vendor-admin/_inc/nav.php'); ?>
+                    <?php $this->load->view('templates/vendor-admin/_inc/nav.php'); ?>
                 </div>
                 <!-- /Sidebar -->
 
@@ -237,5 +236,4 @@
     });
 </script>
 <?php $this->load->view('templates/_inc/shared/modals/config-report-vendor-shipping.php'); ?>
-<?php
-$this->load->view('templates/_inc/footer-vendor.php'); ?>
+
