@@ -289,42 +289,7 @@
                     </div>
                 </div>
 
-                <!-- Saved Data Section -->
-                <div class="card mt-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-database me-2"></i>Saved Excel Files
-                        </h5>
-                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadSavedData()">
-                            <i class="fas fa-sync-alt me-1"></i>Refresh
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="savedDataTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th style="width: 80px;"><i class="fas fa-hashtag me-1"></i>ID</th>
-                                        <th><i class="fas fa-file-excel me-1"></i>File Name</th>
-                                        <th style="width: 120px;"><i class="fas fa-list-ol me-1"></i>Rows</th>
-                                        <th style="width: 180px;"><i class="fas fa-calendar me-1"></i>Created At</th>
-                                        <th style="width: 120px; text-align: center;"><i class="fas fa-cogs me-1"></i>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="savedDataBody">
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">
-                                            <div class="spinner-border text-muted" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                            <p class="mt-2 mb-0 text-muted">Loading saved files...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -734,7 +699,7 @@
             saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
 
             // Save current local data to database
-            $.ajax({
+           $.ajax({
                 url: '<?php echo base_url("SuperAdminDashboard/save_data"); ?>',
                 type: 'POST',
                 data: {
@@ -743,22 +708,33 @@
                 },
                 success: function(response) {
                     const result = JSON.parse(response);
+
                     if (result.status === 'success') {
-                        showAlert('success', result.message + ' You can now upload a new file or view saved data below.');
+                        let message = result.message + ' You can now upload a new file or view saved data below.';
+
+                        // ✅ Show warning if some rows had missing MPN
+                        if (result.warning) {
+                            message += '\ Warning: ' + result.warning;
+
+                            // Optional: Show skipped rows in console or UI
+                            console.warn("Skipped Rows (no MPN):", result.skipped_rows);
+                        }
+
+                        showAlert('success', message);
                         clearData();
                         loadSavedData();
                     } else {
-                        showAlert('error', result.message);
+                        showAlert('error', result.message || 'Unknown error occurred');
                     }
                 },
                 error: function() {
                     showAlert('error', 'Error saving data to database. Please check your connection and try again.');
                 },
                 complete: function() {
-                    // Restore button state
                     saveBtn.prop('disabled', false).html(originalText);
                 }
             });
+
         }
 
         function clearData() {

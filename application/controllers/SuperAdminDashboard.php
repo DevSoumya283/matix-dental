@@ -1901,11 +1901,11 @@ class SuperAdminDashboard extends MW_Controller {
 
     /// New Part
 
-    public function save_data() {
+     public function save_data() {
         
         $excel_data = $this->input->post('excel_data');
         $file_name = $this->input->post('file_name');
-
+        $vendor_id='8';
         if (!$excel_data) {
             echo json_encode(['status' => 'error', 'message' => 'No data to save']);
             return;
@@ -1914,38 +1914,327 @@ class SuperAdminDashboard extends MW_Controller {
         // Decode JSON data
         $decoded_data = json_decode($excel_data, true);
 
-        echo "<pre>";
-        print_r($decoded_data);
-        echo "</pre>";
-        die('hsh');
         
-        if (!$decoded_data) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid data format']);
-            return;
-        }
+            if ($decoded_data != null) {
+                
+                $empty_rows = [];
+                $new_product_array = [];
+                $existing_product_array = [];
+                $price_array = [];
+                $update_price = [];
+                $newprice_array = [];
+                // $decoded_data=$decoded_data;
+              
+          foreach ($decoded_data as $i=>$row) {
+                  if($i===0)continue;
+                                       
+                        //$i += 1;
+                        if ($i > 0) {
+                            $mpn = $row[3];
+                            $manufacturer = $row[6];
+                            if ($mpn != null) {
+                                // Debugger::debug($row);
+                                $vendors_product_id = $row[4];
+                                $matix_id = array($mpn, $vendors_product_id);
+                                $join_matix = implode("-", $matix_id);
 
-        // Prepare data for database
-        $db_data = array(
-            'file_name' => $file_name,
-            'excel_data' => $excel_data,
-            'row_count' => count($decoded_data),
-            'created_at' => date('Y-m-d H:i:s')
-        );
+                                $existing_product = $this->Products_model->select('id')->get_by(['mpn' => $mpn]);
+                                // Debugger::debug($existing_product, 'existing product');
+                                $category_id = $row[19];
+                                // Debugger::debug($row[1]);
+                                $c_id = explode(",", str_replace('"', '', $category_id));
+                                $categories_list = [];
+                                for ($k = 0; $k < count($c_id); $k++) {
+                                    if (trim($c_id[$k]) != "") {
+                                        $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
+                                                        FROM categories AS t1
+                                                        LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
+                                                        LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
+                                                        LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
+                                                        LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
+                                                        WHERE t1.id = ' . trim($c_id[$k]);
 
-        if ($this->Excel_model->save_excel_data($db_data)) {
-            // Clear session data after successful save
-            $this->session->unset_userdata('excel_data');
-            $this->session->unset_userdata('file_name');
-            echo json_encode(['status' => 'success', 'message' => 'Data saved to database successfully!']);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Error saving data to database']);
-        }
+                                        $output = $this->db->query($query)->result();
+
+                                        if ($output != null) {
+                                            if ($output[0]->lev1_id != null) {
+                                                $categories_list[] = $output[0]->lev1_id;
+                                            }
+                                            if ($output[0]->lev2_id != null) {
+                                                $categories_list[] = $output[0]->lev2_id;
+                                            }
+                                            if ($output[0]->lev3_id != null) {
+                                                $categories_list[] = $output[0]->lev3_id;
+                                            }
+                                            if ($output[0]->lev4_id != null) {
+                                                $categories_list[] = $output[0]->lev4_id;
+                                            }
+                                            if ($output[0]->lev5_id != null) {
+                                                $categories_list[] = $output[0]->lev5_id;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                $categories_list = array_unique($categories_list);
+                                if(!empty($categories_list)){
+                                    $categories = '"' . implode('","', $categories_list) . '"';
+                                }
+
+                               $product_data = [
+                                    'matix_id'                 => $row[1],
+                                    'custom_sku'               => $row[2],
+                                    'mpn'                      => $row[3],
+                                    'item_code'                => $row[4],
+                                    'name'                     => $row[5],
+                                    'description'              => $row[6],
+                                    'extended_description'     => $row[7],
+                                    'keywords'                 => $row[8],
+                                    'manufacturer'             => $row[9],
+                                    'product_procedures'       => $row[10],
+                                    'shipping_restrictions'    => $row[11],
+                                    'brand'                    => $row[12],
+                                    'category_code'            => $row[13],
+                                    'arch'                     => $row[14],
+                                    'weight'                   => $row[15],
+                                    'size'                     => $row[16],
+                                    'weight_type'              => $row[17],
+                                    'license_required'         => ucfirst(strtolower($row[18])),
+                                    'category_id'              => $categories,
+                                    'color'                    => $row[20],
+                                    'msds_location'            => $row[21],
+                                    'created_at'               => $row[22],
+                                    'updated_at'               => $row[23],
+                                    'unit_of_measure_selling'  => $row[24],
+                                    'manufacturer_item_no'     => $row[25],
+                                    'manufacturer_ins_sheet'   => $row[26],
+                                    'quantity_per_box'         => $row[27],
+                                    'previous_item_no'         => $row[28],
+                                    'sample'                   => $row[29],
+                                    'ship_weight'              => $row[30],
+                                    'fluoride'                 => $row[31],
+                                    'flavor'                   => $row[32],
+                                    'shade'                    => $row[33],
+                                    'grit'                     => $row[34],
+                                    'set_rate'                 => $row[35],
+                                    'viscosity'                => $row[36],
+                                    'firmness'                 => $row[37],
+                                    'handle_size'             => $row[38],
+                                    'handle_finish'            => $row[39],
+                                    'tip_finish'               => $row[40],
+                                    'tip_diameter'             => $row[41],
+                                    'tip_material'             => $row[42],
+                                    'head_diameter'            => $row[43],
+                                    'head_length'              => $row[44],
+                                    'diameter'                 => $row[45],
+                                    'shaft_dimensions'         => $row[46],
+                                    'shaft_description'        => $row[47],
+                                    'blade_description'        => $row[48],
+                                    'anatomic_use'             => $row[49],
+                                    'instrument_description'   => $row[50],
+                                    'palm_thickness'           => $row[51],
+                                    'finger_thickness'         => $row[52],
+                                    'texture'                  => $row[53],
+                                    'delivery_system'          => $row[54],
+                                    'volume'                   => $row[55],
+                                    'dimensions'               => $row[56],
+                                    'stone_type'               => $row[57],
+                                    'stone_separation_time'    => $row[58],
+                                    'setting_time'             => $row[59],
+                                    'band_thickness'           => $row[60],
+                                    'contents'                 => $row[61],
+                                    'returnable'               => $row[61],
+                                    'tax_per_state'            => $row[63],
+                                    'average_rating'           => $row[64],
+                                ];
+
+                                if ($existing_product == null) {
+                                    $product_data['created_at'] = date('Y-m-d H:i:s');
+                      
+        
+                                    $new_product_array[] = $product_data;
+
+                                    $vendor_data = array(
+                                        'product_id' => '',
+                                        'vendor_product_id' => $row[3],
+                                        'matix_id' => $join_matix,
+                                        'vendor_id' => $vendor_id,
+                                        'price' => $row[10],
+                                        'active' => 1,
+                                        'retail_price' => $row[11],
+                                        'created_at' => date('Y-m-d H:i:s'),
+                                        'updated_at' => date('Y-m-d H:i:s'),
+                                    );
+
+                                    Debugger::debug($vendor_data, 'vendor_data)');
+
+                                    $price_array[] = $vendor_data;
+                                    if (count($new_product_array) == 100) {
+                                        $this->db->insert_batch('products', $new_product_array);
+                                        $total_affected_rows = $this->db->affected_rows();
+                                        $first_insert_id = $this->db->insert_id();
+                                        $last_id = ($first_insert_id + $total_affected_rows - 1);
+                                        if ($first_insert_id > 0) {
+                                            $current_loop_counter = 0;
+                                            for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                                                $price_array[$current_loop_counter]['product_id'] = $insert_id;
+                                                $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+                                                if ($elasticsearch_enabled) {
+                                                        $this->elasticsearch->add("products", $insert_id, $product_data);
+                                                    }  
+                                                    $current_loop_counter += 1;
+                                            }
+                                            $this->db->insert_batch('product_pricings', $price_array);
+                                            $price_array = [];
+                                        }
+                                        $new_product_array = [];
+                                    }
+                                } else {
+                                    // unset mpn as we found the product with that and it can't change
+                                    unset($product_data['mpn']);
+                                    // don't update empty fields
+                                    foreach($product_data as $k => $v){
+                                        if(empty($v)){
+                                            unset($product_data[$k]);
+                                        }
+                                    }
+                                    $active = (is_string($row[5])) ? 0 : 1;
+                                    Debugger::debug($product_data, '$product_data');
+
+                                    if ($elasticsearch_enabled && $row[4] != "") {
+                                        $product = $this->elasticsearch->get("products", $existing_product->id);
+                                        $product_info = $product['_source'];
+
+                                        $vendor_product_id = ((str_replace("-", "", $row[4])) . ',');
+
+                                        $product_info['vendor_product_id'] = $product_info['vendor_product_id'] . "," . $vendor_product_id;
+                                        $this->elasticsearch->delete("products", $existing_product->id);
+                                        $this->elasticsearch->add("products", $existing_product->id, $product_info);
+                                    }
+
+                                    $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(array('product_id' => $existing_product->id, 'vendor_id' => $vendor_id));
+
+                                    $active = (is_string($row[5])) ? 0 : 1;
+
+                                    if ($vendor_pricing != null) {
+                                        $update_vendor_data = array(
+                                            'product_id' => $existing_product->id,
+                                            'vendor_product_id' => $row[3],
+                                            'matix_id' => $join_matix,
+                                            'vendor_id' => $vendor_id,
+                                            'price' => $row[10],
+                                            'active' => $active,
+                                            'retail_price' => $row[10],
+                                            'updated_at' => date('Y-m-d H:i:s'),
+                                        );
+
+                                        if($active == 0){
+                                            unset($update_vendor_data['price']);
+                                        }
+
+                                        foreach($update_vendor_data as $k => $v){
+                                            if(empty($v) && $k != 'active'){
+                                                Debugger::debug('unsetting ' . $k);
+                                                unset($update_vendor_data[$k]);
+                                            }
+                                        }
+
+                                        Debugger::debug($update_vendor_data, '$update_vendor_data post check');
+                                        $this->db->update('product_pricings', $update_vendor_data, ['id' => $vendor_pricing->id]);
+                                        $sql = $this->db->update_string('product_pricings', $update_vendor_data, "id = $vendor_pricing->id");
+                                        Debugger::debug($sql);
+
+                                    } else {
+                                        $vendornew_data = array(
+                                            'product_id' => $existing_product->id,
+                                            'vendor_product_id' => $row[3],
+                                            'matix_id' => $join_matix,
+                                            'vendor_id' => $vendor_id,
+                                            'price' => $row[10],
+                                            'active' => $active,
+                                            'retail_price' => $row[10],
+                                            'created_at' => date('Y-m-d H:i:s'),
+                                            'updated_at' => date('Y-m-d H:i:s'),
+                                        );
+
+                                        $newprice_array[] = $vendornew_data;
+                                        if (count($newprice_array) == 100) {
+                                            $this->db->insert_batch('product_pricings', $newprice_array);
+                                            $newprice_array = [];
+                                        }
+                                    }
+                                    if(!empty($product_data)){
+                                        $product_data['updated_at'] = date('Y-m-d H:i:s');
+                                        $product_data['id'] = $existing_product->id;
+                                        $this->db->update('products', $product_data, "id = $existing_product->id");
+
+                                        $sql = $this->db->update_string('products', $product_data, "id = $existing_product->id");
+                                        Debugger::debug($sql);
+                                    }
+
+
+                                }
+                            } else {
+                                $empty_rows[] = $i;
+                            }
+                        }
+                        $i+=1;
+                    
+                }
+                if ($new_product_array != null && $new_product_array !== "") {
+                    $this->db->insert_batch('products', $new_product_array);
+                    $total_affected_rows = $this->db->affected_rows();
+                    $first_insert_id = $this->db->insert_id();
+                    $last_id = ($first_insert_id + $total_affected_rows - 1);
+                    if ($first_insert_id > 0) {
+                        $current_loop_counter = 0;
+                        for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                            $price_array[$current_loop_counter]['product_id'] = $insert_id;
+                            $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+                            $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
+                            $current_loop_counter += 1;
+                        }
+                        $this->db->insert_batch('product_pricings', $price_array);
+                        $price_array = [];
+                    }
+                    $new_product_array = [];
+                }
+
+                if ($update_price != null && $update_price !== "") {
+                    $this->db->update_batch('product_pricings', $update_price, 'id');
+                    $update_price = [];
+                }
+                if ($newprice_array != null && $newprice_array !== "") {
+                    $this->db->insert_batch('product_pricings', $newprice_array);
+                    $newprice_array = [];
+                }
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Products uploaded successfully.'
+                    ];
+
+                    if (count($empty_rows) > 0) {
+                        $response['warning'] = 'Some rows were skipped because MPNs were blank.';
+                        $response['skipped_rows'] = $empty_rows;
+                    }
+
+                    echo json_encode($response);
+
+            }
+
+        
     }
 
 
     public function showpage() {
+         $admin_roles = unserialize(ROLES_ADMINS);
+        if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $admin_roles))) {
         $data['title'] = 'Excel File Manager';
         $this->load->view('excel_manager', $data);
+           } else {
+            $this->session->set_flashdata('error', 'Please login with authorized account.');
+            header('Location: login');
+        }
     }
 
     public function store_session_data() {
