@@ -48,8 +48,11 @@
         .upload-area {
             border: 2px dashed #dee2e6;
             border-radius: 12px;
-            padding: 50px 40px;
-            text-align: center;
+            padding: 5px 5px;
+            /* text-align: center;   */
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
             margin-bottom: 20px;
             transition: all 0.3s ease;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -223,15 +226,12 @@
                     </div>
                     <div class="card-body">
                         <div class="upload-area" id="uploadArea">
+                            <div class="d-flex justify-content-around align-items-center gap-2">
                             <i class="fas fa-cloud-upload-alt fa-4x upload-icon mb-3"></i>
                             <h5 class="mb-3">Upload Excel File</h5>
-                            <p class="text-muted mb-4">
-                                <i class="fas fa-mouse-pointer me-1"></i>Drag & drop or click to select file<br>
-                                <i class="fas fa-table me-1"></i>Maximum 100 rows allowed<br>
-                                <i class="fas fa-file-excel me-1"></i>Supported formats: .xlsx, .xls
-                            </p>
+                            </div>
                             <input type="file" id="excelFile" class="form-control" accept=".xlsx,.xls" style="display: none;">
-                            <button type="button" class="btn btn-primary btn-lg px-4" onclick="document.getElementById('excelFile').click();">
+                            <button type="button" class="btn btn-primary btn-lg px-4" onclick="document.getElementById('excelFile').click();" style="max-height: 64px;">
                                 <i class="fas fa-file-upload me-2"></i>Choose File
                             </button>
                         </div>
