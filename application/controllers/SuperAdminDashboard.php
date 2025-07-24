@@ -38,6 +38,9 @@ class SuperAdminDashboard extends MW_Controller {
         $this->load->model('Vendor_groups_model');
         $this->load->library('email'); // load email library
         $this->load->helper('my_email_helper');
+
+
+        $this->load->library('session');
     }
 
     public function getAll_vendors() {
@@ -1890,6 +1893,126 @@ class SuperAdminDashboard extends MW_Controller {
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
+        }
+    }
+
+
+
+
+    /// New Part
+
+    public function save_data() {
+        
+        $excel_data = $this->input->post('excel_data');
+        $file_name = $this->input->post('file_name');
+
+        if (!$excel_data) {
+            echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+            return;
+        }
+
+        // Decode JSON data
+        $decoded_data = json_decode($excel_data, true);
+
+        echo "<pre>";
+        print_r($decoded_data);
+        echo "</pre>";
+        die('hsh');
+        
+        if (!$decoded_data) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid data format']);
+            return;
+        }
+
+        // Prepare data for database
+        $db_data = array(
+            'file_name' => $file_name,
+            'excel_data' => $excel_data,
+            'row_count' => count($decoded_data),
+            'created_at' => date('Y-m-d H:i:s')
+        );
+
+        if ($this->Excel_model->save_excel_data($db_data)) {
+            // Clear session data after successful save
+            $this->session->unset_userdata('excel_data');
+            $this->session->unset_userdata('file_name');
+            echo json_encode(['status' => 'success', 'message' => 'Data saved to database successfully!']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Error saving data to database']);
+        }
+    }
+
+
+    public function showpage() {
+        $data['title'] = 'Excel File Manager';
+        $this->load->view('excel_manager', $data);
+    }
+
+    public function store_session_data() {
+        $excel_data = $this->input->post('excel_data');
+        $file_name = $this->input->post('file_name');
+
+        if ($excel_data && $file_name) {
+            $decoded_data = json_decode($excel_data, true);
+     
+            $this->session->set_userdata('excel_data', $decoded_data);
+            $this->session->set_userdata('file_name', $file_name);
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+        }
+    }
+
+    public function update_cell() {
+        $row = $this->input->post('row');
+        $col = $this->input->post('col');
+        $value = $this->input->post('value');
+
+        $excel_data = $this->session->userdata('excel_data');
+        if ($excel_data && isset($excel_data[$row][$col])) {
+            $excel_data[$row][$col] = $value;
+            $this->session->set_userdata('excel_data', $excel_data);
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid cell reference']);
+        }
+    }
+
+    public function delete_row() {
+        $row = $this->input->post('row');
+        $excel_data = $this->session->userdata('excel_data');
+        
+        if ($excel_data && isset($excel_data[$row])) {
+            unset($excel_data[$row]);
+            $excel_data = array_values($excel_data); // Reindex array
+            $this->session->set_userdata('excel_data', $excel_data);
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid row reference']);
+        }
+    }
+
+
+
+    public function get_saved_data() {
+        $data = $this->Excel_model->get_all_excel_data();
+        echo json_encode(['status' => 'success', 'data' => $data]);
+    }
+
+    public function view_data($id) {
+        $data = $this->Excel_model->get_excel_data_by_id($id);
+        if ($data) {
+            echo json_encode(['status' => 'success', 'data' => $data]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Data not found']);
+        }
+    }
+
+    public function delete_saved_data($id) {
+        if ($this->Excel_model->delete_excel_data($id)) {
+            echo json_encode(['status' => 'success', 'message' => 'Data deleted successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Error deleting data']);
         }
     }
 
