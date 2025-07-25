@@ -283,4 +283,17 @@ class Products_model extends MY_Model {
 
         return [$products, $totalProducts];
     }
+    //2025
+    public function get_all_products_with_prices()
+    {
+        $this->db->select('products.*, product_pricings.price, product_pricings.vendor_id, product_pricings.retail_price, product_pricings.active');
+        $this->db->from('products');
+        $this->db->join('product_pricings', 'products.mpn = product_pricings.vendor_product_id', 'left');
+        $this->db->group_by('products.id'); 
+        $this->db->order_by('products.id', 'DESC');
+        $query = $this->db->get();
+        return $query->result();
+    }
+
+
 }
