@@ -1322,7 +1322,7 @@ class SuperAdminDashboard extends MW_Controller {
     public function export_products() {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
-        $headerRow = array('id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords', 'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code','arch', 'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location', 'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet', 'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade', 'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish', 'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions', 'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness', 'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type', 'stone_separation_time', 'setting_time', 'band_thickness', 'contents','returnable', 'tax_per_state', 'average_rating');
+        $headerRow = array('id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords', 'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code','arch', 'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location', 'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet', 'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade', 'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish', 'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions', 'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness', 'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type', 'stone_separation_time', 'setting_time', 'band_thickness', 'contents','returnable', 'tax_per_state', 'average_rating','price','retail_price');
         $random_name = rand(1, 10000000000);
         $filename = $random_name . '.xlsx';
         $uploadPath = FCPATH . 'assets/uploads/';
@@ -1330,7 +1330,7 @@ class SuperAdminDashboard extends MW_Controller {
             mkdir($uploadPath, 0775, true);
         }
 
-        $file_path = 'assets/uploads/' . $filename; //set file path to download
+        $file_path = FCPATH.'assets/uploads/' . $filename; //set file path to download
         $writer = WriterFactory::create(Type::XLSX);
         $writer->openToFile($file_path);
         $firstSheet = $writer->getCurrentSheet();
@@ -1341,8 +1341,9 @@ class SuperAdminDashboard extends MW_Controller {
         $pages = ceil($total_count / $limit);
         for ($k = 0; $k < $pages; $k++) {
             $offset = $k * $limit;
-            $products = $this->Products_model->limit($limit, $offset)->get_all();
+            $products = $this->Products_model->get_all_products_with_prices();
             //Create a project details an array
+            
             for ($i = 0; $i < count($products); $i++) {
                 $products_data = array(
                     $products[$i]->id,
@@ -1407,8 +1408,11 @@ class SuperAdminDashboard extends MW_Controller {
                     $products[$i]->contents,
                     $products[$i]->returnable,
                     $products[$i]->tax_per_state,
-                    $products[$i]->average_rating
+                    $products[$i]->average_rating,
+                    $products[$i]->price,
+                    $products[$i]->retail_price,
                 );
+
                 $writer->addRow($products_data); //write product details
             }
         }
@@ -1983,7 +1987,7 @@ class SuperAdminDashboard extends MW_Controller {
 
                                $product_data = [
                                     'matix_id'                 => $row[1],
-                                    'custom_sku'               => $row[2],
+                                    'sku'                      => $row[2],
                                     'mpn'                      => $row[3],
                                     'item_code'                => $row[4],
                                     'name'                     => $row[5],
@@ -2057,11 +2061,12 @@ class SuperAdminDashboard extends MW_Controller {
                                     $vendor_data = array(
                                         'product_id' => '',
                                         'vendor_product_id' => $row[3],
+                                        'sku' => $row[2],
                                         'matix_id' => $join_matix,
                                         'vendor_id' => $vendor_id,
-                                        'price' => $row[10],
+                                        'price' => $row[63],
                                         'active' => 1,
-                                        'retail_price' => $row[11],
+                                        'retail_price' => $row[64],
                                         'created_at' => date('Y-m-d H:i:s'),
                                         'updated_at' => date('Y-m-d H:i:s'),
                                     );
@@ -2120,11 +2125,12 @@ class SuperAdminDashboard extends MW_Controller {
                                         $update_vendor_data = array(
                                             'product_id' => $existing_product->id,
                                             'vendor_product_id' => $row[3],
+                                            'sku' => $row[2],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[10],
+                                            'price' => $row[63],
                                             'active' => $active,
-                                            'retail_price' => $row[10],
+                                            'retail_price' => $row[64],
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
 
@@ -2148,11 +2154,12 @@ class SuperAdminDashboard extends MW_Controller {
                                         $vendornew_data = array(
                                             'product_id' => $existing_product->id,
                                             'vendor_product_id' => $row[3],
+                                            'sku' => $row[2],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[10],
+                                            'price' => $row[63],
                                             'active' => $active,
-                                            'retail_price' => $row[10],
+                                            'retail_price' => $row[64],
                                             'created_at' => date('Y-m-d H:i:s'),
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
