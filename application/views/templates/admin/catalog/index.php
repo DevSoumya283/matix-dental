@@ -38,9 +38,11 @@
                             </div>
                             <div class="wrapper__inner align--right">
                                 <button class="btn btn--primary btn--m modal--toggle add_vendor" data-target="#uploadCatalogModal">Upload New</button>
-                                <form method="post" action="<?php echo base_url(); ?>Backup-Products" style="display: inline;">
+                                <!-- <form method="post" action="<?php echo base_url(); ?>Backup-Products" style="display: inline;">
                                     <button class="btn btn--tertiary btn--m">Export Backup</button>
-                                </form>
+                                </form> -->
+                                <button class="btn btn--primary btn--m modal--toggle" data-target="#exportRangeModal">Export Products</button>
+
                                 <button class="btn btn--tertiary btn--m contextual--hide modal--toggle" data-target="#bulkUploadModal">Bulk Images</button>
                             </div>
                         </div>
@@ -183,4 +185,5 @@
 <?php $this->load->view('templates/_inc/shared/modals/delete-product.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/bulk-image-upload.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/upload-catalog.php'); ?>
+<?php $this->load->view('templates/_inc/shared/modals/exportModal.php'); ?>
 

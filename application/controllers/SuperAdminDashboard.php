@@ -1429,6 +1429,22 @@ class SuperAdminDashboard extends MW_Controller {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
 
+         $range = $this->input->post('range');
+            if (!$range) {
+                show_error("Invalid range selected.");
+                return;
+            }
+
+            list($start, $end) = explode('-', $range);
+            $limit = $end - $start;
+            $offset = $start;
+
+            // Optional: validate range
+            if (!is_numeric($limit) || !is_numeric($offset)) {
+                show_error("Invalid range values.");
+                return;
+            }
+
         $headerRow = array(
             'id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords',
             'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code', 'arch',
@@ -1454,15 +1470,10 @@ class SuperAdminDashboard extends MW_Controller {
         $writer = WriterFactory::create(Type::XLSX);
         $writer->openToFile($file_path);
         $writer->addRow($headerRow);
-        $limit = 100;
-        $total_count = $this->Products_model->count_all();
-        $pages = ceil($total_count / $limit);
-        for ($k = 0; $k < $pages; $k++) {
-            $offset = $k * $limit;
-            $products = $this->Products_model->get_all($limit, $offset);
-            $mpns = array_filter(array_column($products, 'id'));
-            $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns); 
-            foreach ($products as $product) {
+        $products = $this->Products_model->get_all($limit, $offset);
+        $mpns = array_filter(array_column($products, 'id'));
+        $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns);
+        foreach ($products as $product) {
                 $price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['price'] : '';
                 $retail_price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['retail_price'] : '';
 
@@ -1536,7 +1547,7 @@ class SuperAdminDashboard extends MW_Controller {
                 ];
                 $writer->addRow($products_data);
             }
-        }
+        
 
         $writer->close();
 
