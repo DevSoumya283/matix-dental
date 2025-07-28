@@ -162,7 +162,7 @@ class Products_model extends MY_Model {
 
         return $relatedProducts;
     }
-
+        
     public function getProductPricings($productId)
     {
         $sql = "SELECT *
@@ -284,16 +284,32 @@ class Products_model extends MY_Model {
         return [$products, $totalProducts];
     }
     //2025
-    public function get_all_products_with_prices()
+    public function get_all($limit = 100, $offset = 0)
     {
-        $this->db->select('products.*, product_pricings.price, product_pricings.vendor_id, product_pricings.retail_price, product_pricings.active');
-        $this->db->from('products');
-        $this->db->join('product_pricings', 'products.mpn = product_pricings.vendor_product_id', 'left');
-        $this->db->group_by('products.id'); 
-        $this->db->order_by('products.id', 'DESC');
-        $query = $this->db->get();
-        return $query->result();
+        return $this->db->limit($limit, $offset)
+                        ->order_by('id','ASC')
+                        ->get('products')
+                        ->result();
     }
+
+    public function get_prices_by_mpn_array($mpn_array = [])
+    {
+        if (empty($mpn_array)) return [];
+        $this->db->select('product_id,vendor_product_id, price, retail_price');
+        $this->db->from('product_pricings');
+        $this->db->where_in('product_id', $mpn_array);
+        $query = $this->db->get();
+
+        $result = [];
+        foreach ($query->result() as $row) {
+            $result[$row->product_id] = [
+                'price' => $row->price,
+                'retail_price' => $row->retail_price,
+            ];
+        }
+        return $result;
+    }
+
 
 
 }
