@@ -38,6 +38,8 @@ class VendorDashboard extends MW_Controller {
         $this->load->model('Vendor_customer_notes_model');
         $this->load->model('Whitelabel_model');
         $this->load->library('stripe');
+
+        $this->load->model('Stocks_model');
     }
 
     public function update_companyDetails() {
@@ -319,6 +321,9 @@ class VendorDashboard extends MW_Controller {
                             $data['promoCodes']->free_product_name = $data['freeproductName']->name;
                         }
                     }
+
+                    $product_id = $data['productPricing']->product_id;
+                    $data['stocks'] = $this->Stocks_model->get_stock_by_product($product_id);
 
                     $data['My_vendor_users'] = "";
                     $data['vendor_shipping'] = "";    // Defined for the #edit-user.php Modal
@@ -1920,7 +1925,7 @@ class VendorDashboard extends MW_Controller {
                             'created_at' => date('Y-m-d H:i:s'),
                             'updated_at' => date('Y-m-d H:i:s')
                         ]);
-}
+                    }
                 }
  
                 $this->session->set_flashdata('success', 'Stocks and Custom SKU for the Products are updated');
