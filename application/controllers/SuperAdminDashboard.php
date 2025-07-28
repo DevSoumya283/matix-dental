@@ -1319,10 +1319,130 @@ class SuperAdminDashboard extends MW_Controller {
         header('Location: product-catalog');
     }
 
-    public function export_products() {
+    //  public function export_products_old() {
+    //     set_time_limit(0);
+    //     ini_set("memory_limit", "12288M");
+    //     $headerRow = array('id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords', 'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code','arch', 'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location', 'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet', 'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade', 'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish', 'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions', 'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness', 'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type', 'stone_separation_time', 'setting_time', 'band_thickness', 'contents','returnable', 'tax_per_state', 'average_rating');
+    //     $random_name = rand(1, 10000000000);
+    //     $filename = $random_name . '.xlsx';
+    //     $file_path = 'uploads/' . $filename; //set file path to download
+    //     $writer = WriterFactory::create(Type::XLSX);
+    //     $writer->openToFile($file_path);
+    //     $firstSheet = $writer->getCurrentSheet();
+    //     $writer->addRow($headerRow); //set header row
+    //     $writer->setCurrentSheet($firstSheet);
+    //     $limit = 100;
+    //     $total_count = $this->Products_model->count_all();
+    //     $pages = ceil($total_count / $limit);
+    //     for ($k = 0; $k < $pages; $k++) {
+    //         $offset = $k * $limit;
+    //         $products = $this->Products_model->limit($limit, $offset)->get_all();
+    //         //Create a project details an array
+    //         for ($i = 0; $i < count($products); $i++) {
+    //             $products_data = array(
+    //                 $products[$i]->id,
+    //                 $products[$i]->matix_id,
+    //                 $products[$i]->mpn,
+    //                 $products[$i]->item_code,
+    //                 $products[$i]->name,
+    //                 strip_tags($products[$i]->description),
+    //                 strip_tags($products[$i]->extended_description),
+    //                 $products[$i]->keywords,
+    //                 $products[$i]->manufacturer,
+    //                 $products[$i]->product_procedures,
+    //                 $products[$i]->shipping_restrictions,
+    //                 $products[$i]->brand,
+    //                 $products[$i]->category_code,
+    //                 $products[$i]->arch,
+    //                 $products[$i]->weight,
+    //                 $products[$i]->size,
+    //                 $products[$i]->weight_type,
+    //                 $products[$i]->license_required,
+    //                 $products[$i]->category_id,
+    //                 $products[$i]->color,
+    //                 $products[$i]->msds_location,
+    //                 $products[$i]->created_at,
+    //                 $products[$i]->updated_at,
+    //                 $products[$i]->unit_of_measure_selling,
+    //                 $products[$i]->manufacturer_item_no,
+    //                 $products[$i]->manufacturer_ins_sheet,
+    //                 $products[$i]->quantity_per_box,
+    //                 $products[$i]->previous_item_no,
+    //                 $products[$i]->sample,
+    //                 $products[$i]->ship_weight,
+    //                 $products[$i]->fluoride,
+    //                 $products[$i]->flavor,
+    //                 $products[$i]->shade,
+    //                 $products[$i]->grit,
+    //                 $products[$i]->set_rate,
+    //                 $products[$i]->viscosity,
+    //                 $products[$i]->firmness,
+    //                 $products[$i]->handle_size,
+    //                 $products[$i]->handle_finish,
+    //                 $products[$i]->tip_finish,
+    //                 $products[$i]->tip_diameter,
+    //                 $products[$i]->tip_material,
+    //                 $products[$i]->head_diameter,
+    //                 $products[$i]->head_length,
+    //                 $products[$i]->diameter,
+    //                 $products[$i]->shaft_dimensions,
+    //                 $products[$i]->shaft_description,
+    //                 $products[$i]->blade_description,
+    //                 $products[$i]->anatomic_use,
+    //                 $products[$i]->instrument_description,
+    //                 $products[$i]->palm_thickness,
+    //                 $products[$i]->finger_thickness,
+    //                 $products[$i]->delivery_system,
+    //                 $products[$i]->volume,
+    //                 $products[$i]->dimensions,
+    //                 $products[$i]->stone_type,
+    //                 $products[$i]->stone_separation_time,
+    //                 $products[$i]->setting_time,
+    //                 $products[$i]->band_thickness,
+    //                 $products[$i]->contents,
+    //                 $products[$i]->returnable,
+    //                 $products[$i]->tax_per_state,
+    //                 $products[$i]->average_rating
+    //             );
+    //             $writer->addRow($products_data); //write product details
+    //         }
+    //     }
+ 
+    //     $writer->close();
+    //     $name = 'matix.xlsx';
+    //     header('Content-Description: File Transfer');
+    //     header('Content-Type: application/force-download');
+    //     header("Content-Disposition: attachment; filename=\"" . basename($filename) . "\";");
+    //     header('Content-Transfer-Encoding: binary');
+    //     header('Expires: 0');
+    //     header('Cache-Control: must-revalidate');
+    //     header('Pragma: public');
+    //     header('Content-Length: ' . filesize($file_path));
+    //     ob_clean();
+    //     flush();
+    //     readfile($file_path);
+    //     exit;
+    // }
+
+    public function export_products()
+    {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
-        $headerRow = array('id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords', 'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code','arch', 'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location', 'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet', 'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade', 'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish', 'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions', 'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness', 'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type', 'stone_separation_time', 'setting_time', 'band_thickness', 'contents','returnable', 'tax_per_state', 'average_rating','price','retail_price');
+
+        $headerRow = array(
+            'id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords',
+            'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code', 'arch',
+            'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location',
+            'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet',
+            'quantity_per_box', 'previous_item_no', 'sample', 'ship_weight', 'fluoride', 'flavor', 'shade',
+            'grit', 'set_rate', 'viscosity', 'firmness', 'handle_size', 'handle_finish', 'tip_finish',
+            'tip_diameter', 'tip_material', 'head_diameter', 'head_length', 'diameter', 'shaft_dimensions',
+            'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness',
+            'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type',
+            'stone_separation_time', 'setting_time', 'band_thickness', 'contents', 'returnable',
+            'tax_per_state', 'average_rating', 'price', 'retail_price'
+        );
+
         $random_name = rand(1, 10000000000);
         $filename = $random_name . '.xlsx';
         $uploadPath = FCPATH . 'assets/uploads/';
@@ -1330,95 +1450,97 @@ class SuperAdminDashboard extends MW_Controller {
             mkdir($uploadPath, 0775, true);
         }
 
-        $file_path = FCPATH.'assets/uploads/' . $filename; //set file path to download
+        $file_path = $uploadPath . $filename;
         $writer = WriterFactory::create(Type::XLSX);
         $writer->openToFile($file_path);
-        $firstSheet = $writer->getCurrentSheet();
-        $writer->addRow($headerRow); //set header row
-        $writer->setCurrentSheet($firstSheet);
+        $writer->addRow($headerRow);
         $limit = 100;
         $total_count = $this->Products_model->count_all();
         $pages = ceil($total_count / $limit);
         for ($k = 0; $k < $pages; $k++) {
             $offset = $k * $limit;
-            $products = $this->Products_model->get_all_products_with_prices();
-            //Create a project details an array
-            
-            for ($i = 0; $i < count($products); $i++) {
-                $products_data = array(
-                    $products[$i]->id,
-                    $products[$i]->matix_id,
-                    $products[$i]->mpn,
-                    $products[$i]->item_code,
-                    $products[$i]->name,
-                    strip_tags($products[$i]->description),
-                    strip_tags($products[$i]->extended_description),
-                    $products[$i]->keywords,
-                    $products[$i]->manufacturer,
-                    $products[$i]->product_procedures,
-                    $products[$i]->shipping_restrictions,
-                    $products[$i]->brand,
-                    $products[$i]->category_code,
-                    $products[$i]->arch,
-                    $products[$i]->weight,
-                    $products[$i]->size,
-                    $products[$i]->weight_type,
-                    $products[$i]->license_required,
-                    $products[$i]->category_id,
-                    $products[$i]->color,
-                    $products[$i]->msds_location,
-                    $products[$i]->created_at,
-                    $products[$i]->updated_at,
-                    $products[$i]->unit_of_measure_selling,
-                    $products[$i]->manufacturer_item_no,
-                    $products[$i]->manufacturer_ins_sheet,
-                    $products[$i]->quantity_per_box,
-                    $products[$i]->previous_item_no,
-                    $products[$i]->sample,
-                    $products[$i]->ship_weight,
-                    $products[$i]->fluoride,
-                    $products[$i]->flavor,
-                    $products[$i]->shade,
-                    $products[$i]->grit,
-                    $products[$i]->set_rate,
-                    $products[$i]->viscosity,
-                    $products[$i]->firmness,
-                    $products[$i]->handle_size,
-                    $products[$i]->handle_finish,
-                    $products[$i]->tip_finish,
-                    $products[$i]->tip_diameter,
-                    $products[$i]->tip_material,
-                    $products[$i]->head_diameter,
-                    $products[$i]->head_length,
-                    $products[$i]->diameter,
-                    $products[$i]->shaft_dimensions,
-                    $products[$i]->shaft_description,
-                    $products[$i]->blade_description,
-                    $products[$i]->anatomic_use,
-                    $products[$i]->instrument_description,
-                    $products[$i]->palm_thickness,
-                    $products[$i]->finger_thickness,
-                    $products[$i]->delivery_system,
-                    $products[$i]->volume,
-                    $products[$i]->dimensions,
-                    $products[$i]->stone_type,
-                    $products[$i]->stone_separation_time,
-                    $products[$i]->setting_time,
-                    $products[$i]->band_thickness,
-                    $products[$i]->contents,
-                    $products[$i]->returnable,
-                    $products[$i]->tax_per_state,
-                    $products[$i]->average_rating,
-                    $products[$i]->price,
-                    $products[$i]->retail_price,
-                );
+            $products = $this->Products_model->get_all($limit, $offset);
+            $mpns = array_filter(array_column($products, 'id'));
+            $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns); 
+            foreach ($products as $product) {
+                $price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['price'] : '';
+                $retail_price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['retail_price'] : '';
 
-                $writer->addRow($products_data); //write product details
+                $products_data = [
+                    $product->id,
+                    $product->matix_id,
+                    $product->mpn,
+                    $product->item_code,
+                    $product->name,
+                    strip_tags($product->description),
+                    strip_tags($product->extended_description),
+                    $product->keywords,
+                    $product->manufacturer,
+                    $product->product_procedures,
+                    $product->shipping_restrictions,
+                    $product->brand,
+                    $product->category_code,
+                    $product->arch,
+                    $product->weight,
+                    $product->size,
+                    $product->weight_type,
+                    $product->license_required,
+                    $product->category_id,
+                    $product->color,
+                    $product->msds_location,
+                    $product->created_at,
+                    $product->updated_at,
+                    $product->unit_of_measure_selling,
+                    $product->manufacturer_item_no,
+                    $product->manufacturer_ins_sheet,
+                    $product->quantity_per_box,
+                    $product->previous_item_no,
+                    $product->sample,
+                    $product->ship_weight,
+                    $product->fluoride,
+                    $product->flavor,
+                    $product->shade,
+                    $product->grit,
+                    $product->set_rate,
+                    $product->viscosity,
+                    $product->firmness,
+                    $product->handle_size,
+                    $product->handle_finish,
+                    $product->tip_finish,
+                    $product->tip_diameter,
+                    $product->tip_material,
+                    $product->head_diameter,
+                    $product->head_length,
+                    $product->diameter,
+                    $product->shaft_dimensions,
+                    $product->shaft_description,
+                    $product->blade_description,
+                    $product->anatomic_use,
+                    $product->instrument_description,
+                    $product->palm_thickness,
+                    $product->finger_thickness,
+                    $product->texture,
+                    $product->delivery_system,
+                    $product->volume,
+                    $product->dimensions,
+                    $product->stone_type,
+                    $product->stone_separation_time,
+                    $product->setting_time,
+                    $product->band_thickness,
+                    $product->contents,
+                    $product->returnable,
+                    $product->tax_per_state,
+                    $product->average_rating,
+                    $price,
+                    $retail_price
+                ];
+                $writer->addRow($products_data);
             }
         }
 
         $writer->close();
-        $name = 'matix.xlsx';
+
+        // Force download
         header('Content-Description: File Transfer');
         header('Content-Type: application/force-download');
         header("Content-Disposition: attachment; filename=\"" . basename($filename) . "\";");
@@ -1432,6 +1554,7 @@ class SuperAdminDashboard extends MW_Controller {
         readfile($file_path);
         exit;
     }
+
 
     public function status() {
         if ($this->elasticsearch->status() == null) {

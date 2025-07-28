@@ -9,7 +9,7 @@
             <div class="row row--full-height">
 
                 <!-- Sidebar -->
-                <div class="sidebar col col--2-of-12">
+                <div class="sidebar col col--2-of-12" style="padding:12px">
                     <?php //include(INCLUDE_PATH . '/admin/_inc/nav.php'); ?>
                     <?php $this->load->view('templates/admin/_inc/nav.php'); ?>
 
@@ -33,11 +33,11 @@
                                 <div class="accordion__preview">
                                     <div class="entity__group">
                                         <?php if ($profile_image != null) { ?>
-                                            <div class="vendor__logo" style="width:160px;">
+                                            <div class="vendor__logo" >
                                                 <img src="<?php echo base_url(); ?>uploads/user/profile/<?php echo $profile_image->photo; ?>" alt="<?php echo $profile_image->photo; ?>">
                                             </div>
                                         <?php } else { ?>
-                                            <div class="vendor__logo" style="width:160px;">
+                                            <div class="vendor__logo" >
                                                 <img src="<?php echo base_url(); ?>assets/img/avatar-default.png" alt="">
                                             </div>
                                         <?php } ?>
@@ -166,5 +166,3 @@
 
 <!-- Modals -->
 
-<?php //include(INCLUDE_PATH . '/_inc/footer-admin.php');?>
-<?php $this->load->view('templates/_inc/footer-admin.php'); ?>

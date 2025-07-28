@@ -219,10 +219,15 @@ class VendorDashboard extends MW_Controller {
             $config['base_url'] = base_url() . '/vendor-products-dashboard';
             $config['total_rows'] = $data['total_rows'];
             $config['per_page'] = $data['limit'];
-            $this->pagination->initialize($config);
+
             $config['enable_query_strings'] = TRUE;
             $config['page_query_string'] = TRUE;
             $config['use_page_numbers'] = TRUE;
+            $config['query_string_segment'] = 'p'; 
+
+
+            $this->pagination->initialize($config);
+            
 
             // Categories START ***
             $queryproduct = $this->db->query("select *,f.id as location_id from product_pricings a INNER JOIN products b on b.id=a.product_id INNER JOIN order_items c on c.product_id=a.product_id INNER JOIN orders d on d.id=c.order_id INNER JOIN user_locations e on e.user_id=d.user_id INNER JOIN organization_locations f on f.id=e.organization_location_id where d.restricted_order='0'and a.vendor_id=$vendor_id");
@@ -1837,6 +1842,95 @@ class VendorDashboard extends MW_Controller {
         } else {
             $this->session->set_flashdata('error', 'You do not have access to that page');
             header('Location: login');
+        }
+    }
+
+    //2025
+    public function productPriceStocksupdate() {
+        $vendor_roles = unserialize(ROLES_VENDORS);
+ 
+        if (isset($_SESSION['user_id']) && isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], $vendor_roles)) {
+            $productPricing_id = $this->input->post('productPricing_id');
+ 
+            if ($productPricing_id != null) {
+                $sku = $this->input->post('sku');
+                $new_stock = (int) $this->input->post('stocks');
+ 
+                $this->db->where('id', $productPricing_id);
+                $productPricing = $this->db->get('product_pricings')->row();
+ 
+                if ($productPricing) {
+                    $product_id = $productPricing->product_id;
+                    $vendor_id = $productPricing->vendor_product_id;
+ 
+           
+                    $this->db->where('id', $productPricing_id);
+                    $this->db->update('product_pricings', [
+                        'sku' => $sku,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+ 
+                   
+                    $this->db->where('id', $product_id);
+                    $this->db->update('products', [
+                        'sku' => $sku,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+ 
+                   
+                    $this->db->where('products_id', $product_id);
+                    $this->db->where('vendor_id', $vendor_id);
+                    $existing_stock = $this->db->get('stocks')->row();
+ 
+                    $current_stock = $existing_stock ? (int) $existing_stock->stocks : 0;
+                    $credit_stocks = 0;
+                    $debit_stocks = 0;
+ 
+                   
+                    if ($new_stock > $current_stock) {
+                        $credit_stocks = $new_stock - $current_stock;
+                    } elseif ($new_stock < $current_stock) {
+                        $debit_stocks = $current_stock - $new_stock;
+                    }
+ 
+                   
+                    if ($existing_stock) {
+                        $this->db->where('id', $existing_stock->id);
+                        $this->db->update('stocks', [
+                            'stocks' => $new_stock,
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    } else {
+                        $this->db->insert('stocks', [
+                            'products_id' => $product_id,
+                            'vendor_id' => $vendor_id,
+                            'stocks' => $new_stock,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+ 
+                   
+                    if ($credit_stocks > 0 || $debit_stocks > 0) {
+                        $this->db->insert('stock_history', [
+                            'products_id' => $product_id,
+                            'vendor_id' => $vendor_id,
+                            'credit_stocks' => $credit_stocks,
+                            'debit_stocks' => $debit_stocks,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+}
+                }
+ 
+                $this->session->set_flashdata('success', 'Stocks and Custom SKU for the Products are updated');
+                header("Location: product-pricing-vendorEdit?productPrice_id=" . $productPricing_id);
+                exit;
+            }
+        } else {
+            $this->session->set_flashdata('error', 'Please login with authorized account.');
+            header('Location: login');
+            exit;
         }
     }
 }

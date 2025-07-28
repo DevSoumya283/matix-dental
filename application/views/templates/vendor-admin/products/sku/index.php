@@ -501,8 +501,75 @@
                         </div>
                     </div>
                     <!-- /Vendor SKU -->
+<hr>
+ 
+                    <!-- Stocks and Custom SKU -->
+                    <div class="row">
+                        <div class="col col--3-of-12 col--am">
+                            <h3>STOCKS</h3>
+                            <p>This should be your own unique identifier.</p>
+                        </div>
+                        <div class="col col--9-of-12 col--am">
+                            <div class="well bg--lightest-gray">
+                                <form id="formPrice" action="<?php echo base_url(); ?>productPriceStocks-update" method="post">
+                                    <?php if ($productPricing != null) { ?>
+                                        <div class="input__group is--inline">
+                                            <input type="hidden" name="productPricing_id" value="<?php echo $productPricing->id; ?>" required>
+                                            <input id="productSKU" name="sku" class="input not--empty" type="text" value="<?php echo $productPricing->sku; ?>" >
+                                            <label class="label" for="productSKU">Product Custom SKU</label>
+                                        </div>
+                                        <hr>
+                                        <?php $currentStock = isset($stocks) ? (int)$stocks : 0; ?>
+ 
+                                        <!-- Display current and total stock -->
+                                        <div style="margin-top:10px;display: flex;justify-content: space-between;">
+                                            <div><strong>Current Stock:</strong> <span id="currentStock"><?php echo $currentStock; ?></span></div>
+                                            <div><strong>Total Stock:</strong> <span id="totalStock"><?php echo $currentStock; ?></span></div>
+                                        </div>
+ 
+                                        <div class="input__group is--inline">
+                                            <!-- Hidden input for product pricing ID -->
+                                            <input type="hidden" name="productPricing_id" value="<?php echo $productPricing->id; ?>" required>
+ 
+                                            <!-- Stock input -->
+                                            <input id="productSKU" name="stocks" class="input not--empty" type="text" value="0" required oninput="validateStockInput(this)">
+                                            <label class="label" for="productSKU">Product Stocks</label>
+                                        </div>
+ 
+                                        <script>
+                                            const currentStock = <?php echo $currentStock; ?>;
+                                            function validateStockInput(input) {
+                                               
+                                                input.value = input.value.replace(/[^0-9]/g, '');
+ 
+                                                let inputVal = parseInt(input.value) || 0;
+                                                let totalStock = currentStock + inputVal;
+                                                document.getElementById('totalStock').textContent = totalStock;
+                                            }
+                                        </script>
+ 
+                                    <?php } else { ?>
+                                        <div class="input__group is--inline">
+                                            <input type="hidden" name="productPricing_id" value="" required>
+                                            <input id="productSKU" name="sku" class="input not--empty" type="text" value="" required>
+                                            <label class="label" for="productSKU">Product Custom SKU</label>
+                                        </div>
+                                        <div class="input__group is--inline">
+                                            <input type="hidden" name="productPricing_id" value="" required>
+                                            <input id="productSKU" name="stocks" class="input not--empty" type="number" value="" required>
+                                            <label class="label" for="productSKU">Product Stocks</label>
+                                        </div>
+                                    <?php } ?>
+                                    <hr>
+                                    <button class="btn btn--primary btn--block btn--m save--toggle form--submit" data-target="#formPrice">Update Stocks</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Stocks and Custom SKU -->
+ 
                     <hr>
-                    <!-- Universal Product Info -->
+                         <!-- Universal Product Info -->
                     <div class="row">
                         <div class="col col--3-of-12 col--am">
                             <h3>Product Info</h3>

@@ -126,17 +126,11 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/new-admin.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/edit-admin.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/delete-admin.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/reset-password.php'); ?>
-<?php //include(INCLUDE_PATH . '/_inc/shared/modals/delete-multiple-admin.php'); ?>
 
-<?php //include(INCLUDE_PATH . '/_inc/footer-admin.php');?>
+
 
 <?php $this->load->view('templates/_inc/shared/modals/new-admin.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/edit-admin.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/delete-admin.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/reset-password.php'); ?>
 <?php $this->load->view('templates/_inc/shared/modals/delete-multiple-admin.php'); ?>
-<?php $this->load->view('templates/_inc/footer-admin.php'); ?>

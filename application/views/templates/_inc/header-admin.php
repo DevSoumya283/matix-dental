@@ -150,6 +150,9 @@
                 .col--3-of-4, .col--6-of-8, .col--9-of-12 {
                     width: 100%;
                 }
+                .popover{
+                    left: 13vw;
+                } 
             }
     </style>
  

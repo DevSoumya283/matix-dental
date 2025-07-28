@@ -1,4 +1,3 @@
-<?php include(INCLUDE_PATH . '/_inc/header-admin.php'); ?>
 <!-- Content Section -->
 <div class="overlay__wrapper">
     <div class="overlay overlay__browse" data-target="#browseDropdown"></div>
@@ -7,7 +6,7 @@
             <div class="row row--full-height">
 
                 <!-- Sidebar -->
-                <div class="sidebar col col--2-of-12">
+                <div class="sidebar col col--2-of-12" style="padding:12px">
                     <?php //include(INCLUDE_PATH . '/admin/_inc/nav.php'); ?>
                     <?php $this->load->view('templates/admin/_inc/nav.php'); ?>
                 </div>
@@ -35,6 +34,7 @@
                             </div>
                         </div>
                     </div>
+                    <div style="overflow: scroll;"> 
                     <table class="table" data-controls="#controlsTable">
                         <thead>
                             <tr>
@@ -125,6 +125,7 @@
                     </table>
                     <!-- /Flagged Reviews -->
                     <?php echo $this->pagination->create_links(); ?>
+                    </div>
                 </div>
                 <!-- /Content Area -->
             </div>
