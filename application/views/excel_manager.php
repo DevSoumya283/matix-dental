@@ -483,38 +483,32 @@
                     // Ensure all rows have the same number of columns
                     var maxCols = Math.max(...filteredData.map(row => row.length));
 
-                    // excelData = filteredData.map(row => {
-                    //     while (row.length < maxCols) {
-                    //         row.push('');
-                    //     }
-                    //     return row;
-                    // });
-                    excelData = filteredData.map((row, index) => {
-                        while (row.length < maxCols) {
-                            row.push('');
-                        }
+                                       
+                   excelData = filteredData.map((row, index) => {
+                    // Ensure consistent columns
+                    while (row.length < maxCols) {
+                        row.push('');
+                    }
 
-                        if (index === 0) {
-                            // Insert "Custom_SKU" header if not present
-                            if (!row.includes('Custom_SKU')) {
-                                row[2] = 'Custom_SKU'; // Assuming column C is index 2
-                            }
-                            return row;
-                        }
+                    if (index === 0) {
+                        return row; // leave headers untouched
+                    }
 
-                        // Extract mpn and name columns
-                        const mpn = row[3] || `RND${Math.floor(Math.random() * 9000 + 1000)}`; // Column D (index 3)
-                        const name = row[5] || '';
+                    const mpn = row[3] || `RND${Math.floor(Math.random() * 9000 + 1000)}`; // Column E = index 4
+                    const match = row[15] ? row[15].toString().match(/(\d+)/) : null;
+                    const size = match ? match[1] : '0001';
 
-                        // Extract number from name (e.g., 33gm or 17ml)
-                        const match = name.match(/(\d+\.?\d*)/);
-                        const number = match ? match[1] : Math.floor(Math.random() * 9000 + 1000);
+                    const customSKU = `SKU-${mpn}-${size}`;
 
-                        // Build custom SKU
-                        row[2] = `SKU-${mpn}-${number}`; // Column C (index 2)
+                    // Assign directly to existing 'sku' column (index 3)
+                    row[2] = customSKU;
 
-                        return row;
-                    });
+                    console.log(row);
+                    return row;
+                });
+
+
+
 
                     $('.loading').hide();
                     $('.upload-area').show();

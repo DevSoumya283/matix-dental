@@ -1446,7 +1446,7 @@ class SuperAdminDashboard extends MW_Controller {
             }
 
         $headerRow = array(
-            'id', 'matix_id', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords',
+            'id', 'matix_id', 'sku','mpn', 'item_code', 'name', 'description', 'extended_description', 'keywords',
             'manufacturer', 'product_procedures', 'shipping_restrictions', 'brand', 'category_code', 'arch',
             'weight', 'size', 'weight_type', 'license_required', 'category_id', 'color', 'msds_location',
             'created_at', 'updated_at', 'unit_of_measure_selling', 'manufacturer_item_no', 'manufacturer_ins_sheet',
