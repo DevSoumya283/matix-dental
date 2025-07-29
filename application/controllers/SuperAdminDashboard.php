@@ -2398,12 +2398,60 @@ class SuperAdminDashboard extends MW_Controller {
         $row = $this->input->post('row');
         $col = $this->input->post('col');
         $value = $this->input->post('value');
+        $needs_sku_update = $this->input->post('needs_sku_update');
 
         $excel_data = $this->session->userdata('excel_data');
+        
         if ($excel_data && isset($excel_data[$row][$col])) {
+            // Update the edited cell
             $excel_data[$row][$col] = $value;
+            
+            $response = ['status' => 'success'];
+            
+            // If MPN (col 3) or Weight (col 15) was edited and it's not the header row
+            if ($needs_sku_update == 1) {
+                // Get current MPN, Weight, and Size values from the row
+                $mpn = isset($excel_data[$row][3]) && !empty($excel_data[$row][3]) ? $excel_data[$row][3] : '';
+                $weight = isset($excel_data[$row][15]) && !empty($excel_data[$row][15]) ? $excel_data[$row][15] : '';
+                $size_field = isset($excel_data[$row][16]) && !empty($excel_data[$row][16]) ? $excel_data[$row][16] : ''; // row[16] for size
+                
+                // Generate new SKU using the updated logic
+                if (empty($mpn)) {
+                    $mpn = 'RND' . rand(1000, 9999);
+                }
+                
+                // Priority: SIZE field (row[16]) → Weight (row[15]) → default "0001"
+                $size = '0001'; // default
+                
+                if (!empty($size_field)) {
+                    // First priority: use size field directly
+                    $size = $size_field;
+                } elseif (!empty($weight)) {
+                    // Second priority: extract numeric value from weight
+                    if (preg_match('/(\d+)/', $weight, $matches)) {
+                        $size = $matches[1];
+                    } else {
+                        // If weight exists but no numeric value found, use the weight as is
+                        $size = $weight;
+                    }
+                }
+                // If both are null/empty, $size remains "0001"
+                
+                // Create new SKU
+                $new_sku = "SKU-{$mpn}-{$size}";
+                
+                // Update SKU in column 2
+                $excel_data[$row][2] = $new_sku;
+                
+                // Return the new SKU so JavaScript can update the UI
+                $response['new_sku'] = $new_sku;
+                $response['message'] = 'Cell updated and SKU recalculated';
+            }
+            
+            // Save updated data back to session
             $this->session->set_userdata('excel_data', $excel_data);
-            echo json_encode(['status' => 'success']);
+            
+            echo json_encode($response);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Invalid cell reference']);
         }

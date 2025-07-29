@@ -202,6 +202,54 @@
             transform: scale(1.1);
         }
     </style>
+
+    <style>
+        .sku-auto-updated {
+            background-color: #d1ecf1 !important;
+            border: 2px solid #17a2b8 !important;
+            animation: skuUpdatePulse 1s ease-in-out;
+            position: relative;
+        }
+
+        .sku-auto-updated::after {
+            content: "✓ Auto-updated";
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #17a2b8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes skuUpdatePulse {
+            0% { 
+                background-color: #17a2b8; 
+                transform: scale(1);
+            }
+            50% { 
+                background-color: #138496; 
+                transform: scale(1.02);
+            }
+            100% { 
+                background-color: #d1ecf1; 
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(5px); }
+            20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+        }
+
+    </style>
 </head>
 
 <body>
@@ -484,30 +532,46 @@
                     var maxCols = Math.max(...filteredData.map(row => row.length));
 
                                        
-                   excelData = filteredData.map((row, index) => {
-                    // Ensure consistent columns
-                    while (row.length < maxCols) {
-                        row.push('');
-                    }
+                    excelData = filteredData.map((row, index) => {
+                        // Ensure consistent columns
+                        while (row.length < maxCols) {
+                            row.push('');
+                        }
 
-                    if (index === 0) {
-                        return row; // leave headers untouched
-                    }
+                        if (index === 0) {
+                            return row; // leave headers untouched
+                        }
 
-                    const mpn = row[3] || `RND${Math.floor(Math.random() * 9000 + 1000)}`; // Column E = index 4
-                    const match = row[15] ? row[15].toString().match(/(\d+)/) : null;
-                    const size = match ? match[1] : '0001';
+                        const mpn = row[3] || `RND${Math.floor(Math.random() * 9000 + 1000)}`; // Column D = index 3
+                        const weight = row[15] || ''; // Column P = index 15
+                        const sizeField = row[16] || ''; // Column Q = index 16
+                        
+                        // Priority: SIZE field (row[16]) → Weight (row[15]) → default "0001"
+                        let size = '0001'; // default
+                        
+                        if (sizeField && sizeField.toString().trim() !== '') {
+                            // First priority: use size field directly
+                            size = sizeField.toString().trim();
+                        } else if (weight && weight.toString().trim() !== '') {
+                            // Second priority: extract numeric value from weight
+                            const match = weight.toString().match(/(\d+)/);
+                            if (match) {
+                                size = match[1];
+                            } else {
+                                // If weight exists but no numeric value found, use the weight as is
+                                size = weight.toString().trim();
+                            }
+                        }
+                        // If both are null/empty, size remains "0001"
 
-                    const customSKU = `SKU-${mpn}-${size}`;
+                        const customSKU = `SKU-${mpn}-${size}`;
 
-                    // Assign directly to existing 'sku' column (index 3)
-                    row[2] = customSKU;
+                        // Assign to SKU column (index 2)
+                        row[2] = customSKU;
 
-                    console.log(row);
-                    return row;
-                });
-
-
+                        console.log(`Row ${index}: MPN=${mpn}, Weight=${weight}, Size=${sizeField}, Generated SKU=${customSKU}`);
+                        return row;
+                    });
 
 
                     $('.loading').hide();
@@ -551,6 +615,44 @@
             reader.readAsArrayBuffer(file);
         }
 
+        // function displayData() {
+        //     if (excelData.length === 0) return;
+
+        //     $('#fileName').text(currentFileName);
+        //     $('#rowCount').text(`${excelData.length} rows`);
+
+        //     // Create header
+        //     let headerHtml = '<th class="row-number">#</th>';
+        //     for (let i = 0; i < excelData[0].length; i++) {
+        //         headerHtml += `<th class="column-header">Column ${String.fromCharCode(65 + i)}</th>`;
+        //     }
+        //     headerHtml += '<th class="column-header" style="width: 100px;">Actions</th>';
+        //     $('#tableHeader').html(headerHtml);
+
+        //     // Create body
+        //     let bodyHtml = '';
+        //     excelData.forEach((row, rowIndex) => {
+        //         bodyHtml += `<tr>`;
+        //         bodyHtml += `<td class="row-number">${rowIndex + 1}</td>`;
+
+        //         row.forEach((cell, colIndex) => {
+        //             const cellValue = cell === null || cell === undefined ? '' : String(cell).replace(/"/g, '&quot;');
+
+        //             bodyHtml += `<td class="editable-cell" data-row="${rowIndex}" data-col="${colIndex}" title="Double-click to edit">${cellValue}</td>`;
+        //         });
+
+        //         bodyHtml += `<td class="action-buttons">
+        //             <button class="btn btn-sm btn-outline-danger delete-row" data-row="${rowIndex}" title="Delete Row">
+        //                 <i class="fas fa-trash"></i>
+        //             </button>
+        //         </td>`;
+        //         bodyHtml += `</tr>`;
+        //     });
+
+        //     $('#tableBody').html(bodyHtml);
+        //     $('.table-container').show().addClass('fade-in');
+        // }
+
         function displayData() {
             if (excelData.length === 0) return;
 
@@ -560,7 +662,8 @@
             // Create header
             let headerHtml = '<th class="row-number">#</th>';
             for (let i = 0; i < excelData[0].length; i++) {
-                headerHtml += `<th class="column-header">Column ${String.fromCharCode(65 + i)}</th>`;
+                let columnLabel = `Column ${String.fromCharCode(65 + i)}`;
+                headerHtml += `<th class="column-header">${columnLabel}</th>`;
             }
             headerHtml += '<th class="column-header" style="width: 100px;">Actions</th>';
             $('#tableHeader').html(headerHtml);
@@ -573,8 +676,26 @@
 
                 row.forEach((cell, colIndex) => {
                     const cellValue = cell === null || cell === undefined ? '' : String(cell).replace(/"/g, '&quot;');
+                    
+                    // Add special classes for key columns
+                    let cellClass = 'editable-cell';
+                    let title = 'Double-click to edit';
+                    
+                    if (colIndex === 2) {
+                        cellClass += ' sku-column';
+                        title = 'SKU (Auto-calculated from MPN + SIZE/Weight)';
+                    } else if (colIndex === 3) {
+                        cellClass += ' mpn-column';
+                        title = 'MPN - Double-click to edit (will update SKU)';
+                    } else if (colIndex === 15) {
+                        cellClass += ' weight-column';
+                        title = 'Weight - Double-click to edit (will update SKU if no SIZE)';
+                    } else if (colIndex === 16) {
+                        cellClass += ' size-column';
+                        title = 'SIZE - Double-click to edit (priority for SKU calculation)';
+                    }
 
-                    bodyHtml += `<td class="editable-cell" data-row="${rowIndex}" data-col="${colIndex}" title="Double-click to edit">${cellValue}</td>`;
+                    bodyHtml += `<td class="${cellClass}" data-row="${rowIndex}" data-col="${colIndex}" title="${title}">${cellValue}</td>`;
                 });
 
                 bodyHtml += `<td class="action-buttons">
@@ -618,9 +739,48 @@
             });
         }
 
+        // function saveEditedCell(row, col, value) {
+        //     // Update local data
+        //     excelData[row][col] = value;
+
+        //     // Update session data on server
+        //     $.ajax({
+        //         url: '<?php echo base_url("SuperAdminDashboard/update_cell"); ?>',
+        //         type: 'POST',
+        //         data: {
+        //             row: row,
+        //             col: col,
+        //             value: value
+        //         },
+        //         success: function(response) {
+        //             const result = JSON.parse(response);
+        //             if (result.status === 'success') {
+        //                 // Update display
+        //                 $(editingCell).html(String(value).replace(/"/g, '&quot;'));
+        //                 editingCell = null;
+        //                 showAlert('info', 'Cell updated successfully');
+        //             } else {
+        //                 showAlert('error', 'Error updating cell: ' + result.message);
+        //                 // Revert the change
+        //                 $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
+        //                 editingCell = null;
+        //             }
+        //         },
+        //         error: function() {
+        //             showAlert('error', 'Error updating cell. Please try again.');
+        //             // Revert the change
+        //             $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
+        //             editingCell = null;
+        //         }
+        //     });
+        // }
+
         function saveEditedCell(row, col, value) {
-            // Update local data
+            // Update local data first
             excelData[row][col] = value;
+
+            // Check if we need to recalculate SKU (if MPN column 3, weight column 15, or size column 16 was edited)
+            const needsSkuUpdate = (col === 3 || col === 15 || col === 16) && row > 0; // Skip header row
 
             // Update session data on server
             $.ajax({
@@ -629,15 +789,36 @@
                 data: {
                     row: row,
                     col: col,
-                    value: value
+                    value: value,
+                    needs_sku_update: needsSkuUpdate ? 1 : 0
                 },
                 success: function(response) {
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
-                        // Update display
+                        // Update the edited cell display
                         $(editingCell).html(String(value).replace(/"/g, '&quot;'));
+                        
+                        // If SKU was recalculated, update the SKU cell display too
+                        if (result.new_sku) {
+                            // Update local data with new SKU
+                            excelData[row][2] = result.new_sku;
+                            
+                            // Find and update SKU cell in the UI (column 2)
+                            const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
+                            skuCell.html(String(result.new_sku).replace(/"/g, '&quot;'));
+                            
+                            // Add visual feedback that SKU was auto-updated
+                            skuCell.addClass('sku-auto-updated');
+                            setTimeout(() => {
+                                skuCell.removeClass('sku-auto-updated');
+                            }, 3000);
+                            
+                            showAlert('success', `Cell updated and SKU automatically recalculated to: ${result.new_sku}`);
+                        } else {
+                            showAlert('info', 'Cell updated successfully');
+                        }
+                        
                         editingCell = null;
-                        showAlert('info', 'Cell updated successfully');
                     } else {
                         showAlert('error', 'Error updating cell: ' + result.message);
                         // Revert the change
@@ -653,6 +834,29 @@
                 }
             });
         }
+
+
+        // Helper function to generate SKU (matches your original logic)
+        function generateSKU(mpn, weight, sizeField) {
+            const finalMpn = mpn || `RND${Math.floor(Math.random() * 9000 + 1000)}`;
+            
+            let size = '0001'; // default
+            
+            // Priority: SIZE field (sizeField) → Weight → default "0001"
+            if (sizeField && sizeField.toString().trim() !== '') {
+                size = sizeField.toString().trim();
+            } else if (weight && weight.toString().trim() !== '') {
+                const match = weight.toString().match(/(\d+)/);
+                if (match) {
+                    size = match[1];
+                } else {
+                    size = weight.toString().trim(); // Use weight as is if no numeric match
+                }
+            }
+            
+            return `SKU-${finalMpn}-${size}`;
+        }
+
 
         function deleteRow(rowIndex) {
             if (confirm('Are you sure you want to delete this row? This action cannot be undone.')) {

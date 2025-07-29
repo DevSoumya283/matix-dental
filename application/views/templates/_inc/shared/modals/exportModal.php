@@ -21,9 +21,9 @@
                     }
                     ?>
                 </select>
-                <div class="modal__footer">
-                    <button type="submit" class="btn btn--m btn--primary btn--block user--profile">Export</button>
-                    <button type="button" class="btn btn--tertiary modal--close">Cancel</button>
+                <div class="modal__footer" style="margin-top: 10px;">
+                    <button type="submit" class="btn btn--m btn--primary btn--block user--profile" style="margin: 0px 0px 5px;">Export</button>
+                    <button type="button" class="btn btn--m btn--primary btn--block user--profile">Cancel</button>
                 </div>
             </form>
             </div>
