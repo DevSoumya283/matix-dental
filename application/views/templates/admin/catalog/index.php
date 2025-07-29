@@ -38,6 +38,7 @@
                             </div>
                             <div class="wrapper__inner align--right">
                                 <button class="btn btn--primary btn--m modal--toggle add_vendor" data-target="#uploadCatalogModal">Upload New</button>
+                               <a href="<?php echo base_url(); ?>import-products"> <button class="btn btn--primary btn--m add_vendor" >Import Products</button></a>
                                 <!-- <form method="post" action="<?php echo base_url(); ?>Backup-Products" style="display: inline;">
                                     <button class="btn btn--tertiary btn--m">Export Backup</button>
                                 </form> -->

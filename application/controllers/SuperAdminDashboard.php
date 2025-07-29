@@ -1480,6 +1480,7 @@ class SuperAdminDashboard extends MW_Controller {
                 $products_data = [
                     $product->id,
                     $product->matix_id,
+                    $product->sku,
                     $product->mpn,
                     $product->item_code,
                     $product->name,
@@ -2198,9 +2199,9 @@ class SuperAdminDashboard extends MW_Controller {
                                         'sku' => $row[2],
                                         'matix_id' => $join_matix,
                                         'vendor_id' => $vendor_id,
-                                        'price' => $row[63],
+                                        'price' => $row[65],
                                         'active' => 1,
-                                        'retail_price' => $row[64],
+                                        'retail_price' => $row[66],
                                         'created_at' => date('Y-m-d H:i:s'),
                                         'updated_at' => date('Y-m-d H:i:s'),
                                     );
@@ -2262,9 +2263,9 @@ class SuperAdminDashboard extends MW_Controller {
                                             'sku' => $row[2],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[63],
+                                            'price' => $row[65],
                                             'active' => $active,
-                                            'retail_price' => $row[64],
+                                            'retail_price' => $row[66],
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
 
@@ -2291,9 +2292,9 @@ class SuperAdminDashboard extends MW_Controller {
                                             'sku' => $row[2],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[63],
+                                            'price' => $row[65],
                                             'active' => $active,
-                                            'retail_price' => $row[64],
+                                            'retail_price' => $row[66],
                                             'created_at' => date('Y-m-d H:i:s'),
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
