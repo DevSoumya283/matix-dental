@@ -2077,7 +2077,7 @@ class SuperAdminDashboard extends MW_Controller {
                                 $matix_id = array($mpn, $vendors_product_id);
                                 $join_matix = implode("-", $matix_id);
 
-                                $existing_product = $this->Products_model->select('id')->get_by(['mpn' => $mpn]);
+                                $existing_product = $this->Products_model->select('id','sku')->get_by(['mpn' => $mpn]);
                                 // Debugger::debug($existing_product, 'existing product');
                                 $category_id = $row[19];
                                 // Debugger::debug($row[1]);
@@ -2252,7 +2252,8 @@ class SuperAdminDashboard extends MW_Controller {
                                         $this->elasticsearch->add("products", $existing_product->id, $product_info);
                                     }
 
-                                    $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(array('product_id' => $existing_product->id, 'vendor_id' => $vendor_id));
+                                    // $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(array('product_id' => $existing_product->id, 'vendor_id' => $vendor_id));
+                                    $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(['sku' => $row[2],'vendor_id' => $vendor_id]);
 
                                     $active = (is_string($row[5])) ? 0 : 1;
 
@@ -2308,9 +2309,10 @@ class SuperAdminDashboard extends MW_Controller {
                                     if(!empty($product_data)){
                                         $product_data['updated_at'] = date('Y-m-d H:i:s');
                                         $product_data['id'] = $existing_product->id;
-                                        $this->db->update('products', $product_data, "id = $existing_product->id");
-
-                                        $sql = $this->db->update_string('products', $product_data, "id = $existing_product->id");
+                                        if($existing_product->sku === row['2']){
+                                            $this->db->update('products', $product_data, "id = $existing_product->id");
+                                            $sql = $this->db->update_string('products', $product_data, "id = $existing_product->id");
+                                        }
                                         Debugger::debug($sql);
                                     }
 
@@ -2403,52 +2405,39 @@ class SuperAdminDashboard extends MW_Controller {
         $excel_data = $this->session->userdata('excel_data');
         
         if ($excel_data && isset($excel_data[$row][$col])) {
-            // Update the edited cell
             $excel_data[$row][$col] = $value;
             
             $response = ['status' => 'success'];
             
-            // If MPN (col 3) or Weight (col 15) was edited and it's not the header row
             if ($needs_sku_update == 1) {
-                // Get current MPN, Weight, and Size values from the row
                 $mpn = isset($excel_data[$row][3]) && !empty($excel_data[$row][3]) ? $excel_data[$row][3] : '';
                 $weight = isset($excel_data[$row][15]) && !empty($excel_data[$row][15]) ? $excel_data[$row][15] : '';
                 $size_field = isset($excel_data[$row][16]) && !empty($excel_data[$row][16]) ? $excel_data[$row][16] : ''; // row[16] for size
-                
-                // Generate new SKU using the updated logic
+                $color= isset($excel_data[$row][20]) && !empty($excel_data[$row][20]) ? $excel_data[$row][20] : '';
                 if (empty($mpn)) {
-                    $mpn = 'RND' . rand(1000, 9999);
+                    $mpn =  rand(1000, 9999);
                 }
                 
-                // Priority: SIZE field (row[16]) → Weight (row[15]) → default "0001"
-                $size = '0001'; // default
+                $size = rand(1000, 9999); // default
                 
                 if (!empty($size_field)) {
-                    // First priority: use size field directly
                     $size = $size_field;
                 } elseif (!empty($weight)) {
-                    // Second priority: extract numeric value from weight
                     if (preg_match('/(\d+)/', $weight, $matches)) {
                         $size = $matches[1];
                     } else {
-                        // If weight exists but no numeric value found, use the weight as is
                         $size = $weight;
                     }
                 }
-                // If both are null/empty, $size remains "0001"
                 
-                // Create new SKU
-                $new_sku = "SKU-{$mpn}-{$size}";
+                $new_sku = "SKU-{$mpn}-{$size}-{$color}";
                 
-                // Update SKU in column 2
                 $excel_data[$row][2] = $new_sku;
                 
-                // Return the new SKU so JavaScript can update the UI
                 $response['new_sku'] = $new_sku;
                 $response['message'] = 'Cell updated and SKU recalculated';
             }
             
-            // Save updated data back to session
             $this->session->set_userdata('excel_data', $excel_data);
             
             echo json_encode($response);

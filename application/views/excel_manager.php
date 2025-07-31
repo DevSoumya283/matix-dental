@@ -547,7 +547,7 @@
                         const sizeField = row[16] || ''; // Column Q = index 16
                         
                         // Priority: SIZE field (row[16]) → Weight (row[15]) → default "0001"
-                        let size = '0001'; // default
+                        let size = `${Math.floor(Math.random() * 9000 + 1000)}`; // default
                         
                         if (sizeField && sizeField.toString().trim() !== '') {
                             // First priority: use size field directly
@@ -564,7 +564,7 @@
                         }
                         // If both are null/empty, size remains "0001"
 
-                        const customSKU = `SKU-${mpn}-${size}`;
+                        const customSKU = `SKU-${mpn}-${size}-${row[20]}`;
 
                         // Assign to SKU column (index 2)
                         row[2] = customSKU;
@@ -739,48 +739,13 @@
             });
         }
 
-        // function saveEditedCell(row, col, value) {
-        //     // Update local data
-        //     excelData[row][col] = value;
-
-        //     // Update session data on server
-        //     $.ajax({
-        //         url: '<?php echo base_url("SuperAdminDashboard/update_cell"); ?>',
-        //         type: 'POST',
-        //         data: {
-        //             row: row,
-        //             col: col,
-        //             value: value
-        //         },
-        //         success: function(response) {
-        //             const result = JSON.parse(response);
-        //             if (result.status === 'success') {
-        //                 // Update display
-        //                 $(editingCell).html(String(value).replace(/"/g, '&quot;'));
-        //                 editingCell = null;
-        //                 showAlert('info', 'Cell updated successfully');
-        //             } else {
-        //                 showAlert('error', 'Error updating cell: ' + result.message);
-        //                 // Revert the change
-        //                 $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
-        //                 editingCell = null;
-        //             }
-        //         },
-        //         error: function() {
-        //             showAlert('error', 'Error updating cell. Please try again.');
-        //             // Revert the change
-        //             $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
-        //             editingCell = null;
-        //         }
-        //     });
-        // }
-
+       
         function saveEditedCell(row, col, value) {
             // Update local data first
             excelData[row][col] = value;
 
             // Check if we need to recalculate SKU (if MPN column 3, weight column 15, or size column 16 was edited)
-            const needsSkuUpdate = (col === 3 || col === 15 || col === 16) && row > 0; // Skip header row
+            const needsSkuUpdate = (col === 3 || col === 15 || col === 16 || col===20) && row > 0; // Skip header row
 
             // Update session data on server
             $.ajax({
@@ -795,19 +760,14 @@
                 success: function(response) {
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
-                        // Update the edited cell display
                         $(editingCell).html(String(value).replace(/"/g, '&quot;'));
                         
-                        // If SKU was recalculated, update the SKU cell display too
                         if (result.new_sku) {
-                            // Update local data with new SKU
                             excelData[row][2] = result.new_sku;
                             
-                            // Find and update SKU cell in the UI (column 2)
                             const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
                             skuCell.html(String(result.new_sku).replace(/"/g, '&quot;'));
                             
-                            // Add visual feedback that SKU was auto-updated
                             skuCell.addClass('sku-auto-updated');
                             setTimeout(() => {
                                 skuCell.removeClass('sku-auto-updated');
@@ -838,9 +798,9 @@
 
         // Helper function to generate SKU (matches your original logic)
         function generateSKU(mpn, weight, sizeField) {
-            const finalMpn = mpn || `RND${Math.floor(Math.random() * 9000 + 1000)}`;
+            const finalMpn = mpn || `${Math.floor(Math.random() * 9000 + 1000)}`;
             
-            let size = '0001'; // default
+            let size = `${Math.floor(Math.random() * 9000 + 1000)}`; // default
             
             // Priority: SIZE field (sizeField) → Weight → default "0001"
             if (sizeField && sizeField.toString().trim() !== '') {
@@ -854,7 +814,7 @@
                 }
             }
             
-            return `SKU-${finalMpn}-${size}`;
+            return `SKU-${finalMpn}-${size}-${row[20]}`;
         }
 
 
