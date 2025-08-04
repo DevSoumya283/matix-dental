@@ -1456,7 +1456,7 @@ class SuperAdminDashboard extends MW_Controller {
             'shaft_description', 'blade_description', 'anatomic_use', 'instrument_description', 'palm_thickness',
             'finger_thickness', 'texture', 'delivery_system', 'volume', 'dimensions', 'stone_type',
             'stone_separation_time', 'setting_time', 'band_thickness', 'contents', 'returnable',
-            'tax_per_state', 'average_rating', 'price', 'retail_price'
+            'tax_per_state', 'average_rating', 'price', 'retail_price','active'
         );
 
         $random_name = rand(1, 10000000000);
@@ -1544,7 +1544,8 @@ class SuperAdminDashboard extends MW_Controller {
                     $product->tax_per_state,
                     $product->average_rating,
                     $price,
-                    $retail_price
+                    $retail_price,
+                    $product->active,
                 ];
                 $writer->addRow($products_data);
             }
@@ -2457,6 +2458,496 @@ class SuperAdminDashboard extends MW_Controller {
         
     }
 
+        // 01-08-25
+        public function save_data_new() {
+        
+            $excel_data = $this->input->post('excel_data');
+            $file_name = $this->input->post('file_name');
+            $vendor_id='8';
+            if (!$excel_data) {
+                echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+                return;
+            }
+
+            $decoded_data = json_decode($excel_data, true);
+
+               if ($decoded_data != null) {
+                
+                $empty_rows = [];
+                $new_product_array = [];
+                $existing_product_array = [];
+                $price_array = [];
+                $update_price = [];
+                $newprice_array = [];
+                $variant_product_array = []; 
+                $variant_price_array = []; 
+                $product_option_values_map = []; // for base
+                $variant_option_values_map = []; // for variants
+
+              
+            foreach ($decoded_data as $i=>$row) {
+                  if($i===0)continue;
+                                       
+                        if ($i > 0) {
+                            $mpn = $row[3];
+                            $manufacturer = $row[6];
+                            if ($mpn != null) {
+                                // Debugger::debug($row);
+                                $vendors_product_id = $row[4];
+                                $matix_id = array($mpn, $vendors_product_id);
+                                $join_matix = implode("-", $matix_id);
+
+                                $existing_product = $this->Products_model->select('id','sku')->get_by(['mpn' => $mpn]);
+                                // Debugger::debug($existing_product, 'existing product');
+                                $category_id = $row[19];
+                                // Debugger::debug($row[1]);
+                                $c_id = explode(",", str_replace('"', '', $category_id));
+                                $categories_list = [];
+                            //new options logic
+                                $static_keys = ['sku', 'mpn', 'item_code', 'name', 'description', 'extended_description', 'manufacturer', 'brand', 'category_id', 'created_at', 'updated_at', 'active']; // skip these
+                                $option_value_ids = [];
+
+                                foreach ($product_data as $key => $value) {
+                                    if (!in_array($key, $static_keys) && !empty($value)) {
+                                        $label = ucwords(str_replace('_', ' ', $key));
+                                        $option_id = $this->getOrCreateOption($product_id, $label);
+                                        $option_value_ids[] = $this->getOrCreateOptionValue($option_id, trim($value));
+                                    }
+                                }
+
+                            //new options 
+                                for ($k = 0; $k < count($c_id); $k++) {
+                                    if (trim($c_id[$k]) != "") {
+                                        $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
+                                                        FROM categories AS t1
+                                                        LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
+                                                        LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
+                                                        LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
+                                                        LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
+                                                        WHERE t1.id = ' . trim($c_id[$k]);
+
+                                        $output = $this->db->query($query)->result();
+
+                                        if ($output != null) {
+                                            if ($output[0]->lev1_id != null) {
+                                                $categories_list[] = $output[0]->lev1_id;
+                                            }
+                                            if ($output[0]->lev2_id != null) {
+                                                $categories_list[] = $output[0]->lev2_id;
+                                            }
+                                            if ($output[0]->lev3_id != null) {
+                                                $categories_list[] = $output[0]->lev3_id;
+                                            }
+                                            if ($output[0]->lev4_id != null) {
+                                                $categories_list[] = $output[0]->lev4_id;
+                                            }
+                                            if ($output[0]->lev5_id != null) {
+                                                $categories_list[] = $output[0]->lev5_id;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                $categories_list = array_unique($categories_list);
+                                if(!empty($categories_list)){
+                                    $categories = '"' . implode('","', $categories_list) . '"';
+                                }
+
+                                //  NEW matix_id LOGIC ADDED HERE
+                                if ($existing_product == null) {
+                                    $matrix_id_value = 0; // new product
+                                    $product_option_values_map[] = $option_value_ids;
+                                } else {
+                                    $matrix_id_value = $existing_product->id; // parent product ID
+                                    $variant_option_values_map[] = $option_value_ids;
+                                }
+
+
+                               $product_data = [
+                                    // 'matix_id'                 => $row[1],
+                                    'matix_id'                 => $matrix_id_value,
+                                    'sku'                      => $row[2],
+                                    'mpn'                      => $row[3],
+                                    'item_code'                => $row[4],
+                                    'name'                     => $row[5],
+                                    'description'              => $row[6],
+                                    'extended_description'     => $row[7],
+                                    'keywords'                 => $row[8],
+                                    'manufacturer'             => $row[9],
+                                    'product_procedures'       => $row[10],
+                                    'shipping_restrictions'    => $row[11],
+                                    'brand'                    => $row[12],
+                                    'category_code'            => $row[13],
+                                    'arch'                     => $row[14],
+                                    'weight'                   => $row[15],
+                                    'size'                     => $row[16],
+                                    'weight_type'              => $row[17],
+                                    'license_required'         => ucfirst(strtolower($row[18])),
+                                    'category_id'              => $categories,
+                                    'color'                    => $row[20],
+                                    'msds_location'            => $row[21],
+                                    'created_at'               => $row[22],
+                                    'updated_at'               => $row[23],
+                                    'unit_of_measure_selling'  => $row[24],
+                                    'manufacturer_item_no'     => $row[25],
+                                    'manufacturer_ins_sheet'   => $row[26],
+                                    'quantity_per_box'         => $row[27],
+                                    'previous_item_no'         => $row[28],
+                                    'sample'                   => $row[29],
+                                    'ship_weight'              => $row[30],
+                                    'fluoride'                 => $row[31],
+                                    'flavor'                   => $row[32],
+                                    'shade'                    => $row[33],
+                                    'grit'                     => $row[34],
+                                    'set_rate'                 => $row[35],
+                                    'viscosity'                => $row[36],
+                                    'firmness'                 => $row[37],
+                                    'handle_size'             => $row[38],
+                                    'handle_finish'            => $row[39],
+                                    'tip_finish'               => $row[40],
+                                    'tip_diameter'             => $row[41],
+                                    'tip_material'             => $row[42],
+                                    'head_diameter'            => $row[43],
+                                    'head_length'              => $row[44],
+                                    'diameter'                 => $row[45],
+                                    'shaft_dimensions'         => $row[46],
+                                    'shaft_description'        => $row[47],
+                                    'blade_description'        => $row[48],
+                                    'anatomic_use'             => $row[49],
+                                    'instrument_description'   => $row[50],
+                                    'palm_thickness'           => $row[51],
+                                    'finger_thickness'         => $row[52],
+                                    'texture'                  => $row[53],
+                                    'delivery_system'          => $row[54],
+                                    'volume'                   => $row[55],
+                                    'dimensions'               => $row[56],
+                                    'stone_type'               => $row[57],
+                                    'stone_separation_time'    => $row[58],
+                                    'setting_time'             => $row[59],
+                                    'band_thickness'           => $row[60],
+                                    'contents'                 => $row[61],
+                                    'returnable'               => $row[61],
+                                    'tax_per_state'            => $row[63],
+                                    'average_rating'           => $row[64],
+                                    'active'                   => $row[67]
+                                ];
+
+                                if ($existing_product == null) {
+                                    $product_data['created_at'] = date('Y-m-d H:i:s');
+                      
+        
+                                    $new_product_array[] = $product_data;
+
+                                    $vendor_data = array(
+                                        'product_id' => '',
+                                        'vendor_product_id' => $row[3],
+                                        'sku' => $row[2],
+                                        'matix_id' => $join_matix,
+                                        'vendor_id' => $vendor_id,
+                                        'price' => $row[65],
+                                        'active' => 1,
+                                        'retail_price' => $row[66],
+                                        'created_at' => date('Y-m-d H:i:s'),
+                                        'updated_at' => date('Y-m-d H:i:s'),
+                                    );
+
+                                    Debugger::debug($vendor_data, 'vendor_data)');
+
+                                    $price_array[] = $vendor_data;
+                                    if (count($new_product_array) == 100) {
+                                        $this->db->insert_batch('products', $new_product_array);
+                                        $total_affected_rows = $this->db->affected_rows();
+                                        $first_insert_id = $this->db->insert_id();
+                                        $last_id = ($first_insert_id + $total_affected_rows - 1);
+                                        if ($first_insert_id > 0) {
+                                            $current_loop_counter = 0;
+                                            for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                                                $price_array[$current_loop_counter]['product_id'] = $insert_id;
+                                                $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+                                                $this->linkSkuOptionValues($insert_id, $product_option_values_map[$current_loop_counter]);
+                                                if ($elasticsearch_enabled) {
+                                                        $this->elasticsearch->add("products", $insert_id, $product_data);
+                                                    }  
+                                                    $current_loop_counter += 1;
+                                            }
+                                            $this->db->insert_batch('product_pricings', $price_array);
+                                            $price_array = [];
+                                        }
+                                        $new_product_array = [];
+                                    }
+                                } else {
+                                    
+                                    $existing_sku_product = $this->Products_model->select('id','sku')->get_by(['sku' => $row[2]]);
+                                    
+                                    if ($existing_sku_product == null) {
+                                        $variant_product_data = $product_data;
+                                        $variant_product_data['matix_id'] = $existing_product->id; // Set matix_id to parent product ID
+                                        $variant_product_data['created_at'] = date('Y-m-d H:i:s');
+                                        
+                                        // Add to variant products array
+                                        $variant_product_array[] = $variant_product_data;
+                                        
+                                        // Create variant pricing data (one time entry)
+                                        $variant_vendor_data = array(
+                                            'product_id' => '', // Will be set after insertion
+                                            'vendor_product_id' => $row[3],
+                                            'sku' => $row[2],
+                                            'matix_id' => $join_matix,
+                                            'vendor_id' => $vendor_id,
+                                            'price' => $row[65],
+                                            'active' => 1,
+                                            'retail_price' => $row[66],
+                                            'created_at' => date('Y-m-d H:i:s'),
+                                            'updated_at' => date('Y-m-d H:i:s'),
+                                        );
+                                        
+                                        $variant_price_array[] = $variant_vendor_data;
+                                        
+                                        // Process variant products in batches
+                                        if (count($variant_product_array) == 100) {
+                                            $this->db->insert_batch('products', $variant_product_array);
+                                            $total_affected_rows = $this->db->affected_rows();
+                                            $first_insert_id = $this->db->insert_id();
+                                            $last_id = ($first_insert_id + $total_affected_rows - 1);
+                                            if ($first_insert_id > 0) {
+                                                $current_loop_counter = 0;
+                                                for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                                                    $variant_price_array[$current_loop_counter]['product_id'] = $insert_id;
+                                                    $variant_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $variant_product_array[$current_loop_counter]['mpn']));
+                                                    if ($elasticsearch_enabled) {
+                                                        $this->elasticsearch->add("products", $insert_id, $variant_product_array[$current_loop_counter]);
+                                                    }
+                                                    $current_loop_counter += 1;
+                                                }
+                                                $this->db->insert_batch('product_pricings', $variant_price_array);
+                                                $variant_price_array = [];
+                                            }
+                                            $variant_product_array = [];
+                                        }
+                                    } else {
+                              
+                                        unset($product_data['mpn']);
+                                   
+                                        foreach($product_data as $k => $v){
+                                            if(empty($v)){
+                                                unset($product_data[$k]);
+                                            }
+                                        }
+                                        // $active = (is_string($row[5])) ? 0 : 1; // live
+                                        Debugger::debug($product_data, '$product_data');
+
+                                        if ($elasticsearch_enabled && $row[4] != "") {
+                                            $product = $this->elasticsearch->get("products", $existing_sku_product->id);
+                                            $product_info = $product['_source'];
+
+                                            $vendor_product_id = ((str_replace("-", "", $row[4])) . ',');
+
+                                            $product_info['vendor_product_id'] = $product_info['vendor_product_id'] . "," . $vendor_product_id;
+                                            $this->elasticsearch->delete("products", $existing_sku_product->id);
+                                            $this->elasticsearch->add("products", $existing_sku_product->id, $product_info);
+                                        }
+
+                                        
+                                        $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(['sku' => $row[2],'vendor_id' => $vendor_id]);
+
+                                        if ($vendor_pricing != null) {
+                                            
+                                            $update_vendor_data = array(
+                                                'product_id' => $existing_sku_product->id,
+                                                'vendor_product_id' => $row[3],
+                                                'sku' => $row[2],
+                                                'matix_id' => $join_matix,
+                                                'vendor_id' => $vendor_id,
+                                                'price' => $row[65],
+                                                'active' => $row[67],
+                                                'retail_price' => $row[66],
+                                                'updated_at' => date('Y-m-d H:i:s'),
+                                            );
+
+                                            // echo "<pre>";
+                                            // print_r($update_vendor_data);
+                                            // die("jasjj");
+
+                                            // if($active == 0){
+                                            //     unset($update_vendor_data['price']);
+                                            // } //live
+
+                                            foreach($update_vendor_data as $k => $v){
+                                                if(empty($v) && $k != 'active'){
+                                                    Debugger::debug('unsetting ' . $k);
+                                                    unset($update_vendor_data[$k]);
+                                                }
+                                            }
+
+                                            Debugger::debug($update_vendor_data, '$update_vendor_data post check');
+                                            $this->db->update('product_pricings', $update_vendor_data, ['id' => $vendor_pricing->id]);
+                                            $sql = $this->db->update_string('product_pricings', $update_vendor_data, "id = $vendor_pricing->id");
+                                            Debugger::debug($sql);
+
+                                        } else {
+                                            
+                                            $vendornew_data = array(
+                                                'product_id' => $existing_sku_product->id,
+                                                'vendor_product_id' => $row[3],
+                                                'sku' => $row[2],
+                                                'matix_id' => $join_matix,
+                                                'vendor_id' => $vendor_id,
+                                                'price' => $row[65],
+                                                'active' => $row[67],
+                                                'retail_price' => $row[66],
+                                                'created_at' => date('Y-m-d H:i:s'),
+                                                'updated_at' => date('Y-m-d H:i:s'),
+                                            );
+
+                                            $newprice_array[] = $vendornew_data;
+                                            if (count($newprice_array) == 100) {
+                                                $this->db->insert_batch('product_pricings', $newprice_array);
+                                                $newprice_array = [];
+                                            }
+                                        }
+                                        
+                                        
+                                        if(!empty($product_data)){
+                                            $product_data['updated_at'] = date('Y-m-d H:i:s');
+                                            $product_data['id'] = $existing_sku_product->id;
+                                            if($existing_sku_product->sku === $row[2]){
+                                                $this->db->update('products', $product_data, "id = $existing_sku_product->id");
+                                                $sql = $this->db->update_string('products', $product_data, "id = $existing_sku_product->id");
+                                                Debugger::debug($sql);
+                                            }
+                                        }
+                                    }
+
+
+                                }
+                            } else {
+                                $empty_rows[] = $i;
+                            }
+                        }
+                        $i+=1;
+                    
+                }
+                
+                // Process remaining new products
+                if ($new_product_array != null && $new_product_array !== "") {
+                    $this->db->insert_batch('products', $new_product_array);
+                    $total_affected_rows = $this->db->affected_rows();
+                    $first_insert_id = $this->db->insert_id();
+                    $last_id = ($first_insert_id + $total_affected_rows - 1);
+                    if ($first_insert_id > 0) {
+                        $current_loop_counter = 0;
+                        for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                            $price_array[$current_loop_counter]['product_id'] = $insert_id;
+                            $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+                            $this->linkSkuOptionValues($insert_id, $product_option_values_map[$current_loop_counter]);
+                            $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
+                            $current_loop_counter += 1;
+                        }
+                        $this->db->insert_batch('product_pricings', $price_array);
+                        $price_array = [];
+                    }
+                    $new_product_array = [];
+                }
+
+                // Process remaining variant products
+                if ($variant_product_array != null && $variant_product_array !== "") {
+                    $this->db->insert_batch('products', $variant_product_array);
+                    $total_affected_rows = $this->db->affected_rows();
+                    $first_insert_id = $this->db->insert_id();
+                    $last_id = ($first_insert_id + $total_affected_rows - 1);
+                    if ($first_insert_id > 0) {
+                        $current_loop_counter = 0;
+                        for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+                            $variant_price_array[$current_loop_counter]['product_id'] = $insert_id;
+                            $variant_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $variant_product_array[$current_loop_counter]['mpn']));
+                            if ($elasticsearch_enabled) {
+                                $this->elasticsearch->add("products", $insert_id, $variant_product_array[$current_loop_counter]);
+                            }
+                            $current_loop_counter += 1;
+                        }
+                        $this->db->insert_batch('product_pricings', $variant_price_array);
+                        $variant_price_array = [];
+                    }
+                    $variant_product_array = [];
+                }
+
+                if ($update_price != null && $update_price !== "") {
+                    $this->db->update_batch('product_pricings', $update_price, 'id');
+                    $update_price = [];
+                }
+                if ($newprice_array != null && $newprice_array !== "") {
+                    $this->db->insert_batch('product_pricings', $newprice_array);
+                    $newprice_array = [];
+                }
+                    $response = [
+                        'status' => 'success',
+                        'message' => 'Products uploaded successfully.'
+                    ];
+
+                    if (count($empty_rows) > 0) {
+                        $response['warning'] = 'Some rows were skipped because MPNs were blank.';
+                        $response['skipped_rows'] = $empty_rows;
+                    }
+
+                    echo json_encode($response);
+
+            }
+
+        
+    }
+    private function getOrCreateOption($product_id, $name)
+    {
+        $option = $this->db->get_where('product_options', [
+            'product_id' => $product_id,
+            'name' => $name
+        ])->row();
+
+        if (!$option) {
+            $this->db->insert('product_options', [
+                'product_id' => $product_id,
+                'name'       => $name,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+            return $this->db->insert_id();
+        }
+
+        return $option->id;
+    }
+
+    private function getOrCreateOptionValue($option_id, $value)
+    {
+        $row = $this->db->get_where('product_option_values', [
+            'option_id' => $option_id,
+            'value'     => $value
+        ])->row();
+
+        if (!$row) {
+            $this->db->insert('product_option_values', [
+                'option_id'   => $option_id,
+                'value'       => $value,
+                'created_at'  => date('Y-m-d H:i:s')
+            ]);
+            return $this->db->insert_id();
+        }
+
+        return $row->id;
+    }
+
+    private function linkSkuOptionValues($sku_id, $value_ids = [])
+    {
+        $insert_batch = [];
+        foreach ($value_ids as $value_id) {
+            $insert_batch[] = [
+                'sku_id'   => $sku_id,
+                'value_id' => $value_id
+            ];
+        }
+        if (!empty($insert_batch)) {
+            $this->db->insert_batch('sku_option_values', $insert_batch);
+        }
+    }
+
+    // 01-08-25
     //  public function save_data_old() {
         
     //     $excel_data = $this->input->post('excel_data');
