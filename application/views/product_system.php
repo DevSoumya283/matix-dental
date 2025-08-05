@@ -7,6 +7,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         table th,
         table td {
@@ -16,6 +20,9 @@
 </head>
 
 <body class="p-4 bg-light">
+    <!-- Alert Messages -->
+    <!-- <div id="alertContainer"></div> -->
+
     <div class="container">
         <h2 class="mb-4">Product Management System</h2>
         <ul class="nav nav-tabs" id="productTab" role="tablist">
@@ -38,9 +45,9 @@
             <!-- ADD OPTION TAB -->
             <div class="tab-pane fade" id="addOption">
 
-                <button id="saveToDb2" class="btn btn-success mt-3">Save to Database</button>
-                <a href="<?php echo base_url('export-options'); ?>" class="btn btn-primary mt-3">Export Options</a>
-                
+                <button id="saveToDb2" class="btn btn-success my-3">Save to Database</button>
+                <a href="<?php echo base_url('export-options'); ?>" class="btn btn-primary my-3">Export Options</a>
+
                 <div id="productTable" class="table-responsive"></div>
             </div>
 
@@ -94,7 +101,6 @@
     </div>
 
     <script>
-
         let baseData = [];
         let allProducts = [];
         let excelData = [];
@@ -103,13 +109,15 @@
             let reader = new FileReader();
             reader.onload = function(e) {
                 let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, { type: 'array' });
+                let workbook = XLSX.read(data, {
+                    type: 'array'
+                });
                 let sheet = workbook.Sheets[workbook.SheetNames[0]];
                 baseData = XLSX.utils.sheet_to_json(sheet, {
                     header: 1,
                     defval: ''
                 });
-                
+
                 // ✅ Build excelData from baseData
                 excelData = baseData.slice(1).map(row => {
                     let obj = {};
@@ -122,31 +130,61 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
+        // function showAlert(type, message) {
+        //     const alertClass = type === 'success' ? 'alert-success' :
+        //         type === 'info' ? 'alert-info' :
+        //         type === 'warning' ? 'alert-warning' : 'alert-danger';
+        //     const icon = type === 'success' ? 'check-circle' :
+        //         type === 'info' ? 'info-circle' :
+        //         type === 'warning' ? 'exclamation-triangle' : 'exclamation-triangle';
+
+        //     const alertHtml = `
+        //         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+        //             <i class="fas fa-${icon} me-2"></i>
+        //             <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+        //             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        //         </div>
+        //     `;
+
+        //     $('#alertContainer').html(alertHtml);
+
+        //     // Auto-hide success and info messages
+        //     if (type === 'success' || type === 'info') {
+        //         setTimeout(() => {
+        //             $('.alert').alert('close');
+        //         }, 5000);
+        //     }
+        // }
+
         function showAlert(type, message) {
-            const alertClass = type === 'success' ? 'alert-success' :
-                type === 'info' ? 'alert-info' :
-                type === 'warning' ? 'alert-warning' : 'alert-danger';
-            const icon = type === 'success' ? 'check-circle' :
-                type === 'info' ? 'info-circle' :
-                type === 'warning' ? 'exclamation-triangle' : 'exclamation-triangle';
+            const titleMap = {
+                success: 'Success!',
+                info: 'Info',
+                warning: 'Warning!',
+                error: 'Error!'
+            };
 
-            const alertHtml = `
-                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-${icon} me-2"></i>
-                    <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
+            const iconMap = {
+                success: 'success',
+                info: 'info',
+                warning: 'warning',
+                error: 'error'
+            };
 
-            $('#alertContainer').html(alertHtml);
+            // Detect if message contains HTML tags
+            const containsHTML = /<\/?[a-z][\s\S]*>/i.test(message);
 
-            // Auto-hide success and info messages
-            if (type === 'success' || type === 'info') {
-                setTimeout(() => {
-                    $('.alert').alert('close');
-                }, 5000);
-            }
+            Swal.fire({
+                icon: iconMap[type] || 'info',
+                title: titleMap[type] || 'Notice',
+                ...(containsHTML ? { html: message } : { text: message }),
+                confirmButtonText: 'OK',
+                showConfirmButton: true,
+                allowOutsideClick: false
+            });
         }
+
+
 
         // $('#saveToDb').click(function() {
         //     let keys = baseData[0];
@@ -163,7 +201,7 @@
         // });
 
         // Call this on save button click
-       $('#saveToDb').on('click', saveToDatabase);
+        $('#saveToDb').on('click', saveToDatabase);
 
         function saveToDatabase() {
             if (baseData.length === 0) {
@@ -205,6 +243,10 @@
                             message += '<br><strong>Warning:</strong> ' + result.warning;
                             console.warn("Skipped Rows:", result.skipped_rows);
                         }
+                        
+                        baseData = [];
+                        $('#basePreview').html('');
+                        $('#baseExcel').val('');
                         showAlert('success', message);
                     } else {
                         showAlert('error', result.message || 'Unknown error occurred');
