@@ -3317,11 +3317,21 @@ class SuperAdminDashboard extends MW_Controller {
             
             $response = ['status' => 'success'];
             
+            // Prevent if both size and weight are empty
+            $weight_check = isset($excel_data[$row][15]) ? trim($excel_data[$row][15]) : '';
+            $size_check = isset($excel_data[$row][16]) ? trim($excel_data[$row][16]) : '';
+
+            if (empty($weight_check) && empty($size_check)) {
+                echo json_encode(['status' => 'error', 'message' => 'At least one of Size or Weight is required for MPN: ' . ($excel_data[$row][3] ?? 'Unknown')]);
+                return;
+            }
             if ($needs_sku_update == 1) {
-                $mpn = isset($excel_data[$row][3]) && !empty($excel_data[$row][3]) ? $excel_data[$row][3] : '';
-                $weight = isset($excel_data[$row][15]) && !empty($excel_data[$row][15]) ? $excel_data[$row][15] : '';
-                $size_field = isset($excel_data[$row][16]) && !empty($excel_data[$row][16]) ? $excel_data[$row][16] : ''; // row[16] for size
-                $color= isset($excel_data[$row][20]) && !empty($excel_data[$row][20]) ? $excel_data[$row][20] : '';
+                $mpn = $this->input->post('mpn');
+                $weight = $this->input->post('weight');
+                $size_field = $this->input->post('size');
+                $color = $this->input->post('color');
+
+
                 if (empty($mpn)) {
                     $mpn =  rand(1000, 9999);
                 }
@@ -3331,12 +3341,9 @@ class SuperAdminDashboard extends MW_Controller {
                 if (!empty($size_field)) {
                     $size = $size_field;
                 } elseif (!empty($weight)) {
-                    if (preg_match('/(\d+)/', $weight, $matches)) {
-                        $size = $matches[1];
-                    } else {
-                        $size = $weight;
-                    }
+                    $size = $weight; // ✅ Use full weight like "44g"
                 }
+
                 
                 $new_sku = "SKU-{$mpn}-{$size}-{$color}";
                 

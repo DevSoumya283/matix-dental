@@ -379,6 +379,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <script>
         let excelData = [];
@@ -509,7 +515,6 @@
                         defval: ''
                     });
 
-                    // Remove completely empty rows
                     const filteredData = jsonData.filter(row =>
                         row.some(cell => cell !== null && cell !== undefined && cell !== '')
                     );
@@ -528,12 +533,35 @@
                         return;
                     }
 
-                    // Ensure all rows have the same number of columns
+                    
                     var maxCols = Math.max(...filteredData.map(row => row.length));
 
-                                       
+                    const invalidRows = [];
+
+                    filteredData.forEach((row, index) => {
+                        if (index === 0) return; // Skip header
+
+                        const mpn = row[3] || `Unknown MPN (Row ${index + 1})`;
+                        const weight = row[15] || '';
+                        const sizeField = row[16] || '';
+
+                        if (!weight.toString().trim() && !sizeField.toString().trim()) {
+                            invalidRows.push(mpn);
+                        }
+                    });
+
+                    if (invalidRows.length > 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Size & Weight',
+                            html: `The following MPN(s) are missing both <b>Size</b> and <b>Weight</b>:<br><br><code>${invalidRows.join(', ')}</code><br><br>Please enter at least one.`,
+                            confirmButtonText: 'OK',
+                        });
+                    }
+                 
+
                     excelData = filteredData.map((row, index) => {
-                        // Ensure consistent columns
+                        
                         while (row.length < maxCols) {
                             row.push('');
                         }
@@ -546,27 +574,16 @@
                         const weight = row[15] || ''; // Column P = index 15
                         const sizeField = row[16] || ''; // Column Q = index 16
                         
-                        // Priority: SIZE field (row[16]) → Weight (row[15]) → default "0001"
-                        let size = `${Math.floor(Math.random() * 9000 + 1000)}`; // default
                         
+                        let size = '';
+
                         if (sizeField && sizeField.toString().trim() !== '') {
-                            // First priority: use size field directly
                             size = sizeField.toString().trim();
                         } else if (weight && weight.toString().trim() !== '') {
-                            // Second priority: extract numeric value from weight
-                            const match = weight.toString().match(/(\d+)/);
-                            if (match) {
-                                size = match[1];
-                            } else {
-                                // If weight exists but no numeric value found, use the weight as is
-                                size = weight.toString().trim();
-                            }
+                            // const match = weight.toString().match(/(\d+)/);
+                            size = weight.toString().trim();
                         }
-                        // If both are null/empty, size remains "0001"
-
                         const customSKU = `SKU-${mpn}-${size}-${row[20]}`;
-
-                        // Assign to SKU column (index 2)
                         row[2] = customSKU;
 
                         console.log(`Row ${index}: MPN=${mpn}, Weight=${weight}, Size=${sizeField}, Generated SKU=${customSKU}`);
@@ -576,9 +593,12 @@
 
                     $('.loading').hide();
                     $('.upload-area').show();
+
+                    checkAllRowsValid(); //new
+
                     displayData();
 
-                    // Store data in session when file is processed
+                    
                     $.ajax({
                         url: '<?php echo base_url("SuperAdminDashboard/store_session_data"); ?>',
                         type: 'POST',
@@ -662,7 +682,8 @@
             // Create header
             let headerHtml = '<th class="row-number">#</th>';
             for (let i = 0; i < excelData[0].length; i++) {
-                let columnLabel = `Column ${String.fromCharCode(65 + i)}`;
+                // let columnLabel = `Column ${String.fromCharCode(65 + i)}`;
+                let columnLabel = `Column ${i + 1}`;
                 headerHtml += `<th class="column-header">${columnLabel}</th>`;
             }
             headerHtml += '<th class="column-header" style="width: 100px;">Actions</th>';
@@ -740,14 +761,211 @@
         }
 
        
+        // function saveEditedCell(row, col, value) {
+        //     // Update local data first
+        //     excelData[row][col] = value;
+
+        //     const weight = (excelData[row][15] || '').toString().trim();
+        //     const size = (excelData[row][16] || '').toString().trim();
+        //     const mpn = (excelData[row][3] || '').toString().trim();
+
+        //     // Block update if both are missing
+        //     if (!weight && !size && row > 0) {
+        //         showAlert('error', `Both Size and Weight are missing for MPN: ${mpn}. Please enter at least one.`);
+                
+        //         // Remove SKU
+        //         excelData[row][2] = `SKU-${mpn}---${excelData[row][20] || ''}`;
+        //         const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
+        //         skuCell.html(excelData[row][2]);
+
+        //         // Disable Save to DB
+        //         $('#saveToDb').prop('disabled', true).addClass('btn-secondary').removeClass('btn-success');
+
+        //         $(editingCell).html(value); // Keep edited value in UI
+        //         editingCell = null;
+        //         return;
+        //     }
+
+
+
+        //     // Check if we need to recalculate SKU (if MPN column 3, weight column 15, or size column 16 was edited)
+        //     const needsSkuUpdate = (col === 3 || col === 15 || col === 16 || col===20) && row > 0; // Skip header row
+
+        //     // Update session data on server
+        //     $.ajax({
+        //         url: '<?php echo base_url("SuperAdminDashboard/update_cell"); ?>',
+        //         type: 'POST',
+        //         data: {
+        //             row: row,
+        //             col: col,
+        //             value: value,
+        //             needs_sku_update: needsSkuUpdate ? 1 : 0
+        //         },
+        //         success: function(response) {
+        //             const result = JSON.parse(response);
+        //             if (result.status === 'success') {
+        //                 $(editingCell).html(String(value).replace(/"/g, '&quot;'));
+                        
+        //                 if (result.new_sku) {
+        //                     excelData[row][2] = result.new_sku;
+                            
+        //                     const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
+        //                     skuCell.html(String(result.new_sku).replace(/"/g, '&quot;'));
+                            
+        //                     skuCell.addClass('sku-auto-updated');
+        //                     setTimeout(() => {
+        //                         skuCell.removeClass('sku-auto-updated');
+        //                     }, 3000);
+                            
+        //                     showAlert('success', `Cell updated and SKU automatically recalculated to: ${result.new_sku}`);
+        //                 } else {
+        //                     showAlert('info', 'Cell updated successfully');
+        //                 }
+                        
+        //                 editingCell = null;
+        //             } else {
+        //                 showAlert('error', 'Error updating cell: ' + result.message);
+        //                 // Revert the change
+        //                 $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
+        //                 editingCell = null;
+        //             }
+        //         },
+        //         error: function() {
+        //             showAlert('error', 'Error updating cell. Please try again.');
+        //             // Revert the change
+        //             $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
+        //             editingCell = null;
+        //         }
+        //     });
+        // }
+
+        // function saveEditedCell(row, col, value) {
+        //     excelData[row][col] = value;
+
+        //     const mpn = (excelData[row][3] || '').toString().trim();
+
+        //     // Update UI for the edited cell
+        //     $(editingCell).html(String(value).replace(/"/g, '&quot;'));
+        //     editingCell = null;
+
+        //     // Check all rows after any edit
+        //     let invalidMPNs = [];
+
+        //     for (let i = 1; i < excelData.length; i++) {
+        //         const weight = (excelData[i][15] || '').toString().trim();
+        //         const size = (excelData[i][16] || '').toString().trim();
+        //         const currentMPN = (excelData[i][3] || '').toString().trim();
+
+        //         if (!weight && !size) {
+        //             invalidMPNs.push(currentMPN || `Row ${i + 1}`);
+        //             // Also reset SKU to empty
+        //             excelData[i][2] = `SKU-${currentMPN}---${excelData[i][20] || ''}`;
+        //             $(`td[data-row="${i}"][data-col="2"]`).html(excelData[i][2]);
+        //         }
+        //     }
+
+        //     if (invalidMPNs.length > 0) {
+        //         $('#saveToDb').prop('disabled', true).addClass('btn-secondary').removeClass('btn-success');
+        //         showAlert('error', `Size and Weight are missing for the following MPN(s):\n\n${invalidMPNs.join(', ')}\n\nPlease enter at least one.`);
+        //         return;
+        //     } else {
+        //         $('#saveToDb').prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
+        //     }
+
+        //     // Proceed with update if all rows are valid
+        //     const weight = (excelData[row][15] || '').toString().trim();
+        //     const sizeField = (excelData[row][16] || '').toString().trim();
+
+        //     $.ajax({
+        //         url: '<?php echo base_url("SuperAdminDashboard/update_cell"); ?>',
+        //         type: 'POST',
+        //         data: {
+        //             row: row,
+        //             col: col,
+        //             value: value,
+        //             needs_sku_update: (col === 3 || col === 15 || col === 16 || col === 20) && row > 0 ? 1 : 0
+        //         },
+        //         success: function(response) {
+        //             const result = JSON.parse(response);
+        //             if (result.status === 'success') {
+        //                 if (result.new_sku) {
+        //                     excelData[row][2] = result.new_sku;
+        //                     const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
+        //                     skuCell.html(String(result.new_sku).replace(/"/g, '&quot;'));
+        //                     skuCell.addClass('sku-auto-updated');
+        //                     setTimeout(() => {
+        //                         skuCell.removeClass('sku-auto-updated');
+        //                     }, 3000);
+        //                     showAlert('success', `Cell updated and SKU automatically recalculated to: ${result.new_sku}`);
+        //                 } else {
+        //                     showAlert('info', 'Cell updated successfully');
+        //                 }
+        //             } else {
+        //                 showAlert('error', 'Error updating cell: ' + result.message);
+        //             }
+        //         },
+        //         error: function() {
+        //             showAlert('error', 'Error updating cell. Please try again.');
+        //         }
+        //     });
+        // }
+
         function saveEditedCell(row, col, value) {
-            // Update local data first
             excelData[row][col] = value;
 
-            // Check if we need to recalculate SKU (if MPN column 3, weight column 15, or size column 16 was edited)
-            const needsSkuUpdate = (col === 3 || col === 15 || col === 16 || col===20) && row > 0; // Skip header row
+            const mpn = (excelData[row][3] || '').toString().trim();
 
-            // Update session data on server
+            // Update the edited cell UI
+            $(editingCell).html(String(value).replace(/"/g, '&quot;'));
+            editingCell = null;
+
+            // Validate all rows again
+            let invalidMPNs = [];
+            let allValid = true;
+
+            for (let i = 1; i < excelData.length; i++) {
+                const weight = (excelData[i][15] || '').toString().trim();
+                const size = (excelData[i][16] || '').toString().trim();
+                const currentMPN = (excelData[i][3] || '').toString().trim();
+
+                if (!weight && !size) {
+                    allValid = false;
+                    invalidMPNs.push(currentMPN || `Row ${i + 1}`);
+                    // Set SKU as blank if both missing
+                    excelData[i][2] = `SKU-${currentMPN}---${excelData[i][20] || ''}`;
+                    $(`td[data-row="${i}"][data-col="2"]`).html(excelData[i][2]);
+                }
+            }
+
+            // Enable or disable save button based on validity
+            if (!allValid) {
+                $('#saveToDb').prop('disabled', true).addClass('btn-secondary').removeClass('btn-success');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Size & Weight',
+                    html: `
+                        <p>The following MPN(s) are missing both <b>Size</b> and <b>Weight</b>:</p>
+                        <ul style="text-align: left; max-height: 200px; overflow-y: auto;">
+                            ${invalidMPNs.map(mpn => `<li><code>${mpn}</code></li>`).join('')}
+                        </ul>
+                        <p>Please enter at least one.</p>
+                    `,
+                    width: 600,
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                $('#saveToDb').prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
+            }
+
+            // ⏬ Always update current row on server
+            const weight = (excelData[row][15] || '').toString().trim();
+            const sizeField = (excelData[row][16] || '').toString().trim();
+
+            const mpnUpdated = (excelData[row][3] || '').toString().trim();
+            const weightUpdated = (excelData[row][15] || '').toString().trim();
+            const sizeUpdated = (excelData[row][16] || '').toString().trim();
+            const colorUpdated = (excelData[row][20] || '').toString().trim();
+
             $.ajax({
                 url: '<?php echo base_url("SuperAdminDashboard/update_cell"); ?>',
                 type: 'POST',
@@ -755,68 +973,92 @@
                     row: row,
                     col: col,
                     value: value,
-                    needs_sku_update: needsSkuUpdate ? 1 : 0
+                    needs_sku_update: (col === 3 || col === 15 || col === 16 || col === 20) && row > 0 ? 1 : 0,
+                    mpn: mpnUpdated,
+                    weight: weightUpdated,
+                    size: sizeUpdated,
+                    color: colorUpdated
                 },
                 success: function(response) {
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
-                        $(editingCell).html(String(value).replace(/"/g, '&quot;'));
-                        
                         if (result.new_sku) {
                             excelData[row][2] = result.new_sku;
-                            
                             const skuCell = $(`td[data-row="${row}"][data-col="2"]`);
                             skuCell.html(String(result.new_sku).replace(/"/g, '&quot;'));
-                            
                             skuCell.addClass('sku-auto-updated');
                             setTimeout(() => {
                                 skuCell.removeClass('sku-auto-updated');
                             }, 3000);
-                            
                             showAlert('success', `Cell updated and SKU automatically recalculated to: ${result.new_sku}`);
                         } else {
                             showAlert('info', 'Cell updated successfully');
                         }
-                        
-                        editingCell = null;
                     } else {
                         showAlert('error', 'Error updating cell: ' + result.message);
-                        // Revert the change
-                        $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
-                        editingCell = null;
                     }
                 },
                 error: function() {
                     showAlert('error', 'Error updating cell. Please try again.');
-                    // Revert the change
-                    $(editingCell).html(String(excelData[row][col]).replace(/"/g, '&quot;'));
-                    editingCell = null;
                 }
             });
         }
 
 
         // Helper function to generate SKU (matches your original logic)
-        function generateSKU(mpn, weight, sizeField) {
+        // function generateSKU(mpn, weight, sizeField) {
+        //     const finalMpn = mpn || `${Math.floor(Math.random() * 9000 + 1000)}`;
+            
+        //     let size = `${Math.floor(Math.random() * 9000 + 1000)}`; // default
+            
+        //     // Priority: SIZE field (sizeField) → Weight → default "0001"
+        //     if (sizeField && sizeField.toString().trim() !== '') {
+        //         size = sizeField.toString().trim();
+        //     } else if (weight && weight.toString().trim() !== '') {
+        //         const match = weight.toString().match(/(\d+)/);
+        //         if (match) {
+        //             size = match[1];
+        //         } else {
+        //             size = weight.toString().trim(); // Use weight as is if no numeric match
+        //         }
+        //     }
+            
+        //     return `SKU-${finalMpn}-${size}-${row[20]}`;
+        // }
+
+        function generateSKU(mpn, weight, sizeField, col20) {
             const finalMpn = mpn || `${Math.floor(Math.random() * 9000 + 1000)}`;
-            
-            let size = `${Math.floor(Math.random() * 9000 + 1000)}`; // default
-            
-            // Priority: SIZE field (sizeField) → Weight → default "0001"
+            let size = '';
+
             if (sizeField && sizeField.toString().trim() !== '') {
                 size = sizeField.toString().trim();
             } else if (weight && weight.toString().trim() !== '') {
-                const match = weight.toString().match(/(\d+)/);
-                if (match) {
-                    size = match[1];
-                } else {
-                    size = weight.toString().trim(); // Use weight as is if no numeric match
-                }
+                // const match = weight.toString().match(/(\d+)/);
+                size = weight.toString().trim();
             }
-            
-            return `SKU-${finalMpn}-${size}-${row[20]}`;
+
+            return `SKU-${finalMpn}-${size}-${col20 || ''}`;
         }
 
+
+        function checkAllRowsValid() {
+            let isValid = true;
+
+            for (let i = 1; i < excelData.length; i++) {
+                const weight = (excelData[i][15] || '').toString().trim();
+                const size = (excelData[i][16] || '').toString().trim();
+                if (!weight && !size) {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid) {
+                $('#saveToDb').prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
+            } else {
+                $('#saveToDb').prop('disabled', true).addClass('btn-secondary').removeClass('btn-success');
+            }
+        }
 
         function deleteRow(rowIndex) {
             if (confirm('Are you sure you want to delete this row? This action cannot be undone.')) {
@@ -994,7 +1236,7 @@
             // Create header
             let headerHtml = '<th class="row-number">#</th>';
             for (let i = 0; i < excelData[0].length; i++) {
-                headerHtml += `<th class="column-header">Column ${String.fromCharCode(65 + i)}</th>`;
+                headerHtml += `<th class="column-header">Column ${i+1}</th>`;
             }
             $('#previewTableHeader').html(headerHtml);
 
