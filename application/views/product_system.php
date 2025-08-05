@@ -39,7 +39,7 @@
             <div class="tab-pane fade" id="addOption">
 
                 <button id="saveToDb2" class="btn btn-success mt-3">Save to Database</button>
-                <button id="exportAllBtn2" class="btn btn-primary mt-3">Export All</button>
+                <a href="<?php echo base_url('export-options'); ?>" class="btn btn-primary mt-3">Export Options</a>
                 
                 <div id="productTable" class="table-responsive"></div>
             </div>
