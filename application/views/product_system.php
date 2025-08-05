@@ -55,6 +55,8 @@
             <div class="tab-pane fade" id="upload">
                 <input type="file" id="uploadExcel" class="form-control mb-3">
                 <div id="uploadPreview"></div>
+                <button id="saveToDb3" class="btn btn-success">Upload Variants</button>
+
             </div>
 
         </div>
@@ -151,13 +153,17 @@
             Swal.fire({
                 icon: iconMap[type] || 'info',
                 title: titleMap[type] || 'Notice',
-                ...(containsHTML ? { html: message } : { text: message }),
+                ...(containsHTML ? {
+                    html: message
+                } : {
+                    text: message
+                }),
                 confirmButtonText: 'OK',
                 showConfirmButton: true,
                 allowOutsideClick: false
             });
         }
-  
+
 
         // Call this on save button click
         $('#saveToDb').on('click', saveToDatabase);
@@ -202,7 +208,7 @@
                             message += '<br><strong>Warning:</strong> ' + result.warning;
                             console.warn("Skipped Rows:", result.skipped_rows);
                         }
-                        
+
                         baseData = [];
                         $('#basePreview').html('');
                         $('#baseExcel').val('');
@@ -250,7 +256,86 @@
             reader.readAsArrayBuffer(file);
         });
         $('#saveToDb2').on('click', insertOption);
-                function insertOption() {
+
+        let headers3 = [],
+            baseData3 = [],
+            _variantRows = [];
+
+        $('#uploadExcel').on('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1
+                });
+
+                if (jsonData.length > 0) {
+                    headers3 = jsonData[0]; // first row as headers
+                    baseData3 = jsonData.slice(1); // rest are data rows
+
+                    // Convert to array of objects for easier use in AJAX
+                    _variantRows = baseData3.map(row => {
+                        const obj = {};
+                        headers3.forEach((key, i) => {
+                            obj[key] = row[i] !== undefined ? row[i] : '';
+                        });
+                        return obj;
+                    });
+
+                    $('#productTable').html(`<div class="alert alert-info">Excel file loaded. <strong>${_variantRows.length}</strong> records ready for upload.</div>`);
+                } else {
+                    showAlert('error', 'No data found in the Excel sheet.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        $('#saveToDb3').on('click', insertVariants);
+
+        function insertVariants() {
+            console.log(_variantRows);
+            if (_variantRows.length === 0) {
+                showAlert('error', 'No data to save. Please upload and process an Excel file first.');
+                return;
+            }
+
+            const saveBtn = $('#saveToDb3');
+            const originalText = saveBtn.html();
+            saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+
+            $.ajax({
+                url: BASE_URL + "insert-variants", // Adjust this route if needed
+                type: "POST",
+                data: {
+                    excel_data: JSON.stringify(_variantRows)
+                },
+                dataType: "json",
+                success: function(response) {
+                    saveBtn.prop('disabled', false).html(originalText);
+
+                    if (response.status === 'success') {
+                        alert(`✅ Inserted: ${response.inserted}, Updated: ${response.updated}`);
+                    } else {
+                        alert('❌ Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    saveBtn.prop('disabled', false).html(originalText);
+                    alert('❌ Failed to upload variants. Please try again.');
+                }
+            });
+        }
+
+
+        function insertOption() {
             if (baseData2.length === 0) {
                 showAlert('error', 'No data to save. Please upload and process an Excel file first.');
                 return;
@@ -298,7 +383,7 @@
                     saveBtn.prop('disabled', false).html(originalText);
                 }
             });
-        }      
+        }
 
         $('#downloadRangeBtn').on('click', function() {
             let start = parseInt($('#rangeStart').val(), 10) - 1;
@@ -315,8 +400,10 @@
         });
 
         // Add Option Tab
-        $('button[data-bs-target="#addOption"]').on('click', function () {
-            $.getJSON('product-system/get-product-options-json', function (data) {
+        const BASE_URL = "<?= base_url() ?>";
+
+        $('button[data-bs-target="#addOption"]').on('click', function() {
+            $.getJSON('product-system/get-product-options-json', function(data) {
                 if (!data.length) return $('#productTable').html('<p>No data found</p>');
 
                 let html = '<table class="table table-bordered"><thead><tr>';
@@ -332,8 +419,7 @@
                                 <td>${row.options}</td>
                                 <td>
                                     <button class="btn btn-sm btn-info me-1" onclick="openModal(${row.id})">Add Option's</button>
-                                    <button class="btn btn-sm btn-primary" onclick="downloadOptionRow(${index})">Download</button>
-                                </td>
+                                <button class="btn btn-sm btn-primary download-btn" data-id="${row.id}">Download</button>                                </td>
                             </tr>`;
                 });
 
@@ -343,6 +429,37 @@
                 // Store data for single-row download
                 window._optionHeaders = ['id', 'matix_id', 'mpn', 'name', 'options'];
                 window._optionRows = data;
+            });
+        });
+        $(document).on('click', '.download-btn', function() {
+            const productId = $(this).data('id');
+
+            $.ajax({
+                url: `${BASE_URL}export-variant/${productId}`,
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(blob, status, xhr) {
+                    // Extract filename from content-disposition header
+                    const disposition = xhr.getResponseHeader('Content-Disposition');
+                    let filename = 'product_variants.csv';
+
+                    if (disposition && disposition.indexOf('filename=') !== -1) {
+                        filename = disposition.split('filename=')[1].replace(/"/g, '');
+                    }
+
+                    // Create temporary link to download
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                error: function() {
+                    alert('Failed to download CSV');
+                }
             });
         });
 
@@ -367,11 +484,13 @@
         });
 
         // Upload Tab
-        $('#uploadExcel').change(function (e) {
+        $('#uploadExcel').change(function(e) {
             let reader = new FileReader();
-            reader.onload = function (e) {
+            reader.onload = function(e) {
                 let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, { type: 'array' });
+                let workbook = XLSX.read(data, {
+                    type: 'array'
+                });
                 let sheet = workbook.Sheets[workbook.SheetNames[0]];
                 let excelData = XLSX.utils.sheet_to_json(sheet, {
                     header: 1,
@@ -407,20 +526,6 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-
-        function renderTable(container, data) {
-            let html = '<table class="table table-bordered"><thead><tr>';
-            data[0].forEach(h => html += `<th>${h}</th>`);
-            html += '</tr></thead><tbody>';
-            for (let i = 1; i < data.length; i++) {
-                html += '<tr>';
-                data[i].forEach(cell => html += `<td>${cell ?? ''}</td>`);
-                html += '</tr>';
-            }
-            html += '</tbody></table>';
-            $(container).html(html);
-        }
-
         function renderTable2(container, data) {
             const headers = data[0];
             const rows = data.slice(1);
@@ -443,19 +548,18 @@
 
             $(container).html(html);
         }
-     
-        function downloadOptionRow(index) {
-            const headers = window._optionHeaders;
-            const rowData = window._optionRows[index];
-            if (!headers || !rowData) return alert("Data not ready");
 
-            const row = headers.map(h => rowData[h]);
-            const data = [headers, row]; // include header and single row
-
-            const worksheet = XLSX.utils.aoa_to_sheet(data);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "RowExport");
-            XLSX.writeFile(workbook, `option_row_${index + 1}.xlsx`);
+        function renderTable(container, data) {
+            let html = '<table class="table table-bordered"><thead><tr>';
+            data[0].forEach(h => html += `<th>${h}</th>`);
+            html += '</tr></thead><tbody>';
+            for (let i = 1; i < data.length; i++) {
+                html += '<tr>';
+                data[i].forEach(cell => html += `<td>${cell ?? ''}</td>`);
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            $(container).html(html);
         }
     </script>
 </body>

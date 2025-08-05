@@ -409,7 +409,6 @@ class ProductsUpload extends MW_Controller {
         readfile($file_path);
         exit;
     }
-    
     public function insert_options()
     {
         $excel_data = $this->input->post('excel_data');
@@ -489,9 +488,207 @@ class ProductsUpload extends MW_Controller {
         echo json_encode(['status' => 'success', 'message' => $message]);
     }
 
-    public function export_added_columns()
+    private function array_to_csv_with_headers($headers, $data, $delimiter = ",", $newline = "\r\n")
     {
+        $output = implode($delimiter, $headers) . $newline;
 
+        foreach ($data as $row) {
+            $row_data = [];
+            foreach ($headers as $head) {
+                $row_data[] = '"' . str_replace('"', '""', $row[$head] ?? '') . '"';
+            }
+            $output .= implode($delimiter, $row_data) . $newline;
+        }
+
+        return $output;
+    }
+
+
+
+    public function export_variant_csv($product_id)
+    {
+        $this->load->helper('download');
+
+        // Fetch base product
+        $product = $this->db->get_where('products', ['id' => $product_id])->row_array();
+        if (!$product) {
+            echo "Invalid Product ID"; return;
+        }
+
+        // Fetch options and option values
+        $options = $this->db->get_where('product_options', ['product_id' => $product_id])->result_array();
+        $option_names = array_column($options, 'name', 'id'); // [option_id => name]
+
+        $option_value_map = []; // [option_id => [option_value_id => value]]
+        foreach ($options as $opt) {
+            $values = $this->db->get_where('product_option_values', ['option_id' => $opt['id']])->result_array();
+            foreach ($values as $val) {
+                $option_value_map[$opt['id']][$val['id']] = $val['value'];
+            }
+        }
+
+        // Create consistent headers
+        $headers = ['id','matix_id','mpn', 'name','price','retail_price','stocks','sku'];
+        foreach ($option_names as $name) {
+            $headers[] = ($name); // Color, Size, etc.
+        }
+
+        $export_data = [];
+
+        // Fetch SKUs
+        $skus = $this->db->get_where('skus', ['product_id' => $product_id])->result_array();
+
+        if (!empty($skus)) {
+            // Export SKUs with linked option values
+            foreach ($skus as $sku) {
+                $row = [
+                    'id' => $product['id'],
+                    'matix_id' => $product['matix_id'],
+                    'mpn' => $product['mpn'],
+                    'name' => $product['name'],
+                    'price' => $sku['price'],
+                    'retail_price' => $sku['retail_price'],
+                    'stocks' => $sku['stock_quantity'],
+                    'sku' => $sku['sku'],
+                ];
+
+                // Initialize option columns blank
+                foreach ($option_names as $opt_id => $opt_name) {
+                    $row[ucfirst($opt_name)] = '';
+                }
+
+                $sku_options = $this->db->get_where('sku_option_values', ['sku_id' => $sku['id']])->result_array();
+                foreach ($sku_options as $sku_opt) {
+                    $option_value_id = $sku_opt['option_value_id'];
+
+                    $opt_val = $this->db->get_where('product_option_values', ['id' => $option_value_id])->row();
+                    if ($opt_val) {
+                        $option_id = $opt_val->option_id;
+                        $option_name = ucfirst($option_names[$option_id] ?? 'Option ' . $option_id);
+                        $row[$option_name] = $opt_val->value;
+                    }
+                }
+
+                $export_data[] = $row;
+            }
+        } else {
+            // No SKUs — create 1 blank row with options for user to fill
+             $row = [
+                    'id' => $product['id'],
+                    'matix_id' => $product['matix_id'],
+                    'mpn' => $product['mpn'],
+                    'name' => $product['name'],
+                    'price' => $sku['price'],
+                    'retail_price' => $sku['retail_price'],
+                    'stocks' => $sku['stock_quantity'],
+                    'sku' => $sku['sku'],
+                ];
+
+            foreach ($option_names as $opt_name) {
+                $row[ucfirst($opt_name)] = '';
+            }
+
+            $export_data[] = $row;
+        }
+
+        // Format CSV
+        $csv = $this->array_to_csv_with_headers($headers, $export_data);
+        force_download($product['mpn'] . '_variants.csv', $csv);
+    }
+
+
+    public function insert_variants()
+    {
+        $excel_data = $this->input->post('excel_data');
+        if (!$excel_data) {
+            echo json_encode(['status' => 'error', 'message' => 'No Excel data provided']);
+            return;
+        }
+
+        $decoded_data = json_decode($excel_data, true);
+        if (!$decoded_data || !is_array($decoded_data)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid Excel data']);
+            return;
+        }
+
+        $batchSize = 100;
+        $rows = array_chunk($decoded_data, $batchSize);
+        $inserted = 0;
+        $updated = 0;
+
+        foreach ($rows as $batch) {
+            foreach ($batch as $row) {
+                $mpn = trim($row['mpn']);
+                $sku_code = trim($row['sku']);
+                $product = $this->db->get_where('products', ['mpn' => $mpn])->row();
+                if (!$product) continue;
+
+                $product_id = $product->id;
+
+                // Check if SKU exists
+                $existing_sku = $this->db->get_where('skus', ['sku_code' => $sku_code, 'product_id' => $product_id])->row();
+
+                $sku_data = [
+                    'product_id' => $product_id,
+                    'sku_code'        => $sku_code,
+                    'price'      => $row['price'] ?? 0,
+                    'retail_price' => $row['retail_price'] ?? 0,
+                    'stock_quantity' => $row['stocks'] ?? 0,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+
+                if ($existing_sku) {
+                    $this->db->where('id', $existing_sku->id)->update('skus', $sku_data);
+                    $sku_id = $existing_sku->id;
+                    $updated++;
+                } else {
+                    $sku_data['created_at'] = date('Y-m-d H:i:s');
+                    $this->db->insert('skus', $sku_data);
+                    $sku_id = $this->db->insert_id();
+                    $inserted++;
+                }
+
+                // Handle each option (like color, size...)
+                foreach ($row as $key => $value) {
+                    if (in_array($key, ['id', 'matix_id', 'mpn', 'name', 'sku', 'price', 'retail_price']) || $value === '') continue;
+
+                    $option = $this->db->get_where('product_options', ['product_id' => $product_id, 'name' => $key])->row();
+                    if (!$option) continue; // Option not defined
+
+                    $option_id = $option->id;
+
+                    // Check if this option value exists
+                    $value_row = $this->db->get_where('product_option_values', ['option_id' => $option_id, 'value' => $value])->row();
+                    if (!$value_row) {
+                        $this->db->insert('product_option_values', [
+                        'product_id' => $product_id,   
+                        'option_id'  => $option_id,
+                        'value'      => $value,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                    $option_value_id = $this->db->insert_id();
+
+                    } else {
+                        $option_value_id = $value_row->id;
+                    }
+
+                    // Now insert into sku_option_values if not exists
+                    $exists = $this->db->get_where('sku_option_values', [
+                        'sku_id'          => $sku_id,
+                        'value_id' => $option_value_id
+                    ])->row();
+
+                    if (!$exists) {
+                        $this->db->insert('sku_option_values', [
+                            'sku_id'          => $sku_id,
+                            'value_id' => $option_value_id
+                        ]);
+                    }
+                }
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'inserted' => $inserted, 'updated' => $updated]);
     }
 
 
