@@ -315,30 +315,37 @@
         });
 
         // Add Option Tab
-        $('button[data-bs-target="#addOption"]').on('click', function() {
-            $.getJSON('product-system/products', function(data) {
+        $('button[data-bs-target="#addOption"]').on('click', function () {
+            $.getJSON('product-system/get-product-options-json', function (data) {
                 if (!data.length) return $('#productTable').html('<p>No data found</p>');
 
-                window._optionHeaders = Object.keys(data[0]); // store headers
-                window._optionRows = data; // store rows
-
                 let html = '<table class="table table-bordered"><thead><tr>';
-                for (let key in data[0]) html += `<th>${key}</th>`;
-                html += '<th>Actions</th></tr></thead><tbody>';
+                html += '<th>ID</th><th>Matrix ID</th><th>MPN</th><th>Name</th><th>Options</th><th>Actions</th>';
+                html += '</tr></thead><tbody>';
 
                 data.forEach((row, index) => {
-                    html += '<tr>';
-                    for (let k in row) html += `<td>${row[k]}</td>`;
-                    html += `<td>
-                                <button class="btn btn-sm btn-info me-1" onclick="openModal(${row.id})">Add Column</button>
-                                <button class="btn btn-sm btn-primary" onclick="downloadOptionRow(${index})">Download</button>
-                            </td></tr>`;
+                    html += `<tr>
+                                <td>${row.id}</td>
+                                <td>${row.matix_id ?? ''}</td>
+                                <td>${row.mpn ?? ''}</td>
+                                <td>${row.name ?? ''}</td>
+                                <td>${row.options}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info me-1" onclick="openModal(${row.id})">Add Option's</button>
+                                    <button class="btn btn-sm btn-primary" onclick="downloadOptionRow(${index})">Download</button>
+                                </td>
+                            </tr>`;
                 });
 
                 html += '</tbody></table>';
                 $('#productTable').html(html);
+
+                // Store data for single-row download
+                window._optionHeaders = ['id', 'matix_id', 'mpn', 'name', 'options'];
+                window._optionRows = data;
             });
         });
+
 
 
         function openModal(id) {
@@ -360,13 +367,11 @@
         });
 
         // Upload Tab
-        $('#uploadExcel').change(function(e) {
+        $('#uploadExcel').change(function (e) {
             let reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, {
-                    type: 'array'
-                });
+                let workbook = XLSX.read(data, { type: 'array' });
                 let sheet = workbook.Sheets[workbook.SheetNames[0]];
                 let excelData = XLSX.utils.sheet_to_json(sheet, {
                     header: 1,
@@ -376,23 +381,32 @@
                 let headers = excelData[0];
                 let rows = excelData.slice(1);
 
-                const skipCols = ['id', 'matix_id', 'name', 'price', 'retail_price', 'created_at', 'updated_at'];
                 let skuIndex = headers.indexOf('sku');
+                let mpnIndex = headers.indexOf('mpn');
 
                 for (let i = 0; i < rows.length; i++) {
-                    let row = {};
-                    headers.forEach((k, j) => row[k] = rows[i][j]);
-                    let sku = headers
-                        .filter(k => k !== 'sku' && !skipCols.includes(k))
-                        .map(k => (row[k] || '').toString().trim())
-                        .join('-').toLowerCase();
-                    rows[i][skuIndex] = sku;
+                    let row = rows[i];
+                    let mpnRaw = row[mpnIndex];
+
+                    // Collect values from all columns *after* "sku"
+                    let suffixParts = [];
+                    for (let j = skuIndex + 1; j < headers.length; j++) {
+                        suffixParts.push((row[j] || '').toString().trim());
+                    }
+
+                    let sku = `SKU-${mpnRaw}`;
+                    if (suffixParts.length > 0) {
+                        sku += `-${suffixParts.join('-')}`;
+                    }
+
+                    row[skuIndex] = sku;
                 }
 
-                renderTable('#uploadPreview', [headers, ...rows]);
+                renderTable2('#uploadPreview', [headers, ...rows]);
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         });
+
 
         function renderTable(container, data) {
             let html = '<table class="table table-bordered"><thead><tr>';
@@ -407,6 +421,29 @@
             $(container).html(html);
         }
 
+        function renderTable2(container, data) {
+            const headers = data[0];
+            const rows = data.slice(1);
+
+            let html = '<table class="table table-bordered"><thead><tr>';
+            headers.forEach(h => html += `<th>${h}</th>`);
+            html += '<th>Actions</th></tr></thead><tbody>';
+
+            rows.forEach((row, i) => {
+                html += `<tr data-row="${i}">`;
+                row.forEach((cell, j) => {
+                    html += `<td title="Double click to edit" ondblclick="makeEditable(this)" 
+                                onblur="updateRowInSession(${i}, this, ${j})">${cell}</td>`;
+                });
+                html += `<td><button class="btn btn-sm btn-danger" onclick="deleteRow(${i})">Delete</button></td>`;
+                html += `</tr>`;
+            });
+
+            html += '</tbody></table>';
+
+            $(container).html(html);
+        }
+     
         function downloadOptionRow(index) {
             const headers = window._optionHeaders;
             const rowData = window._optionRows[index];

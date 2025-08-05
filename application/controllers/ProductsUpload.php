@@ -409,6 +409,7 @@ class ProductsUpload extends MW_Controller {
         readfile($file_path);
         exit;
     }
+    
     public function insert_options()
     {
         $excel_data = $this->input->post('excel_data');
