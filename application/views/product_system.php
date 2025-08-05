@@ -44,8 +44,8 @@
 
             <!-- ADD OPTION TAB -->
             <div class="tab-pane fade" id="addOption">
-
-                <button id="saveToDb2" class="btn btn-success my-3">Save to Database</button>
+                <input type="file" id="baseExcel2" class="form-control mb-3">
+                <button id="saveToDb2" class="btn btn-success my-3">Upload Options</button>
                 <a href="<?php echo base_url('export-options'); ?>" class="btn btn-primary my-3">Export Options</a>
 
                 <div id="productTable" class="table-responsive"></div>
@@ -130,32 +130,6 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // function showAlert(type, message) {
-        //     const alertClass = type === 'success' ? 'alert-success' :
-        //         type === 'info' ? 'alert-info' :
-        //         type === 'warning' ? 'alert-warning' : 'alert-danger';
-        //     const icon = type === 'success' ? 'check-circle' :
-        //         type === 'info' ? 'info-circle' :
-        //         type === 'warning' ? 'exclamation-triangle' : 'exclamation-triangle';
-
-        //     const alertHtml = `
-        //         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-        //             <i class="fas fa-${icon} me-2"></i>
-        //             <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
-        //             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        //         </div>
-        //     `;
-
-        //     $('#alertContainer').html(alertHtml);
-
-        //     // Auto-hide success and info messages
-        //     if (type === 'success' || type === 'info') {
-        //         setTimeout(() => {
-        //             $('.alert').alert('close');
-        //         }, 5000);
-        //     }
-        // }
-
         function showAlert(type, message) {
             const titleMap = {
                 success: 'Success!',
@@ -183,22 +157,7 @@
                 allowOutsideClick: false
             });
         }
-
-
-
-        // $('#saveToDb').click(function() {
-        //     let keys = baseData[0];
-        //     let rows = baseData.slice(1).map(r => {
-        //         let obj = {};
-        //         keys.forEach((k, i) => obj[k] = r[i]);
-        //         return obj;
-        //     });
-        //     $.post('upload', {
-        //         data: rows
-        //     }, function(res) {
-        //         alert('Saved!');
-        //     });
-        // });
+  
 
         // Call this on save button click
         $('#saveToDb').on('click', saveToDatabase);
@@ -261,34 +220,85 @@
             });
         }
 
+        let headers2 = [];
+        let baseData2 = [];
 
+        $('#baseExcel2').on('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1
+                });
 
+                if (jsonData.length > 0) {
+                    headers2 = jsonData[0];
+                    baseData2 = jsonData;
+                    $('#productTable').html(`<div class="alert alert-info">Excel file loaded. <strong>${baseData2.length - 1}</strong> records ready for upload.</div>`);
+                } else {
+                    showAlert('error', 'No data found in the Excel sheet.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        $('#saveToDb2').on('click', insertOption);
+                function insertOption() {
+            if (baseData2.length === 0) {
+                showAlert('error', 'No data to save. Please upload and process an Excel file first.');
+                return;
+            }
 
-        // Export All Logic
-        // $('#exportAllBtn').on('click', function() {
-        //     $.getJSON('product-system/products', function(response) {
-        //         if (Array.isArray(response)) {
-        //             // Normal flow with data
-        //             allProducts = response;
-        //             window._optionHeaders = Object.keys(response[0]);
-        //             window._optionRows = response;
+            const dataRows = baseData2.slice(1);
+            const formattedRows = dataRows.map(row => {
+                const paddedRow = [...row];
+                while (paddedRow.length < headers2.length) {
+                    paddedRow.push('');
+                }
+                return paddedRow;
+            });
 
-        //             $('#rangeStart').val(1);
-        //             $('#rangeEnd').val(response.length);
-        //             $('#exportRangeModal').modal('show');
-        //         } else if (response.headers_only) {
-        //             // No rows, but return headers from backend
-        //             const worksheet = XLSX.utils.aoa_to_sheet([response.headers_only]);
-        //             const workbook = XLSX.utils.book_new();
-        //             XLSX.utils.book_append_sheet(workbook, worksheet, "HeadersOnly");
-        //             XLSX.writeFile(workbook, "products_headers_only.xlsx");
-        //         } else {
-        //             alert("Unexpected response from server.");
-        //         }
-        //     });
-        // });
+            const excelData = [headers2, ...formattedRows];
 
+            const saveBtn = $('#saveToDb2');
+            const originalText = saveBtn.html();
+            saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+
+            $.ajax({
+                url: 'insert-options',
+                type: 'POST',
+                data: {
+                    excel_data: JSON.stringify(excelData),
+                    file_name: 'uploaded_options.xlsx'
+                },
+                success: function(response) {
+                    const result = JSON.parse(response);
+                    if (result.status === 'success') {
+                        let message = result.message || 'Options inserted successfully.';
+                        if (result.warning) {
+                            message += `<br><strong>Warning:</strong> ${result.warning}`;
+                            console.warn("Skipped Rows:", result.skipped_rows);
+                        }
+                        showAlert('success', message);
+                    } else {
+                        showAlert('error', result.message || 'Error inserting options.');
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Failed to save options. Please check your server or network.');
+                },
+                complete: function() {
+                    saveBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        }      
 
         $('#downloadRangeBtn').on('click', function() {
             let start = parseInt($('#rangeStart').val(), 10) - 1;

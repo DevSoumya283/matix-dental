@@ -412,143 +412,87 @@ class ProductsUpload extends MW_Controller {
     public function insert_options()
     {
         $excel_data = $this->input->post('excel_data');
-       
         if (!$excel_data) {
-            echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+            echo json_encode(['status' => 'error', 'message' => 'No Excel data provided']);
             return;
         }
 
         $decoded_data = json_decode($excel_data, true);
-        if ($decoded_data === null) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid JSON format']);
+
+        if (!$decoded_data || count($decoded_data) < 2) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid or empty Excel data']);
             return;
         }
 
-        $empty_rows = [];
-        $new_product_array = [];
+        $headers = $decoded_data[0];
+        $rows = array_slice($decoded_data, 1);
 
-        foreach ($decoded_data as $i => $row) {
-            if ($i === 0) continue;
+        $created = 0;
+        $skipped = [];
 
-            $mpn = $row[2];
-            if (empty($mpn)) {
-                $empty_rows[] = $i;
+        foreach ($rows as $i => $row) {
+            $row_index = $i + 2;
+
+            $row_data = array_combine($headers, $row);
+
+            $mpn = trim($row_data['mpn'] ?? '');
+            $product_id = trim($row_data['id'] ?? '');
+
+            if (!$product_id || !$mpn) {
+                $skipped[] = $row_index;
                 continue;
             }
 
-            $vendors_product_id = $row[4];
-            $matix_id = implode("-", [$mpn, $vendors_product_id]);
-
-            $existing_product = $this->Products_model->select('id', 'matix_id')->get_by(['mpn' => $mpn]);
-            $matrix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
-
-            $category_id = $row[12];
-            $c_id = explode(",", str_replace('"', '', $category_id));
-            $categories_list = [];
-
-            foreach ($c_id as $cid) {
-                $cid = trim($cid);
-                if ($cid !== "") {
-                    $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
-                            FROM categories AS t1
-                            LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
-                            LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
-                            LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
-                            LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
-                            WHERE t1.id = ' . $cid;
-
-                    $output = $this->db->query($query)->result();
-
-                    if (!empty($output)) {
-                        foreach (['lev1_id', 'lev2_id', 'lev3_id', 'lev4_id', 'lev5_id'] as $lev) {
-                            if (!empty($output[0]->$lev)) {
-                                $categories_list[] = $output[0]->$lev;
-                            }
-                        }
-                    }
-                }
+            $product = $this->db->get_where('products', ['id' => $product_id, 'mpn' => $mpn])->row();
+            if (!$product) {
+                $skipped[] = $row_index;
+                error_log("Row $row_index skipped: No product found for ID: $product_id, MPN: $mpn");
+                continue;
             }
 
-            $categories_list = array_unique($categories_list);
-            $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
+            $option_string = $row_data['options'] ?? '';
+            if (empty(trim($option_string))) continue;
 
-            $product_data = [
-                'item_code' => $row[3],
-                'name' => $row[4],
-                'description' => $row[5],
-                'extended_description' => $row[6],
-                'keywords' => $row[7],
-                'manufacturer' => $row[8],
-                'shipping_restrictions' => $row[9],
-                'brand' => $row[10],
-                'license_required' => ucfirst(strtolower($row[11])),
-                'category_id' => $categories,
-                'base_price' => $row[13],
-                'active' => $row[14],
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
+            $options = explode(',', $option_string);
+            $display_order = 1;
 
-            // Only set these on insert
-            if (!$existing_product) {
-                $product_data['matix_id'] = $matrix_id_value;
-                $product_data['mpn'] = $mpn;
-                $product_data['created_at'] = date('Y-m-d H:i:s');
-                $new_product_array[] = $product_data;
+            foreach ($options as $opt) {
+                $option_name = trim($opt);
+                if (!$option_name) continue;
 
-                if (count($new_product_array) == 100) {
-                    $this->db->insert_batch('products', $new_product_array);
-                    $first_insert_id = $this->db->insert_id();
-                    for ($j = 0; $j < count($new_product_array); $j++) {
-                        $new_id = $first_insert_id + $j;
-                        if ($elasticsearch_enabled) {
-                            $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
-                        }
-                    }
-                    $new_product_array = [];
+                $exists = $this->db->get_where('product_options', [
+                    'product_id' => $product_id,
+                    'name' => $option_name
+                ])->row();
+
+                if (!$exists) {
+                    $this->db->insert('product_options', [
+                        'product_id'    => $product_id,
+                        'name'          => $option_name,
+                        'display_order' => $display_order,
+                        'created_at'    => date('Y-m-d H:i:s'),
+                        'updated_at'    => date('Y-m-d H:i:s'),
+                    ]);
+                    $created++;
                 }
-            } else {
-                // Update existing product — don't touch mpn or matix_id
-                $this->db->update('products', $product_data, ['id' => $existing_product->id]);
 
-                if ($elasticsearch_enabled) {
-                    $this->elasticsearch->add("products", $existing_product->id, $product_data);
-                }
+                $display_order++;
             }
         }
 
-        // Final insert batch
-        if (!empty($new_product_array)) {
-            $this->db->insert_batch('products', $new_product_array);
-            $first_insert_id = $this->db->insert_id();
-            for ($j = 0; $j < count($new_product_array); $j++) {
-                $new_id = $first_insert_id + $j;
-                if ($elasticsearch_enabled) {
-                    $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
-                }
-            }
+        $message = "Options inserted successfully. Total: {$created}";
+        if (!empty($skipped)) {
+            $message .= ". Skipped rows: " . implode(', ', $skipped);
         }
 
-        $response = ['status' => 'success', 'message' => 'Products uploaded successfully.'];
-        if (count($empty_rows) > 0) {
-            $response['warning'] = 'Some rows were skipped because MPNs were blank.';
-            $response['skipped_rows'] = $empty_rows;
-        }
-
-        echo json_encode($response);
+        echo json_encode(['status' => 'success', 'message' => $message]);
     }
-    private function guessOptionName($index)
-{
-    $map = [
-        15 => 'weight',
-        16 => 'size',
-        17 => 'material',
-        18 => 'color',
-        19 => 'flavor',
-        20 => 'shade',
-        // extend as per your Excel format
-    ];
 
-    return $map[$index] ?? 'option_' . $index;
-}
+    public function export_added_columns()
+    {
+
+    }
+
+
 
 }
