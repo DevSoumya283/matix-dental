@@ -207,12 +207,11 @@ class ProductsUpload extends MW_Controller {
 
         $empty_rows = [];
         $new_product_array = [];
-        $update_product_array = [];
 
         foreach ($decoded_data as $i => $row) {
             if ($i === 0) continue;
 
-            $mpn = $row[3];
+            $mpn = $row[2];
             if (empty($mpn)) {
                 $empty_rows[] = $i;
                 continue;
@@ -221,27 +220,27 @@ class ProductsUpload extends MW_Controller {
             $vendors_product_id = $row[4];
             $matix_id = implode("-", [$mpn, $vendors_product_id]);
 
-            $existing_product = $this->Products_model->select('id','matix_id')->get_by(['mpn' => $mpn]);
-
+            $existing_product = $this->Products_model->select('id', 'matix_id')->get_by(['mpn' => $mpn]);
             $matrix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
 
             $category_id = $row[12];
-
             $c_id = explode(",", str_replace('"', '', $category_id));
             $categories_list = [];
-            for ($k = 0; $k < count($c_id); $k++) {
-                if (trim($c_id[$k]) != "") {
+
+            foreach ($c_id as $cid) {
+                $cid = trim($cid);
+                if ($cid !== "") {
                     $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
-                              FROM categories AS t1
-                              LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
-                              LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
-                              LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
-                              LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
-                              WHERE t1.id = ' . trim($c_id[$k]);
+                            FROM categories AS t1
+                            LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
+                            LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
+                            LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
+                            LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
+                            WHERE t1.id = ' . $cid;
 
                     $output = $this->db->query($query)->result();
 
-                    if ($output != null) {
+                    if (!empty($output)) {
                         foreach (['lev1_id', 'lev2_id', 'lev3_id', 'lev4_id', 'lev5_id'] as $lev) {
                             if (!empty($output[0]->$lev)) {
                                 $categories_list[] = $output[0]->$lev;
@@ -255,29 +254,28 @@ class ProductsUpload extends MW_Controller {
             $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
 
             $product_data = [
-                'matix_id' => $matrix_id_value,
-                'mpn' => $row[2],
                 'item_code' => $row[3],
                 'name' => $row[4],
                 'description' => $row[5],
                 'extended_description' => $row[6],
                 'keywords' => $row[7],
                 'manufacturer' => $row[8],
-                'shipping_restrictions' => $row[9],               
-                'brand' => $row[10],               
+                'shipping_restrictions' => $row[9],
+                'brand' => $row[10],
                 'license_required' => ucfirst(strtolower($row[11])),
-                'category_id' => $categories, 
+                'category_id' => $categories,
+                'base_price' => $row[13],
                 'active' => $row[14],
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            foreach ($product_data as $key => $value) {
-                if ($value === null || $value === '') unset($product_data[$key]);
-            }
-
+            // Only set these on insert
             if (!$existing_product) {
+                $product_data['matix_id'] = $matrix_id_value;
+                $product_data['mpn'] = $mpn;
                 $product_data['created_at'] = date('Y-m-d H:i:s');
                 $new_product_array[] = $product_data;
+
                 if (count($new_product_array) == 100) {
                     $this->db->insert_batch('products', $new_product_array);
                     $first_insert_id = $this->db->insert_id();
@@ -290,14 +288,16 @@ class ProductsUpload extends MW_Controller {
                     $new_product_array = [];
                 }
             } else {
-                $product_data['id'] = $existing_product->id;
+                // Update existing product — don't touch mpn or matix_id
                 $this->db->update('products', $product_data, ['id' => $existing_product->id]);
+
                 if ($elasticsearch_enabled) {
                     $this->elasticsearch->add("products", $existing_product->id, $product_data);
                 }
             }
         }
-        // Final inserts if any
+
+        // Final insert batch
         if (!empty($new_product_array)) {
             $this->db->insert_batch('products', $new_product_array);
             $first_insert_id = $this->db->insert_id();
@@ -317,5 +317,9 @@ class ProductsUpload extends MW_Controller {
 
         echo json_encode($response);
     }
+
     // 01-08-25
+    public function export_option_column(){
+
+    }
 }
