@@ -526,6 +526,28 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
+        // function renderTable2(container, data) {
+        //     const headers = data[0];
+        //     const rows = data.slice(1);
+
+        //     let html = '<table class="table table-bordered"><thead><tr>';
+        //     headers.forEach(h => html += `<th>${h}</th>`);
+        //     html += '<th>Actions</th></tr></thead><tbody>';
+
+        //     rows.forEach((row, i) => {
+        //         html += `<tr data-row="${i}">`;
+        //         row.forEach((cell, j) => {
+        //             html += `<td title="Double click to edit" ondblclick="makeEditable(this)" 
+        //                         onblur="updateRowInSession(${i}, this, ${j})">${cell}</td>`;
+        //         });
+        //         html += `<td><button class="btn btn-sm btn-danger" onclick="deleteRow(${i})">Delete</button></td>`;
+        //         html += `</tr>`;
+        //     });
+
+        //     html += '</tbody></table>';
+
+        //     $(container).html(html);
+        // }
         function renderTable2(container, data) {
             const headers = data[0];
             const rows = data.slice(1);
@@ -537,17 +559,90 @@
             rows.forEach((row, i) => {
                 html += `<tr data-row="${i}">`;
                 row.forEach((cell, j) => {
-                    html += `<td title="Double click to edit" ondblclick="makeEditable(this)" 
-                                onblur="updateRowInSession(${i}, this, ${j})">${cell}</td>`;
+                    html += `<td ondblclick="editCell(this)" title="Double Click to Edit">${cell}</td>`;
                 });
                 html += `<td><button class="btn btn-sm btn-danger" onclick="deleteRow(${i})">Delete</button></td>`;
                 html += `</tr>`;
             });
 
             html += '</tbody></table>';
-
             $(container).html(html);
         }
+        function saveEditedRowToSession(rowIndex) {
+            const table = $('#uploadPreview table')[0];
+            const row = table.rows[rowIndex + 1]; // skip header
+            const cells = row.cells;
+            const rowData = [];
+
+            const headers = [];
+            $('#uploadPreview table thead th').each(function () {
+                headers.push($(this).text().trim());
+            });
+
+            const skuIndex = headers.indexOf('sku');
+            const mpnIndex = headers.indexOf('mpn');
+
+            for (let i = 0; i < cells.length - 1; i++) { // exclude "Actions"
+                rowData.push($(cells[i]).text().trim());
+            }
+
+            // 🛠️ Rebuild SKU if any value after SKU changed
+            if (skuIndex !== -1 && mpnIndex !== -1) {
+                const mpn = rowData[mpnIndex];
+                const suffixParts = rowData.slice(skuIndex + 1).map(v => v || '');
+                const newSku = `SKU-${mpn}${suffixParts.length ? '-' + suffixParts.join('-') : ''}`;
+                rowData[skuIndex] = newSku;
+
+                // Update SKU cell visually
+                $(cells[skuIndex]).text(newSku);
+            }
+
+            // ✅ Save updated row to session
+            $.post(BASE_URL + 'product-system/update-session-row', {
+                row_index: rowIndex,
+                row_data: JSON.stringify(rowData)
+            }, function (res) {
+                console.log('Session updated for row', rowIndex);
+            });
+        }
+
+        let editingCell = null;
+
+        function editCell(cell) {
+            if (editingCell) return;
+
+            editingCell = cell;
+            const currentValue = $(cell).text();
+            const rowIndex = $(cell).closest('tr').data('row');
+            const colIndex = $(cell).index();
+
+            $(cell).html(`<input type="text" class="cell-input form-control" 
+                            value="${currentValue.replace(/&quot;/g, '"')}" 
+                            data-row="${rowIndex}" data-col="${colIndex}">`);
+            const input = $(cell).find('.cell-input');
+            input.focus().select();
+
+            input.on('blur keypress', function (e) {
+                if (e.type === 'keypress' && e.which !== 13) return;
+
+                const newValue = $(this).val();
+                $(editingCell).text(newValue);
+                editingCell = null;
+
+                // Send updated row to server
+                saveEditedRowToSession(rowIndex);
+            });
+
+            input.on('keydown', function (e) {
+                if (e.which === 27) { // ESC
+                    $(editingCell).text(currentValue);
+                    editingCell = null;
+                }
+            });
+        }
+
+
+
 
         function renderTable(container, data) {
             let html = '<table class="table table-bordered"><thead><tr>';

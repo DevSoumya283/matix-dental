@@ -105,5 +105,24 @@ class ProductSystem extends MW_Controller {
         echo json_encode($result);
     }
 
+    public function update_session_row()
+    {
+        $rowIndex = $this->input->post('row_index');
+        $rowData = json_decode($this->input->post('row_data'), true);
+
+        if (!is_array($rowData)) {
+            show_error("Invalid row data.");
+        }
+
+        $sessionData = $this->session->userdata('upload_excel_data') ?? [];
+
+        $sessionData[$rowIndex] = $rowData;
+
+        $this->session->set_userdata('upload_excel_data', $sessionData);
+
+        echo json_encode(['status' => 'success']);
+    }
+
+
 
 }
