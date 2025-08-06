@@ -605,7 +605,7 @@ class ProductsUpload extends MW_Controller {
             return;
         }
 
-        echo "<pre>"; print_r($excel_data); die('hhh');
+        // echo "<pre>"; print_r($excel_data); die('hhh');
 
         $decoded_data = json_decode($excel_data, true);
         if (!$decoded_data || !is_array($decoded_data)) {

@@ -281,6 +281,27 @@
                     headers3 = jsonData[0]; // first row as headers
                     baseData3 = jsonData.slice(1); // rest are data rows
 
+                    // I added with sku login in this
+                    let skuIndex = headers3.indexOf('sku');
+                    let mpnIndex = headers3.indexOf('mpn');
+
+                    for (let i = 0; i < baseData3.length; i++) {
+                        let row = baseData3[i];
+                        let mpnRaw = row[mpnIndex];
+
+                        let suffixParts = [];
+                        for (let j = skuIndex + 1; j < headers3.length; j++) {
+                            suffixParts.push((row[j] || '').toString().trim());
+                        }
+
+                        let sku = `SKU-${mpnRaw}`;
+                        if (suffixParts.length > 0) {
+                            sku += `-${suffixParts.join('-')}`;
+                        }
+
+                        row[skuIndex] = sku;
+                    }
+ 
                     // Convert to array of objects for easier use in AJAX
                     _variantRows = baseData3.map(row => {
                         const obj = {};
@@ -568,6 +589,7 @@
             html += '</tbody></table>';
             $(container).html(html);
         }
+
         function saveEditedRowToSession(rowIndex) {
             const table = $('#uploadPreview table')[0];
             const row = table.rows[rowIndex + 1]; // skip header
@@ -575,7 +597,7 @@
             const rowData = [];
 
             const headers = [];
-            $('#uploadPreview table thead th').each(function () {
+            $('#uploadPreview table thead th').each(function() {
                 headers.push($(this).text().trim());
             });
 
@@ -601,10 +623,20 @@
             $.post(BASE_URL + 'product-system/update-session-row', {
                 row_index: rowIndex,
                 row_data: JSON.stringify(rowData)
-            }, function (res) {
+            }, function(res) {
                 console.log('Session updated for row', rowIndex);
             });
+
+            // ✅ ALSO UPDATE _variantRows IMMEDIATELY
+            if (_variantRows[rowIndex]) {
+                const updatedObject = {};
+                headers.forEach((key, i) => {
+                    updatedObject[key] = rowData[i] !== undefined ? rowData[i] : '';
+                });
+                _variantRows[rowIndex] = updatedObject;
+            }
         }
+
 
         let editingCell = null;
 
@@ -622,7 +654,7 @@
             const input = $(cell).find('.cell-input');
             input.focus().select();
 
-            input.on('blur keypress', function (e) {
+            input.on('blur keypress', function(e) {
                 if (e.type === 'keypress' && e.which !== 13) return;
 
                 const newValue = $(this).val();
@@ -633,7 +665,7 @@
                 saveEditedRowToSession(rowIndex);
             });
 
-            input.on('keydown', function (e) {
+            input.on('keydown', function(e) {
                 if (e.which === 27) { // ESC
                     $(editingCell).text(currentValue);
                     editingCell = null;
