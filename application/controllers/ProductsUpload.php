@@ -345,7 +345,7 @@ class ProductsUpload extends MW_Controller {
         ];
 
         $random_name = rand(1, 10000000000);
-        $filename = $random_name . '.xlsx';
+        $filename = $random_name . '_options.xlsx';
         $uploadPath = FCPATH . 'assets/uploads/';
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0775, true);
@@ -528,7 +528,9 @@ class ProductsUpload extends MW_Controller {
         }
 
         // Create consistent headers
-        $headers = ['id','matix_id','mpn', 'name','price','retail_price','stocks','sku'];
+       $headers = ['id', 'mpn', 'name', 'item_code', 'description', 'extended_description', 'keywords', 'manufacturer', 'shipping_restrictions', 
+       'brand', 'license_required', 'category_id', 'base_price', 'price', 'retail_price', 'stocks', 'sku'];
+
         foreach ($option_names as $name) {
             $headers[] = ($name); // Color, Size, etc.
         }
@@ -542,15 +544,25 @@ class ProductsUpload extends MW_Controller {
             // Export SKUs with linked option values
             foreach ($skus as $sku) {
                 $row = [
-                    'id' => $product['id'],
-                    'matix_id' => $product['matix_id'],
-                    'mpn' => $product['mpn'],
-                    'name' => $product['name'],
-                    'price' => $sku['price'],
-                    'retail_price' => $sku['retail_price'],
-                    'stocks' => $sku['stock_quantity'],
-                    'sku' => $sku['sku'],
-                ];
+                        'id' => $product['id'],
+                        'mpn' => $product['mpn'],
+                        'name' => $product['name'],
+                        'item_code' => $product['item_code'] ?? '',
+                        'description' => $product['description'] ?? '',
+                        'extended_description' => $product['extended_description'] ?? '',
+                        'keywords' => $product['keywords'] ?? '',
+                        'manufacturer' => $product['manufacturer'] ?? '',
+                        'shipping_restrictions' => $product['shipping_restrictions'] ?? '',
+                        'brand' => $product['brand'] ?? '',
+                        'license_required' => $product['license_required'] ?? '',
+                        'category_id' => $product['category_id'] ?? '',
+                        'base_price' => $product['base_price'] ?? '',
+                        'price' => $sku['price'] ?? '',
+                        'retail_price' => $sku['retail_price'] ?? '',
+                        'stocks' => $sku['stock_quantity'] ?? '',
+                        'sku' => $sku['sku'] ?? '',
+                    ];
+
 
                 // Initialize option columns blank
                 foreach ($option_names as $opt_id => $opt_name) {
@@ -573,15 +585,24 @@ class ProductsUpload extends MW_Controller {
             }
         } else {
             // No SKUs — create 1 blank row with options for user to fill
-             $row = [
+            $row = [
                     'id' => $product['id'],
-                    'matix_id' => $product['matix_id'],
                     'mpn' => $product['mpn'],
                     'name' => $product['name'],
-                    'price' => $sku['price'],
-                    'retail_price' => $sku['retail_price'],
-                    'stocks' => $sku['stock_quantity'],
-                    'sku' => $sku['sku'],
+                    'item_code' => $product['item_code'] ?? '',
+                    'description' => $product['description'] ?? '',
+                    'extended_description' => $product['extended_description'] ?? '',
+                    'keywords' => $product['keywords'] ?? '',
+                    'manufacturer' => $product['manufacturer'] ?? '',
+                    'shipping_restrictions' => $product['shipping_restrictions'] ?? '',
+                    'brand' => $product['brand'] ?? '',
+                    'license_required' => $product['license_required'] ?? '',
+                    'category_id' => $product['category_id'] ?? '',
+                    'base_price' => $product['base_price'] ?? '',
+                    'price' => $sku['price'] ?? '',
+                    'retail_price' => $sku['retail_price'] ?? '',
+                    'stocks' => $sku['stock_quantity'] ?? '',
+                    'sku' => $sku['sku'] ?? '',
                 ];
 
             foreach ($option_names as $opt_name) {
@@ -597,15 +618,13 @@ class ProductsUpload extends MW_Controller {
     }
 
 
-    public function insert_variants()
+    public function insert_variants() 
     {
         $excel_data = $this->input->post('excel_data');
         if (!$excel_data) {
             echo json_encode(['status' => 'error', 'message' => 'No Excel data provided']);
             return;
         }
-
-        // echo "<pre>"; print_r($excel_data); die('hhh');
 
         $decoded_data = json_decode($excel_data, true);
         if (!$decoded_data || !is_array($decoded_data)) {
@@ -617,80 +636,151 @@ class ProductsUpload extends MW_Controller {
         $rows = array_chunk($decoded_data, $batchSize);
         $inserted = 0;
         $updated = 0;
+        $skipped = 0;
+
+        $this->db->trans_start(); // Start transaction
+
+        $all_options = $this->db->get('product_options')->result_array();
+        $option_map = [];
+        foreach ($all_options as $opt) {
+            $option_map[$opt['product_id']][$opt['name']] = $opt['id'];
+        }
+
+        $sku_inserts = [];
+        $option_value_inserts = [];
+        $sku_option_value_inserts = [];
+        $child_product_inserts = [];
 
         foreach ($rows as $batch) {
             foreach ($batch as $row) {
                 $mpn = trim($row['mpn']);
                 $sku_code = trim($row['sku']);
                 $product = $this->db->get_where('products', ['mpn' => $mpn])->row();
-                if (!$product) continue;
+                if (!$product) {
+                    log_message('error', "Skipped row due to missing product with mpn: $mpn");
+                    $skipped++;
+                    continue;
+                }
 
-                $product_id = $product->id;
+                $parent_product_id = $product->id;
 
-                // Check if SKU exists
-                $existing_sku = $this->db->get_where('skus', ['sku_code' => $sku_code, 'product_id' => $product_id])->row();
-
-                $sku_data = [
-                    'product_id' => $product_id,
-                    'sku_code'        => $sku_code,
-                    'price'      => $row['price'] ?? 0,
-                    'retail_price' => $row['retail_price'] ?? 0,
-                    'stock_quantity' => $row['stocks'] ?? 0,
+                // Insert new child product for each SKU
+                $child_product_data = [
+                    'parent_product_id' => $parent_product_id,
+                    'mpn' => $mpn,
+                    'name' => $row['name'],
+                    'item_code' => $row['item_code'] ?? '',
+                    'description' => $row['description'] ?? '',
+                    'extended_description' => $row['extended_description'] ?? '',
+                    'keywords' => $row['keywords'] ?? '',
+                    'manufacturer' => $row['manufacturer'] ?? '',
+                    'shipping_restrictions' => $row['shipping_restrictions'] ?? '',
+                    'brand' => $row['brand'] ?? '',
+                    'license_required' => $row['license_required'] ?? '',
+                    'category_id' => $row['category_id'] ?? '',
+                    'base_price' => $row['base_price'] ?? '',
+                    'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ];
 
-                if ($existing_sku) {
-                    $this->db->where('id', $existing_sku->id)->update('skus', $sku_data);
-                    $sku_id = $existing_sku->id;
-                    $updated++;
-                } else {
-                    $sku_data['created_at'] = date('Y-m-d H:i:s');
-                    $this->db->insert('skus', $sku_data);
-                    $sku_id = $this->db->insert_id();
-                    $inserted++;
-                }
+                $child_product_inserts[] = $child_product_data;
 
-                // Handle each option (like color, size...)
+                // Prepare SKU data
+                $sku_data = [
+                    'product_id' => null, // will update after child product is inserted
+                    'sku_code' => $sku_code,
+                    'price' => $row['price'] ?? 0,
+                    'retail_price' => $row['retail_price'] ?? 0,
+                    'stock_quantity' => $row['stocks'] ?? 0,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+
+                $sku_inserts[] = $sku_data;
+
                 foreach ($row as $key => $value) {
-                    if (in_array($key, ['id', 'matix_id', 'mpn', 'name', 'sku', 'price', 'retail_price']) || $value === '') continue;
+                    if (in_array($key, ['id', 'matix_id', 'mpn', 'name', 'sku', 'price', 'retail_price', 'stocks']) || $value === '') continue;
 
-                    $option = $this->db->get_where('product_options', ['product_id' => $product_id, 'name' => $key])->row();
-                    if (!$option) continue; // Option not defined
+                    if (isset($option_map[$parent_product_id][$key])) {
+                        $option_id = $option_map[$parent_product_id][$key];
+                    } else {
+                        $skipped++;
+                        continue;
+                    }
 
-                    $option_id = $option->id;
-
-                    // Check if this option value exists
                     $value_row = $this->db->get_where('product_option_values', ['option_id' => $option_id, 'value' => $value])->row();
                     if (!$value_row) {
-                        $this->db->insert('product_option_values', [
-                        'product_id' => $product_id,   
-                        'option_id'  => $option_id,
-                        'value'      => $value,
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                    $option_value_id = $this->db->insert_id();
-
+                        $option_value_data = [
+                            'product_id' => $parent_product_id,
+                            'option_id' => $option_id,
+                            'value' => $value,
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+                        $this->db->insert('product_option_values', $option_value_data);
+                        $option_value_id = $this->db->insert_id();
+                        $option_value_inserts[] = $option_value_data;
                     } else {
                         $option_value_id = $value_row->id;
                     }
 
-                    // Now insert into sku_option_values if not exists
-                    $exists = $this->db->get_where('sku_option_values', [
-                        'sku_id'          => $sku_id,
+                    $sku_option_value_inserts[] = [
+                        'sku_id' => null, // will update later after SKU insert
                         'value_id' => $option_value_id
-                    ])->row();
-
-                    if (!$exists) {
-                        $this->db->insert('sku_option_values', [
-                            'sku_id'          => $sku_id,
-                            'value_id' => $option_value_id
-                        ]);
-                    }
+                    ];
                 }
             }
         }
 
-        echo json_encode(['status' => 'success', 'inserted' => $inserted, 'updated' => $updated]);
+            // Insert the child products in a batch
+            if (!empty($child_product_inserts)) {
+                $this->db->insert_batch('products', $child_product_inserts);
+                $inserted += count($child_product_inserts);
+
+                // Get the first inserted product ID
+                $first_inserted_product_id = $this->db->insert_id();
+
+                $child_product_ids = range($first_inserted_product_id, $first_inserted_product_id + count($child_product_inserts) - 1);
+            }
+
+            if (!empty($sku_inserts)) {
+                foreach ($sku_inserts as $index => &$sku_data) {
+                    $sku_data['product_id'] = $child_product_ids[$index];
+
+                }
+
+                $this->db->insert_batch('skus', $sku_inserts);
+                $first_inserted_sku_id = $this->db->insert_id();
+
+                $sku_ids = range($first_inserted_sku_id, $first_inserted_sku_id + count($sku_inserts) - 1);
+            }
+
+        // // Link SKU and option values
+        //     if (!empty($sku_option_value_inserts)) {
+        //         $sku_index = 0;
+        //         foreach ($sku_option_value_inserts as $index => &$sku_option_value_data) {
+        //             if (isset($sku_ids[$sku_index])) {
+        //                 $sku_option_value_data['sku_id'] = $sku_ids[$sku_index];
+        //                 if (($index + 1) % count($sku_option_value_inserts) == 0) {
+        //                     $sku_index++;
+        //                 }
+        //             }
+        //         }
+        //         $this->db->insert_batch('sku_option_values', $sku_option_value_inserts);
+        //     }
+
+
+        $this->db->trans_complete(); 
+        if ($this->db->trans_status() === FALSE) {
+            echo json_encode(['status' => 'error', 'message' => 'Transaction failed']);
+            return;
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'inserted' => $inserted,
+            'updated' => $updated,
+            'skipped' => $skipped
+        ]);
     }
 
 
