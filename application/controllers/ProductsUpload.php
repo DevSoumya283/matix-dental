@@ -36,8 +36,10 @@ class ProductsUpload extends MW_Controller {
         $this->load->model('Vendor_groups_model');
         $this->load->library('email'); // load email library
         $this->load->helper('my_email_helper');
+        $this->load->helper('download');
 
-
+        $this->load->helper(['form', 'url', 'csv']);  
+        $this->load->library('upload'); 
         $this->load->library('session');
     }
 
@@ -783,6 +785,136 @@ class ProductsUpload extends MW_Controller {
         ]);
     }
 
+/////////
+ public function export_sku_data()
+{
+    // Get SKU data from the model
+    $this->db->select('sku_code, price, retail_price, stock_quantity');
+    $this->db->from('skus');
+    $query = $this->db->get();
+    $sku_data = $query->result_array();
 
+    if (empty($sku_data)) {
+        echo json_encode(['status' => 'error', 'message' => 'No SKU data available to export.']);
+        return;
+    }
 
+    // Set CSV headers
+    $headers = ['sku_code', 'price', 'retail_price', 'stock_quantity'];
+
+    // Prepare CSV data
+    $export_data = [];
+
+    foreach ($sku_data as $sku) {
+        $row = [
+            $sku['sku_code'],
+            $sku['price'],
+            $sku['retail_price'],
+            $sku['stock_quantity']
+        ];
+        $export_data[] = $row;
+    }
+
+    // Convert to CSV format and trigger download
+    $csv = $this->array_to_csv_with_headers2($headers, $export_data);
+
+    // Send the headers and file for download
+    $this->load->helper('download');
+    force_download('sku_data.csv', $csv);
+}
+
+public function array_to_csv_with_headers2($headers, $data)
+{
+    // Open a temporary file for CSV output
+    $output = fopen('php://temp', 'r+');
+
+    // Write the headers row to the CSV
+    fputcsv($output, $headers);
+
+    // Write each data row to the CSV
+    foreach ($data as $row) {
+        fputcsv($output, $row);
+    }
+
+    // Reset file pointer to the beginning
+    rewind($output);
+
+    // Get the CSV content from the temporary file
+    $csv_content = stream_get_contents($output);
+
+    // Close the temporary file
+    fclose($output);
+
+    return $csv_content;
+}
+
+public function update_sku_from_csv() {
+        // Configure the file upload settings
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = 'csv';
+        $config['max_size'] = 5000;  // Max file size in KB
+        $this->upload->initialize($config);
+
+        // Check if the file is uploaded successfully
+        if (!$this->upload->do_upload('csv_file')) {
+            // Display an error message if upload fails
+            echo json_encode(['status' => 'error', 'message' => $this->upload->display_errors()]);
+            return;
+        }
+
+        // Get the uploaded file's data
+        $file_data = $this->upload->data();
+        $file_path = './uploads/' . $file_data['file_name'];
+
+        // Parse the CSV file
+        $csv_data = $this->parse_csv($file_path);
+
+        if (empty($csv_data)) {
+            echo json_encode(['status' => 'error', 'message' => 'No valid data found in the CSV file.']);
+            return;
+        }
+
+        // Update SKUs with the data from the CSV file
+        $this->update_skus_in_db($csv_data);
+
+        echo json_encode(['status' => 'success', 'message' => 'SKU data updated successfully.']);
+    }
+
+    // Function to parse CSV and return data as an associative array
+    private function parse_csv($file_path) {
+        $csv_data = [];
+
+        if (($handle = fopen($file_path, 'r')) !== false) {
+            $headers = fgetcsv($handle);  // Get the headers row
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $csv_data[] = array_combine($headers, $row);
+            }
+
+            fclose($handle);
+        }
+
+        return $csv_data;
+    }
+
+    // Function to update SKUs in the database from the CSV data
+    private function update_skus_in_db($csv_data) {
+        foreach ($csv_data as $row) {
+            $sku_code = $row['sku_code'];  // SKU Code
+            $price = $row['price'];  // New price
+            $retail_price = $row['retail_price'];  // New retail price
+            $stock_quantity = $row['stock_quantity'];  // New stock quantity
+
+            // Prepare data for updating
+            $data = [
+                'price' => $price,
+                'retail_price' => $retail_price,
+                'stock_quantity' => $stock_quantity
+            ];
+
+            // Update SKU in the database
+            $this->db->where('sku_code', $sku_code);
+            $this->db->update('skus', $data);
+        }
+    }
 }
