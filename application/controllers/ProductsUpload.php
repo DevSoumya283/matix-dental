@@ -66,7 +66,7 @@ class ProductsUpload extends MW_Controller {
 
         // Header definition
         $headerRow = [
-            'id', 'matix_id', 'mpn', 'item_code', 'name','description', 'extended_description', 'keywords',
+            'id','mpn', 'item_code', 'name','description', 'extended_description', 'keywords',
             'manufacturer', 'shipping_restrictions', 'brand','license_required', 'category_id', 'base_price','active'
         ];
 
@@ -98,7 +98,6 @@ class ProductsUpload extends MW_Controller {
 
                 $products_data = [
                     $product->id ?? '',
-                    $product->matix_id ?? '',
                     $product->mpn ?? '',
                     $product->item_code ?? '',
                     $product->name ?? '',
@@ -219,7 +218,6 @@ class ProductsUpload extends MW_Controller {
             }
 
             $vendors_product_id = $row[4];
-            $matix_id = implode("-", [$mpn, $vendors_product_id]);
 
             $existing_product = $this->Products_model->select('id', 'matix_id')->get_by(['mpn' => $mpn]);
             $matrix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
@@ -272,7 +270,6 @@ class ProductsUpload extends MW_Controller {
 
             // Only set these on insert
             if (!$existing_product) {
-                $product_data['matix_id'] = $matrix_id_value;
                 $product_data['mpn'] = $mpn;
                 $product_data['created_at'] = date('Y-m-d H:i:s');
                 $new_product_array[] = $product_data;
@@ -341,7 +338,7 @@ class ProductsUpload extends MW_Controller {
         }
 
         $headerRow = [
-            'id', 'matix_id', 'mpn',  'name','options'
+            'id',  'mpn',  'name','options'
         ];
 
         $random_name = rand(1, 10000000000);
@@ -384,7 +381,6 @@ class ProductsUpload extends MW_Controller {
 
             $products_data = [
                 $product->id ?? '',
-                $product->matix_id ?? '',
                 $product->mpn ?? '',                
                 $product->name ?? '',                
                 $options_str
@@ -685,9 +681,9 @@ class ProductsUpload extends MW_Controller {
 
                 $child_product_inserts[] = $child_product_data;
 
-                // Prepare SKU data
+                // Prepare SKU data (this will reference the existing parent product's ID)
                 $sku_data = [
-                    'product_id' => null, // will update after child product is inserted
+                    'product_id' => $parent_product_id, // Link the SKU to the parent product
                     'sku_code' => $sku_code,
                     'price' => $row['price'] ?? 0,
                     'retail_price' => $row['retail_price'] ?? 0,
@@ -698,8 +694,9 @@ class ProductsUpload extends MW_Controller {
 
                 $sku_inserts[] = $sku_data;
 
+                // Link options to the SKU
                 foreach ($row as $key => $value) {
-                    if (in_array($key, ['id', 'matix_id', 'mpn', 'name', 'sku', 'price', 'retail_price', 'stocks']) || $value === '') continue;
+                    if (in_array($key, ['id', 'mpn', 'name', 'sku', 'price', 'retail_price', 'stocks']) || $value === '') continue;
 
                     if (isset($option_map[$parent_product_id][$key])) {
                         $option_id = $option_map[$parent_product_id][$key];

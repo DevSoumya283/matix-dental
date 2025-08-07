@@ -95,7 +95,6 @@ class ProductSystem extends MW_Controller {
         foreach ($products as $product) {
             $result[] = [
                 'id' => $product->id,
-                'matix_id' => $product->matix_id,
                 'mpn' => $product->mpn,
                 'name' => $product->name,
                 'options' => isset($options_map[$product->id]) ? implode(',', $options_map[$product->id]) : '',
