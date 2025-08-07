@@ -664,7 +664,6 @@ class ProductsUpload extends MW_Controller {
                 $child_product_data = [
                     'parent_product_id' => $parent_product_id,
                     'mpn' => $mpn,
-                    'name' => $row['name'],
                     'item_code' => $row['item_code'] ?? '',
                     'description' => $row['description'] ?? '',
                     'extended_description' => $row['extended_description'] ?? '',
@@ -686,6 +685,7 @@ class ProductsUpload extends MW_Controller {
                     'product_id' => $parent_product_id, // Link the SKU to the parent product
                     'sku_code' => $sku_code,
                     'price' => $row['price'] ?? 0,
+                    'name' => $row['name'] ?? NULL,
                     'retail_price' => $row['retail_price'] ?? 0,
                     'stock_quantity' => $row['stocks'] ?? 0,
                     'created_at' => date('Y-m-d H:i:s'),
@@ -729,21 +729,17 @@ class ProductsUpload extends MW_Controller {
         }
 
             // Insert the child products in a batch
-            if (!empty($child_product_inserts)) {
-                $this->db->insert_batch('products', $child_product_inserts);
-                $inserted += count($child_product_inserts);
+            // if (!empty($child_product_inserts)) {
+            //     $this->db->insert_batch('products', $child_product_inserts);
+            //     $inserted += count($child_product_inserts);
 
-                // Get the first inserted product ID
-                $first_inserted_product_id = $this->db->insert_id();
+            //     // Get the first inserted product ID
+            //     $first_inserted_product_id = $this->db->insert_id();
 
-                $child_product_ids = range($first_inserted_product_id, $first_inserted_product_id + count($child_product_inserts) - 1);
-            }
+            //     $child_product_ids = range($first_inserted_product_id, $first_inserted_product_id + count($child_product_inserts) - 1);
+            // }
 
-            if (!empty($sku_inserts)) {
-                foreach ($sku_inserts as $index => &$sku_data) {
-                    $sku_data['product_id'] = $child_product_ids[$index];
-
-                }
+            if (!empty($sku_inserts)) {                
 
                 $this->db->insert_batch('skus', $sku_inserts);
                 $first_inserted_sku_id = $this->db->insert_id();
@@ -751,19 +747,26 @@ class ProductsUpload extends MW_Controller {
                 $sku_ids = range($first_inserted_sku_id, $first_inserted_sku_id + count($sku_inserts) - 1);
             }
 
-        // // Link SKU and option values
-        //     if (!empty($sku_option_value_inserts)) {
-        //         $sku_index = 0;
-        //         foreach ($sku_option_value_inserts as $index => &$sku_option_value_data) {
-        //             if (isset($sku_ids[$sku_index])) {
-        //                 $sku_option_value_data['sku_id'] = $sku_ids[$sku_index];
-        //                 if (($index + 1) % count($sku_option_value_inserts) == 0) {
-        //                     $sku_index++;
-        //                 }
-        //             }
-        //         }
-        //         $this->db->insert_batch('sku_option_values', $sku_option_value_inserts);
-        //     }
+        // Link SKU and option values
+            if (!empty($sku_option_value_inserts)) {
+                $sku_index = 0; 
+
+                $sku_count = count($sku_ids);
+                $value_count = count($sku_option_value_inserts);
+
+                foreach ($sku_option_value_inserts as $index => &$sku_option_value_data) {
+                    if (isset($sku_ids[$sku_index])) {
+                        $sku_option_value_data['sku_id'] = $sku_ids[$sku_index];
+
+                        if (($index + 1) % ($value_count / $sku_count) == 0) {
+                            $sku_index++;
+                        }
+                    }
+                }
+
+                $this->db->insert_batch('sku_option_values', $sku_option_value_inserts);
+            }
+
 
 
         $this->db->trans_complete(); 
