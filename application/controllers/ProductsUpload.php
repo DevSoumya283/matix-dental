@@ -38,7 +38,6 @@ class ProductsUpload extends MW_Controller {
         $this->load->helper('my_email_helper');
         $this->load->helper('download');
 
-        $this->load->helper(['form', 'url', 'csv']);  
         $this->load->library('upload'); 
         $this->load->library('session');
     }
@@ -745,7 +744,7 @@ class ProductsUpload extends MW_Controller {
 
                 $this->db->insert_batch('skus', $sku_inserts);
                 $first_inserted_sku_id = $this->db->insert_id();
-
+                $inserted += count($sku_inserts);
                 $sku_ids = range($first_inserted_sku_id, $first_inserted_sku_id + count($sku_inserts) - 1);
             }
 
@@ -789,7 +788,7 @@ class ProductsUpload extends MW_Controller {
  public function export_sku_data()
 {
     // Get SKU data from the model
-    $this->db->select('sku_code, price, retail_price, stock_quantity');
+    $this->db->select('sku_code, price, retail_price, stock_quantity, image');
     $this->db->from('skus');
     $query = $this->db->get();
     $sku_data = $query->result_array();
@@ -800,7 +799,7 @@ class ProductsUpload extends MW_Controller {
     }
 
     // Set CSV headers
-    $headers = ['sku_code', 'price', 'retail_price', 'stock_quantity'];
+    $headers = ['sku_code', 'price', 'retail_price', 'stock_quantity','image'];
 
     // Prepare CSV data
     $export_data = [];
@@ -810,7 +809,8 @@ class ProductsUpload extends MW_Controller {
             $sku['sku_code'],
             $sku['price'],
             $sku['retail_price'],
-            $sku['stock_quantity']
+            $sku['stock_quantity'],
+            $sku['image']
         ];
         $export_data[] = $row;
     }
@@ -819,7 +819,6 @@ class ProductsUpload extends MW_Controller {
     $csv = $this->array_to_csv_with_headers2($headers, $export_data);
 
     // Send the headers and file for download
-    $this->load->helper('download');
     force_download('sku_data.csv', $csv);
 }
 
@@ -848,37 +847,47 @@ public function array_to_csv_with_headers2($headers, $data)
     return $csv_content;
 }
 
-public function update_sku_from_csv() {
-        // Configure the file upload settings
-        $config['upload_path'] = './uploads/';
-        $config['allowed_types'] = 'csv';
-        $config['max_size'] = 5000;  // Max file size in KB
-        $this->upload->initialize($config);
+public function update_sku_from_csv()
+{
+    $this->load->helper(['form', 'url']);
 
-        // Check if the file is uploaded successfully
-        if (!$this->upload->do_upload('csv_file')) {
-            // Display an error message if upload fails
-            echo json_encode(['status' => 'error', 'message' => $this->upload->display_errors()]);
-            return;
-        }
+    $excel_data = $this->input->post('excel_data');
 
-        // Get the uploaded file's data
-        $file_data = $this->upload->data();
-        $file_path = './uploads/' . $file_data['file_name'];
-
-        // Parse the CSV file
-        $csv_data = $this->parse_csv($file_path);
-
-        if (empty($csv_data)) {
-            echo json_encode(['status' => 'error', 'message' => 'No valid data found in the CSV file.']);
-            return;
-        }
-
-        // Update SKUs with the data from the CSV file
-        $this->update_skus_in_db($csv_data);
-
-        echo json_encode(['status' => 'success', 'message' => 'SKU data updated successfully.']);
+    if (!$excel_data) {
+        echo json_encode(['status' => 'error', 'message' => 'No Excel data provided']);
+        return;
     }
+
+    $decoded_data = json_decode($excel_data, true);
+
+    if (!$decoded_data || !is_array($decoded_data) || count($decoded_data) < 2) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid Excel data']);
+        return;
+    }
+
+    // First row contains headers
+    $headers = $decoded_data[0];
+    $sku_data_rows = array_slice($decoded_data, 1);
+
+    foreach ($sku_data_rows as $row) {
+        $row_data = array_combine($headers, $row); // ['sku_code' => ..., 'price' => ..., etc.]
+
+        if (!isset($row_data['sku_code'])) {
+            continue; // skip invalid rows
+        }
+
+        $this->db->where('sku_code', $row_data['sku_code']);
+        $this->db->update('skus', [
+            'price'          => $row_data['price'] ?? null,
+            'retail_price'   => $row_data['retail_price'] ?? null,
+            'stock_quantity' => $row_data['stock_quantity'] ?? null,
+            'image' => $row_data['image'] ?? null
+        ]);
+    }
+
+    echo json_encode(['status' => 'success', 'message' => 'SKU data updated successfully.']);
+}
+
 
     // Function to parse CSV and return data as an associative array
     private function parse_csv($file_path) {

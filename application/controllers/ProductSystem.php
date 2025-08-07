@@ -123,5 +123,69 @@ class ProductSystem extends MW_Controller {
     }
 
 
+    // price tab
+
+    public function get_price_data()
+    {
+        $this->load->database();
+
+        // Get all columns from skus and products except id, created_at, updated_at
+        $query = $this->db->query("
+            SELECT 
+                skus.product_id AS parent_product_id,
+                skus.sku_code AS SKU, 
+                products.mpn,
+                skus.name AS Product_Name,
+                skus.price,
+                skus.retail_price,
+                products.base_price,
+                skus.stock_quantity,
+                skus.image,
+                skus.status,
+
+                
+                products.description,
+                products.brand,
+                products.category_id,
+                products.item_code,
+                products.active
+
+
+            FROM skus
+            LEFT JOIN products ON skus.product_id = products.id
+        ");
+
+        $skuData = $query->result_array();
+
+        // Get all product options and values
+        $optionQuery = $this->db->query("
+            SELECT pov.product_id, po.name AS option_name, pov.value
+            FROM product_option_values pov
+            JOIN product_options po ON pov.option_id = po.id
+        ");
+
+        $optionRows = $optionQuery->result_array();
+
+        // Group options by product_id
+        $optionMap = [];
+        foreach ($optionRows as $row) {
+            $pid = $row['product_id'];
+            $optionMap[$pid][$row['option_name']] = $row['value'];
+        }
+
+        // Merge SKU + Product with Options
+        foreach ($skuData as &$row) {
+            $pid = $row['parent_product_id'];
+            if (isset($optionMap[$pid])) {
+                foreach ($optionMap[$pid] as $option => $value) {
+                    $row[$option] = $value;
+                }
+            }
+        }
+
+        echo json_encode($skuData);
+    }
+
+
 
 }

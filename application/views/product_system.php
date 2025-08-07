@@ -29,6 +29,7 @@
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#baseProduct">Base Product</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#addOption">Add Option</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#upload">Upload</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#price"  id="price-tab">Price</button></li>
         </ul>
 
         <div class="tab-content border border-top-0 p-3 bg-white" style="overflow: scroll;">
@@ -52,6 +53,7 @@
             </div>
 
             <!-- UPLOAD TAB -->
+           
             <div class="tab-pane fade" id="upload">
                 <input type="file" id="uploadExcel" class="form-control mb-3">
                 <div id="uploadPreview"></div>
@@ -59,11 +61,22 @@
 
             </div>
 
+            <!-- Price  -->
+            <div class="tab-pane fade" id="price">
+                <input type="file" id="uploadExcel3" class="form-control mb-3">
+                <div id="uploadPreview3"></div>
+                <button id="saveToDb5" class="btn btn-success my-2">Update</button>
+                <a href="<?php echo base_url('export-skuData'); ?>" class="btn btn-primary my-3">Export</a>
+
+                <div id="excel-table"  class="table-responsive"></div>
+            </div>
+
         </div>
     </div>
 
     <!-- Modal for Add Columns -->
-    <div class="modal fade" id="addColumnModal" tabindex="-1">
+    <div class="modal f
+    ade" id="addColumnModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -107,30 +120,65 @@
         let allProducts = [];
         let excelData = [];
 
+        $('#baseExcel').on('click', function() {
+            this.value = ''; // Clear to allow same file re-upload
+        });
+
         $('#baseExcel').change(function(e) {
+            if (!e.target.files[0]) return;
+            
+            // Clear old data immediately
+            $('#basePreview').html('Loading...');
+            
             let reader = new FileReader();
             reader.onload = function(e) {
                 let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, {
-                    type: 'array'
-                });
+                let workbook = XLSX.read(data, { type: 'array' });
                 let sheet = workbook.Sheets[workbook.SheetNames[0]];
-                baseData = XLSX.utils.sheet_to_json(sheet, {
-                    header: 1,
-                    defval: ''
-                });
-
-                // ✅ Build excelData from baseData
+                let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                
+                // Filter non-blank columns
+                baseData = filterColumns(rawData);
+                
+                // Build excelData
                 excelData = baseData.slice(1).map(row => {
                     let obj = {};
                     baseData[0].forEach((key, i) => obj[key] = row[i]);
                     return obj;
                 });
-
+                
                 renderTable('#basePreview', baseData);
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         });
+
+        function filterColumns(data) {
+            if (!data.length) return data;
+            
+            let keepColumns = [];
+            for (let i = 0; i < data[0].length; i++) {
+                let hasData = data.some(row => row[i] && row[i].toString().trim() !== '');
+                if (hasData) keepColumns.push(i);
+            }
+            
+            return data.map(row => keepColumns.map(i => row[i] || ''));
+        }
+
+        function renderTable(container, data) {
+            if (!data.length) return;
+            
+            let html = '<table class="table table-bordered"><thead><tr>';
+            data[0].forEach(h => html += `<th>${h}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            for (let i = 1; i < data.length; i++) {
+                html += '<tr>';
+                data[i].forEach(cell => html += `<td>${cell || ''}</td>`);
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            $(container).html(html);
+        }
 
         function showAlert(type, message) {
             const titleMap = {
@@ -204,6 +252,7 @@
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
                         let message = result.message || 'Products saved successfully.';
+
                         if (result.warning) {
                             message += '<br><strong>Warning:</strong> ' + result.warning;
                             console.warn("Skipped Rows:", result.skipped_rows);
@@ -344,6 +393,9 @@
 
                     if (response.status === 'success') {
                         alert(`✅ Inserted: ${response.inserted}, Updated: ${response.updated}`);
+
+                        $('#uploadPreview').html('');
+                        $('#uploadExcel').val('');
                     } else {
                         alert('❌ Error: ' + response.message);
                     }
@@ -428,13 +480,14 @@
                 if (!data.length) return $('#productTable').html('<p>No data found</p>');
 
                 let html = '<table class="table table-bordered"><thead><tr>';
-                html += '<th>ID</th><th>Matrix ID</th><th>MPN</th><th>Name</th><th>Options</th><th>Actions</th>';
+                // html += '<th>ID</th><th>Matrix ID</th><th>MPN</th><th>Name</th><th>Options</th><th>Actions</th>'; <td>${row.matix_id ?? ''}</td>
+                html += '<th>ID</th><th>MPN</th><th>Name</th><th>Options</th><th>Actions</th>';
                 html += '</tr></thead><tbody>';
 
                 data.forEach((row, index) => {
                     html += `<tr>
                                 <td>${row.id}</td>
-                                <td>${row.matix_id ?? ''}</td>
+                                
                                 <td>${row.mpn ?? ''}</td>
                                 <td>${row.name ?? ''}</td>
                                 <td>${row.options}</td>
@@ -547,28 +600,7 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // function renderTable2(container, data) {
-        //     const headers = data[0];
-        //     const rows = data.slice(1);
-
-        //     let html = '<table class="table table-bordered"><thead><tr>';
-        //     headers.forEach(h => html += `<th>${h}</th>`);
-        //     html += '<th>Actions</th></tr></thead><tbody>';
-
-        //     rows.forEach((row, i) => {
-        //         html += `<tr data-row="${i}">`;
-        //         row.forEach((cell, j) => {
-        //             html += `<td title="Double click to edit" ondblclick="makeEditable(this)" 
-        //                         onblur="updateRowInSession(${i}, this, ${j})">${cell}</td>`;
-        //         });
-        //         html += `<td><button class="btn btn-sm btn-danger" onclick="deleteRow(${i})">Delete</button></td>`;
-        //         html += `</tr>`;
-        //     });
-
-        //     html += '</tbody></table>';
-
-        //     $(container).html(html);
-        // }
+       
         function renderTable2(container, data) {
             const headers = data[0];
             const rows = data.slice(1);
@@ -673,21 +705,127 @@
             });
         }
 
+        // price tab 
 
+        $(document).ready(function () {
+            let loaded = false;
 
+            $('#price-tab').on('click', function () {
+                if (loaded) return;
 
-        function renderTable(container, data) {
-            let html = '<table class="table table-bordered"><thead><tr>';
-            data[0].forEach(h => html += `<th>${h}</th>`);
-            html += '</tr></thead><tbody>';
-            for (let i = 1; i < data.length; i++) {
-                html += '<tr>';
-                data[i].forEach(cell => html += `<td>${cell ?? ''}</td>`);
-                html += '</tr>';
+                $.ajax({
+                    url: '<?= base_url("ProductSystem/get_price_data") ?>',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (!data || !data.length) {
+                            $('#excel-table').html("<div class='alert alert-warning'>No data found.</div>");
+                            return;
+                        }
+
+                        // Convert JSON to SheetJS worksheet
+                        const ws = XLSX.utils.json_to_sheet(data);
+                        const html = XLSX.utils.sheet_to_html(ws, { editable: false, id: "price-table" });
+
+                        // Inject HTML table
+                        $('#excel-table').html(html);
+
+                        // Style it with Bootstrap
+                        $('#price-table')
+                            .addClass('table table-bordered table-striped table-hover table-sm align-middle')
+                            .css('width', '100%');
+
+                        loaded = true;
+                    },
+                    error: function (xhr) {
+                        console.error(xhr.responseText);
+                        $('#excel-table').html("<div class='alert alert-danger'>Failed to load data.</div>");
+                    }
+                });
+            });
+        });
+
+        let headers4 = [];
+        let baseData4 = [];
+
+        $('#uploadExcel3').on('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1
+                });
+
+                if (jsonData.length > 0) {
+                    headers4 = jsonData[0];
+                    baseData4 = jsonData;
+                    $('#productTable').html(`<div class="alert alert-info">Excel file loaded. <strong>${baseData4.length - 1}</strong> records ready for upload.</div>`);
+                } else {
+                    showAlert('error', 'No data found in the Excel sheet.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        $('#saveToDb5').on('click', updatesku);
+
+        function updatesku() {
+            if (baseData4.length === 0) {
+                showAlert('error', 'No data to save. Please upload and process an Excel file first.');
+                return;
             }
-            html += '</tbody></table>';
-            $(container).html(html);
+
+            const dataRows = baseData4.slice(1);
+            const formattedRows1 = dataRows.map(row => {
+                const paddedRow = [...row];
+                while (paddedRow.length < headers4.length) {
+                    paddedRow.push('');
+                }
+                return paddedRow;
+            });
+
+            const excelData = [headers4, ...formattedRows1];
+
+            const saveBtn = $('#saveToDb5');
+            const originalText = saveBtn.html();
+            saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+
+            $.ajax({
+                url: 'update-skuData',
+                type: 'POST',
+                data: {
+                    excel_data: JSON.stringify(excelData),
+                    file_name: 'uploaded_options.xlsx'
+                },
+                success: function(response) {
+                    const result = JSON.parse(response);
+                    if (result.status === 'success') {
+                        let message = result.message || 'Options inserted successfully.';
+                        if (result.warning) {
+                            message += `<br><strong>Warning:</strong> ${result.warning}`;
+                            console.warn("Skipped Rows:", result.skipped_rows);
+                        }
+                        showAlert('success', message);
+                    } else {
+                        showAlert('error', result.message || 'Error inserting options.');
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Failed to save options. Please check your server or network.');
+                },
+                complete: function() {
+                    saveBtn.prop('disabled', false).html(originalText);
+                }
+            });
         }
+
     </script>
 </body>
 
