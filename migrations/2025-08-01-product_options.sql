@@ -84,4 +84,3 @@ CREATE TABLE sku_option_values (
     CONSTRAINT fk_sku_option_value FOREIGN KEY (value_id)
         REFERENCES product_option_values(id) ON DELETE CASCADE
 );
-//checkinh
