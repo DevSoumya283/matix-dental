@@ -1,16 +1,18 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class ProductSystem extends MW_Controller {
+class ProductSystem extends MW_Controller
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->load->model('Productdata_model');
         $this->load->library('ion_auth');
-
     }
 
-    public function index() {
+    public function index()
+    {
         $this->load->view('product_system');
     }
 
@@ -22,7 +24,8 @@ class ProductSystem extends MW_Controller {
 
 
 
-    public function get_products() {
+    public function get_products()
+    {
         $products = $this->Productdata_model->get_all_products();
 
         if (empty($products)) {
@@ -35,11 +38,13 @@ class ProductSystem extends MW_Controller {
     }
 
 
-    public function export_all_products() {
+    public function export_all_products()
+    {
         $this->Productdata_model->export_all_products();
     }
 
-    public function export_single_product($id) {
+    public function export_single_product($id)
+    {
         $this->load->model('Productdata_model');
         $product = $this->Productdata_model->get_product_by_id($id);
 
@@ -53,11 +58,12 @@ class ProductSystem extends MW_Controller {
 
         // Load view with one row wrapped in array
         $this->load->view('export', ['products' => [$product]]);
-}
+    }
 
 
 
-    public function add_product_options() {
+    public function add_product_options()
+    {
         $product_id = $this->input->post('product_id');
         $columns = explode(',', $this->input->post('columns'));
         $this->Productdata_model->add_options($product_id, $columns);
@@ -129,63 +135,76 @@ class ProductSystem extends MW_Controller {
     {
         $this->load->database();
 
-        // Get all columns from skus and products except id, created_at, updated_at
+        // Step 1: Get base SKU + Product data
         $query = $this->db->query("
-            SELECT 
-                skus.product_id AS parent_product_id,
-                skus.sku_code AS SKU, 
-                products.mpn,
-                skus.name AS Product_Name,
-                skus.price,
-                skus.retail_price,
-                products.base_price,
-                skus.stock_quantity,
-                skus.image,
-                skus.status,
-
-                
-                products.description,
-                products.brand,
-                products.category_id,
-                products.item_code,
-                products.active
-
-
-            FROM skus
-            LEFT JOIN products ON skus.product_id = products.id
-        ");
+        SELECT 
+            skus.id AS sku_id,
+            skus.product_id AS parent_product_id,
+            skus.sku_code AS SKU, 
+            products.mpn,
+            skus.name AS Product_Name,
+            skus.price,
+            skus.retail_price,
+            products.base_price,
+            skus.stock_quantity,
+            skus.image,
+            skus.status,
+            products.description,
+            products.brand,
+            products.category_id,
+            products.item_code,
+            products.active
+        FROM skus
+        LEFT JOIN products ON skus.product_id = products.id
+    ");
 
         $skuData = $query->result_array();
 
-        // Get all product options and values
-        $optionQuery = $this->db->query("
-            SELECT pov.product_id, po.name AS option_name, pov.value
-            FROM product_option_values pov
-            JOIN product_options po ON pov.option_id = po.id
-        ");
+        // Step 2: Get all options for all products
+        $optionNamesQuery = $this->db->query("
+        SELECT id, product_id, name FROM product_options
+    ");
+        $allProductOptions = $optionNamesQuery->result_array();
 
-        $optionRows = $optionQuery->result_array();
-
-        // Group options by product_id
-        $optionMap = [];
-        foreach ($optionRows as $row) {
-            $pid = $row['product_id'];
-            $optionMap[$pid][$row['option_name']] = $row['value'];
+        // Group option names by product_id
+        $productOptionNames = [];
+        foreach ($allProductOptions as $opt) {
+            $productOptionNames[$opt['product_id']][] = $opt['name'];
         }
 
-        // Merge SKU + Product with Options
-        foreach ($skuData as &$row) {
-            $pid = $row['parent_product_id'];
-            if (isset($optionMap[$pid])) {
-                foreach ($optionMap[$pid] as $option => $value) {
-                    $row[$option] = $value;
-                }
+        // Step 3: Get all SKU option values
+        $skuOptionsQuery = $this->db->query("
+        SELECT 
+            sov.sku_id,
+            pov.id AS value_id,
+            pov.product_id,
+            po.name AS option_name,
+            pov.value
+        FROM sku_option_values sov
+        JOIN product_option_values pov ON sov.value_id = pov.id
+        JOIN product_options po ON pov.option_id = po.id
+    ");
+        $skuOptionRows = $skuOptionsQuery->result_array();
+
+        // Group options by sku_id
+        $skuOptionMap = [];
+        foreach ($skuOptionRows as $row) {
+            $skuOptionMap[$row['sku_id']][$row['option_name']] = $row['value'];
+        }
+
+        // Step 4: Merge into final SKU data with only relevant options per product
+        foreach ($skuData as &$sku) {
+            $sku_id = $sku['sku_id'];
+            $product_id = $sku['parent_product_id'];
+
+            // Get relevant options for this product_id
+            $optionNames = isset($productOptionNames[$product_id]) ? $productOptionNames[$product_id] : [];
+
+            foreach ($optionNames as $optionName) {
+                $sku[$optionName] = isset($skuOptionMap[$sku_id][$optionName]) ? $skuOptionMap[$sku_id][$optionName] : '';
             }
         }
 
         echo json_encode($skuData);
     }
-
-
-
 }

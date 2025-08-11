@@ -253,8 +253,10 @@ class ProductsUpload extends MW_Controller {
             $categories_list = array_unique($categories_list);
             $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
 
+            $random_number =  rand(1111111, 9999999);
             $product_data = [
                 'item_code' => $row[3],
+                'matix_id' => 'p-'.$random_number,
                 'name' => $row[4],
                 'description' => $row[5],
                 'extended_description' => $row[6],
