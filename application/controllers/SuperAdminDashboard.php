@@ -2095,8 +2095,8 @@ class SuperAdminDashboard extends MW_Controller {
                                         'matix_id'         => $row[1],
                                         'vendor_id'        => $vendor_id,
                                         'price'            => $row[65],
-                                        'active'           => $row[67],
                                         'retail_price'     => $row[66],
+                                        'active'           => $row[67],
                                         'created_at'       => date('Y-m-d H:i:s'),
                                         'updated_at'       => date('Y-m-d H:i:s'),
                                     ];
@@ -2155,12 +2155,12 @@ class SuperAdminDashboard extends MW_Controller {
                                     if ($vendor_pricing != null) {
                                         $update_vendor_data = array(
                                             'product_id' => $existing_product->id,
-                                            'vendor_product_id' => $row[4],
+                                            'vendor_product_id' => $row[3],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[5],
+                                            'price'            => $row[65],
+                                            'retail_price'     => $row[66],
                                             'active' => $active,
-                                            'retail_price' => $row[10],
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
 
@@ -2183,12 +2183,12 @@ class SuperAdminDashboard extends MW_Controller {
                                     } else {
                                         $vendornew_data = array(
                                             'product_id' => $existing_product->id,
-                                            'vendor_product_id' => $row[4],
+                                            'vendor_product_id' => $row[3],
                                             'matix_id' => $join_matix,
                                             'vendor_id' => $vendor_id,
-                                            'price' => $row[10],
+                                            'price'            => $row[65],
+                                            'retail_price'     => $row[66],
                                             'active' => $active,
-                                            'retail_price' => $row[5],
                                             'created_at' => date('Y-m-d H:i:s'),
                                             'updated_at' => date('Y-m-d H:i:s'),
                                         );
