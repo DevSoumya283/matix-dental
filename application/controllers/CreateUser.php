@@ -45,7 +45,7 @@ class CreateUser extends MW_Controller {
             } else {
                 if ($insert_data != null) {
                     $this->User_model->insert($insert_data);
-                    $_SESSION['confirmation_token'] = $confirm_password_reset_token;
+                    $_SESSION['confirmation_token'] = $confirmationToken;
 
                     // email user confirmation
                     $this->NotificationEmails->sendUserConfirmationEmail($insert_data);
