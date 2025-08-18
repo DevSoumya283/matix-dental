@@ -1575,10 +1575,352 @@ class SuperAdminDashboard extends MW_Controller {
         }
     }
 
+    // public function import() {
+    //     set_time_limit(0);
+    //     ini_set("memory_limit", "12288M");
+    //     $elasticsearch_enabled = false;
+    //     if ($elasticsearch_enabled && $this->elasticsearch->status() == null) {
+    //         $this->session->set_flashdata('error', 'Error uploading the products. Please contact your website administrator.');
+    //         header("location: product-catalog");
+    //     } else {
+    //         // File upload validation
+    //         if (empty($_FILES["productCatalogFile"]["name"])) {
+    //             $this->session->set_flashdata('error', 'No file selected.');
+    //             redirect("product-catalog");
+    //             return;
+    //         }
+    //         // Set upload path
+    //         $uploadPath = FCPATH . 'assets/uploads/';
+    //         if (!is_dir($uploadPath) && !mkdir($uploadPath, 0775, true)) {
+    //             $this->session->set_flashdata('error', 'Failed to create upload folder.');
+    //             redirect("product-catalog");
+    //             return;
+    //         }
+
+    //         // Upload configuration
+    //         $config = [
+    //             'upload_path' => $uploadPath,
+    //             'allowed_types' => 'xlsx|xls',
+    //             'file_name' => bin2hex(random_bytes(8)) . '.xlsx',
+    //             'max_size' => 10240
+    //         ];
+
+    //         $this->load->library('upload', $config);
+    //         $this->upload->initialize($config);
+    //         if (!$this->upload->do_upload('productCatalogFile')) {
+    //             $this->session->set_flashdata('error', 'Upload failed: ' . $this->upload->display_errors());
+    //             redirect("product-catalog");
+    //             return;
+    //         }
+
+    //         $file_uploaded = $this->upload->data();
+    //         $file_path = $file_uploaded['full_path'];
+    //         if ($file_uploaded != null) {
+    //             // $file_path = $file_uploaded['full_path']; //local server file read
+    //             $reader = ReaderFactory::create(Type::XLSX); //set Type file xlsx
+    //             $reader->open($file_path); //open the file
+    //             $empty_rows = [];
+    //             $new_product_array = [];
+    //             $existing_product_array = [];
+    //             $price_array = [];
+    //             $update_price = [];
+    //             $newprice_array = [];
+    //             foreach ($reader->getSheetIterator() as $sheet) {
+    //                 //Rows iterator
+    //                 $i = 0;
+    //                 foreach ($sheet->getRowIterator() as $row) {
+    //                     //echo "$i -  $row[0] <br />";
+    //                     //$i += 1;
+    //                     if ($i > 0) {
+    //                         $mpn = $row[3];
+    //                         $manufacturer = $row[6];
+    //                         if ($mpn != null) {
+    //                             // Debugger::debug($row);
+    //                             $vendors_product_id = $row[4];
+    //                             $matix_id = array($mpn, $vendors_product_id);
+    //                             $join_matix = implode("-", $matix_id);
+
+    //                             $existing_product = $this->Products_model->select('id')->get_by(['mpn' => $mpn]);
+    //                             // Debugger::debug($existing_product, 'existing product');
+    //                             $category_id = $row[1];
+    //                             // Debugger::debug($row[1]);
+    //                             $c_id = explode(",", str_replace('"', '', $category_id));
+    //                             $categories_list = [];
+    //                             for ($k = 0; $k < count($c_id); $k++) {
+    //                                 if (trim($c_id[$k]) != "") {
+    //                                     $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
+    //                                                     FROM categories AS t1
+    //                                                     LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
+    //                                                     LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
+    //                                                     LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
+    //                                                     LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
+    //                                                     WHERE t1.id = ' . trim($c_id[$k]);
+
+    //                                     $output = $this->db->query($query)->result();
+
+    //                                     if ($output != null) {
+    //                                         if ($output[0]->lev1_id != null) {
+    //                                             $categories_list[] = $output[0]->lev1_id;
+    //                                         }
+    //                                         if ($output[0]->lev2_id != null) {
+    //                                             $categories_list[] = $output[0]->lev2_id;
+    //                                         }
+    //                                         if ($output[0]->lev3_id != null) {
+    //                                             $categories_list[] = $output[0]->lev3_id;
+    //                                         }
+    //                                         if ($output[0]->lev4_id != null) {
+    //                                             $categories_list[] = $output[0]->lev4_id;
+    //                                         }
+    //                                         if ($output[0]->lev5_id != null) {
+    //                                             $categories_list[] = $output[0]->lev5_id;
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+
+    //                             $categories_list = array_unique($categories_list);
+    //                             if(!empty($categories_list)){
+    //                                 $categories = '"' . implode('","', $categories_list) . '"';
+    //                             }
+
+    //                             $product_data = [
+    //                                 'matix_id' => $row[0],
+    //                                 'category_id' => $categories,
+    //                                 'mpn' => $mpn,
+    //                                 'manufacturer' => $row[6],
+    //                                 'name' => $row[7],
+    //                                 'brand' => $row[8],
+    //                                 'description' => $row[11],
+    //                                 'color' => $row[12],
+    //                                 'quantity_per_box' => $row[13],
+    //                                 'size' => $row[14],
+    //                                 'license_required' => ucfirst(strtolower($row[20])),
+    //                                 'msds_location' => $row[22],
+    //                                 'manufacturer_ins_sheet' => $row[23],
+    //                                 'previous_item_no' => $row[24],
+    //                                 'product_procedures' => $row[25],
+    //                                 'tax_per_state' => $row[26],
+    //                                 'shipping_restrictions' => $row[27],
+    //                                 'sample' => $row[33],
+    //                                 'ship_weight' => $row[34],
+    //                                 'fluoride' => $row[35],
+    //                                 'flavor' => $row[36],
+    //                                 'shade' => $row[37],
+    //                                 'grit' => $row[38],
+    //                                 'set_rate' => $row[39],
+    //                                 'viscosity' => $row[40],
+    //                                 'firmness' => $row[41],
+    //                                 'handle_size' => $row[42],
+    //                                 'handle_finish' => $row[43],
+    //                                 'tip_finish' => $row[44],
+    //                                 'tip_diameter' => $row[45],
+    //                                 'tip_material' => $row[46],
+    //                                 'head_diameter' => $row[47],
+    //                                 'head_length' => $row[48],
+    //                                 'diameter' => $row[49],
+    //                                 'shaft_dimensions' => $row[50],
+    //                                 'category_code' => $row[51],
+    //                                 'arch' => $row[52],
+    //                                 'shaft_description' => $row[53],
+    //                                 'blade_description' => $row[54],
+    //                                 'anatomic_use' => $row[55],
+    //                                 'instrument_description' => $row[56],
+    //                                 'palm_thickness' => $row[57],
+    //                                 'finger_thickness' => $row[58],
+    //                                 'texture' => $row[59],
+    //                                 'delivery_system' => $row[60],
+    //                                 'volume' => $row[61],
+    //                                 'dimensions' => $row[62],
+    //                                 'stone_type' => $row[63],
+    //                                 'stone_separation_time' => $row[64],
+    //                                 'setting_time' => $row[65],
+    //                                 'band_thickness' => $row[66],
+    //                                 'contents' => $row[67],
+    //                                 'average_rating' => "",
+    //                                 'returnable' => $row[21],
+    //                             ];
+    //                             if ($existing_product == null) {
+    //                                 $product_data['created_at'] = date('Y-m-d H:i:s');
+
+    //                                 $new_product_array[] = $product_data;
+
+    //                                 $vendor_data = array(
+    //                                     'product_id' => '',
+    //                                     'vendor_product_id' => $row[4],
+    //                                     'matix_id' => $join_matix,
+    //                                     'vendor_id' => $vendor_id,
+    //                                     'price' => $row[10],
+    //                                     'active' => 1,
+    //                                     'retail_price' => $row[5],
+    //                                     'created_at' => date('Y-m-d H:i:s'),
+    //                                     'updated_at' => date('Y-m-d H:i:s'),
+    //                                 );
+
+    //                                 Debugger::debug($vendor_data, 'vendor_data)');
+
+    //                                 $price_array[] = $vendor_data;
+    //                                 if (count($new_product_array) == 100) {
+    //                                     $this->db->insert_batch('products', $new_product_array);
+    //                                     $total_affected_rows = $this->db->affected_rows();
+    //                                     $first_insert_id = $this->db->insert_id();
+    //                                     $last_id = ($first_insert_id + $total_affected_rows - 1);
+    //                                     if ($first_insert_id > 0) {
+    //                                         $current_loop_counter = 0;
+    //                                         for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+    //                                             $price_array[$current_loop_counter]['product_id'] = $insert_id;
+    //                                             $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+    //                                             if ($elasticsearch_enabled) {
+    //                                                     $this->elasticsearch->add("products", $insert_id, $product_data);
+    //                                                 }  
+    //                                                 $current_loop_counter += 1;
+    //                                         }
+    //                                         $this->db->insert_batch('product_pricings', $price_array);
+    //                                         $price_array = [];
+    //                                     }
+    //                                     $new_product_array = [];
+    //                                 }
+    //                             } else {
+    //                                 // unset mpn as we found the product with that and it can't change
+    //                                 unset($product_data['mpn']);
+    //                                 // don't update empty fields
+    //                                 foreach($product_data as $k => $v){
+    //                                     if(empty($v)){
+    //                                         unset($product_data[$k]);
+    //                                     }
+    //                                 }
+    //                                 $active = (is_string($row[5])) ? 0 : 1;
+    //                                 Debugger::debug($product_data, '$product_data');
+
+    //                                 if ($elasticsearch_enabled && $row[4] != "") {
+    //                                     $product = $this->elasticsearch->get("products", $existing_product->id);
+    //                                     $product_info = $product['_source'];
+
+    //                                     $vendor_product_id = ((str_replace("-", "", $row[4])) . ',');
+
+    //                                     $product_info['vendor_product_id'] = $product_info['vendor_product_id'] . "," . $vendor_product_id;
+    //                                     $this->elasticsearch->delete("products", $existing_product->id);
+    //                                     $this->elasticsearch->add("products", $existing_product->id, $product_info);
+    //                                 }
+
+    //                                 $vendor_pricing = $this->Product_pricing_model->select('id')->get_by(array('product_id' => $existing_product->id, 'vendor_id' => $vendor_id));
+
+    //                                 $active = (is_string($row[5])) ? 0 : 1;
+
+    //                                 if ($vendor_pricing != null) {
+    //                                     $update_vendor_data = array(
+    //                                         'product_id' => $existing_product->id,
+    //                                         'vendor_product_id' => $row[4],
+    //                                         'matix_id' => $join_matix,
+    //                                         'vendor_id' => $vendor_id,
+    //                                         'price' => $row[5],
+    //                                         'active' => $active,
+    //                                         'retail_price' => $row[10],
+    //                                         'updated_at' => date('Y-m-d H:i:s'),
+    //                                     );
+
+    //                                     if($active == 0){
+    //                                         unset($update_vendor_data['price']);
+    //                                     }
+
+    //                                     foreach($update_vendor_data as $k => $v){
+    //                                         if(empty($v) && $k != 'active'){
+    //                                             Debugger::debug('unsetting ' . $k);
+    //                                             unset($update_vendor_data[$k]);
+    //                                         }
+    //                                     }
+
+    //                                     Debugger::debug($update_vendor_data, '$update_vendor_data post check');
+    //                                     $this->db->update('product_pricings', $update_vendor_data, ['id' => $vendor_pricing->id]);
+    //                                     $sql = $this->db->update_string('product_pricings', $update_vendor_data, "id = $vendor_pricing->id");
+    //                                     Debugger::debug($sql);
+
+    //                                 } else {
+    //                                     $vendornew_data = array(
+    //                                         'product_id' => $existing_product->id,
+    //                                         'vendor_product_id' => $row[4],
+    //                                         'matix_id' => $join_matix,
+    //                                         'vendor_id' => $vendor_id,
+    //                                         'price' => $row[10],
+    //                                         'active' => $active,
+    //                                         'retail_price' => $row[5],
+    //                                         'created_at' => date('Y-m-d H:i:s'),
+    //                                         'updated_at' => date('Y-m-d H:i:s'),
+    //                                     );
+
+    //                                     $newprice_array[] = $vendornew_data;
+    //                                     if (count($newprice_array) == 100) {
+    //                                         $this->db->insert_batch('product_pricings', $newprice_array);
+    //                                         $newprice_array = [];
+    //                                     }
+    //                                 }
+    //                                 if(!empty($product_data)){
+    //                                     $product_data['updated_at'] = date('Y-m-d H:i:s');
+    //                                     $product_data['id'] = $existing_product->id;
+    //                                     $this->db->update('products', $product_data, "id = $existing_product->id");
+
+    //                                     $sql = $this->db->update_string('products', $product_data, "id = $existing_product->id");
+    //                                     Debugger::debug($sql);
+    //                                 }
+
+
+    //                             }
+    //                         } else {
+    //                             $empty_rows[] = $i;
+    //                         }
+    //                     }
+    //                     $i+=1;
+    //                 }
+    //             }
+    //             if ($new_product_array != null && $new_product_array !== "") {
+    //                 $this->db->insert_batch('products', $new_product_array);
+    //                 $total_affected_rows = $this->db->affected_rows();
+    //                 $first_insert_id = $this->db->insert_id();
+    //                 $last_id = ($first_insert_id + $total_affected_rows - 1);
+    //                 if ($first_insert_id > 0) {
+    //                     $current_loop_counter = 0;
+    //                     for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
+    //                         $price_array[$current_loop_counter]['product_id'] = $insert_id;
+    //                         $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
+    //                         $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
+    //                         $current_loop_counter += 1;
+    //                     }
+    //                     $this->db->insert_batch('product_pricings', $price_array);
+    //                     $price_array = [];
+    //                 }
+    //                 $new_product_array = [];
+    //             }
+
+    //             if ($update_price != null && $update_price !== "") {
+    //                 $this->db->update_batch('product_pricings', $update_price, 'id');
+    //                 $update_price = [];
+    //             }
+    //             if ($newprice_array != null && $newprice_array !== "") {
+    //                 $this->db->insert_batch('product_pricings', $newprice_array);
+    //                 $newprice_array = [];
+    //             }
+
+    //             $this->session->set_flashdata('success', 'Products Uploaded successfully. ');
+    //             if (count($empty_rows) > 0) {
+    //                 $this->session->set_flashdata('success', 'Products Uploaded successfully, And the following rows on the excel could not be uploaded because the MPNs were blank.');
+    //             }
+    //         }
+    //         $path = $file_path;
+    //         if (file_exists($path)) {
+    //                 $reader->close(); 
+
+    //             unlink($path) or die('failed deleting: ' . $path);
+    //         }
+    //         header("location: product-catalog");
+    //     }
+    // }
+
     public function import() {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
         $elasticsearch_enabled = false;
+        $vendor_id = $this->input->post('vendor_id');
+
+     
         if ($elasticsearch_enabled && $this->elasticsearch->status() == null) {
             $this->session->set_flashdata('error', 'Error uploading the products. Please contact your website administrator.');
             header("location: product-catalog");
@@ -1633,10 +1975,10 @@ class SuperAdminDashboard extends MW_Controller {
                         //$i += 1;
                         if ($i > 0) {
                             $mpn = $row[3];
-                            $manufacturer = $row[6];
+                            $manufacturer = $row[9];
                             if ($mpn != null) {
                                 // Debugger::debug($row);
-                                $vendors_product_id = $row[4];
+                                $vendors_product_id = $row[3];
                                 $matix_id = array($mpn, $vendors_product_id);
                                 $join_matix = implode("-", $matix_id);
 
@@ -1684,77 +2026,81 @@ class SuperAdminDashboard extends MW_Controller {
                                 }
 
                                 $product_data = [
-                                    'matix_id' => $row[0],
-                                    'category_id' => $categories,
-                                    'mpn' => $mpn,
-                                    'manufacturer' => $row[6],
-                                    'name' => $row[7],
-                                    'brand' => $row[8],
-                                    'description' => $row[11],
-                                    'color' => $row[12],
-                                    'quantity_per_box' => $row[13],
-                                    'size' => $row[14],
-                                    'license_required' => ucfirst(strtolower($row[20])),
-                                    'msds_location' => $row[22],
-                                    'manufacturer_ins_sheet' => $row[23],
-                                    'previous_item_no' => $row[24],
-                                    'product_procedures' => $row[25],
-                                    'tax_per_state' => $row[26],
-                                    'shipping_restrictions' => $row[27],
-                                    'sample' => $row[33],
-                                    'ship_weight' => $row[34],
-                                    'fluoride' => $row[35],
-                                    'flavor' => $row[36],
-                                    'shade' => $row[37],
-                                    'grit' => $row[38],
-                                    'set_rate' => $row[39],
-                                    'viscosity' => $row[40],
-                                    'firmness' => $row[41],
-                                    'handle_size' => $row[42],
-                                    'handle_finish' => $row[43],
-                                    'tip_finish' => $row[44],
-                                    'tip_diameter' => $row[45],
-                                    'tip_material' => $row[46],
-                                    'head_diameter' => $row[47],
-                                    'head_length' => $row[48],
-                                    'diameter' => $row[49],
-                                    'shaft_dimensions' => $row[50],
-                                    'category_code' => $row[51],
-                                    'arch' => $row[52],
-                                    'shaft_description' => $row[53],
-                                    'blade_description' => $row[54],
-                                    'anatomic_use' => $row[55],
-                                    'instrument_description' => $row[56],
-                                    'palm_thickness' => $row[57],
-                                    'finger_thickness' => $row[58],
-                                    'texture' => $row[59],
-                                    'delivery_system' => $row[60],
-                                    'volume' => $row[61],
-                                    'dimensions' => $row[62],
-                                    'stone_type' => $row[63],
-                                    'stone_separation_time' => $row[64],
-                                    'setting_time' => $row[65],
-                                    'band_thickness' => $row[66],
-                                    'contents' => $row[67],
-                                    'average_rating' => "",
-                                    'returnable' => $row[21],
+                                    'matix_id'              => $row[1],
+                                    'mpn'                   => $row[3],
+                                    'name'                  => $row[5],
+                                    'description'           => $row[6],
+                                    'extended_description'  => $row[7],
+                                    'manufacturer'          => $row[9],
+                                    'product_procedures'    => $row[10],
+                                    'shipping_restrictions' => $row[11],
+                                    'brand'                 => $row[12],
+                                    'category_code'         => $row[13],
+                                    'arch'                  => $row[14],
+                                    'weight'                => $row[15],
+                                    'size'                  => $row[16],
+                                    'license_required'      => $row[18],
+                                    'category_id'           => $row[19],
+                                    'color'                 => $row[20],
+                                    'msds_location'         => $row[21],
+                                    'manufacturer_ins_sheet'=> $row[26],
+                                    'quantity_per_box'      => $row[27],
+                                    'previous_item_no'      => $row[28],
+                                    'sample'                => $row[29],
+                                    'ship_weight'           => $row[30],
+                                    'fluoride'              => $row[31],
+                                    'flavor'                => $row[32],
+                                    'shade'                 => $row[33],
+                                    'grit'                  => $row[34],
+                                    'set_rate'              => $row[35],
+                                    'viscosity'             => $row[36],
+                                    'firmness'              => $row[37],
+                                    'handle_size'           => $row[38],
+                                    'handle_finish'         => $row[39],
+                                    'tip_finish'            => $row[40],
+                                    'tip_diameter'          => $row[41],
+                                    'tip_material'          => $row[42],
+                                    'head_diameter'         => $row[43],
+                                    'head_length'           => $row[44],
+                                    'diameter'              => $row[45],
+                                    'shaft_dimensions'      => $row[46],
+                                    'shaft_description'     => $row[47],
+                                    'blade_description'     => $row[48],
+                                    'anatomic_use'          => $row[49],
+                                    'instrument_description'=> $row[50],
+                                    'palm_thickness'        => $row[51],
+                                    'finger_thickness'      => $row[52],
+                                    'texture'               => $row[53],
+                                    'delivery_system'       => $row[54],
+                                    'volume'                => $row[55],
+                                    'dimensions'            => $row[56],
+                                    'stone_type'            => $row[57],
+                                    'stone_separation_time' => $row[58],
+                                    'setting_time'          => $row[59],
+                                    'band_thickness'        => $row[60],
+                                    'contents'              => $row[61],
+                                    'returnable'            => $row[62],
+                                    'tax_per_state'         => $row[63],
+                                    'average_rating'        => $row[64],
                                 ];
+
                                 if ($existing_product == null) {
                                     $product_data['created_at'] = date('Y-m-d H:i:s');
 
                                     $new_product_array[] = $product_data;
 
-                                    $vendor_data = array(
-                                        'product_id' => '',
-                                        'vendor_product_id' => $row[4],
-                                        'matix_id' => $join_matix,
-                                        'vendor_id' => $vendor_id,
-                                        'price' => $row[10],
-                                        'active' => 1,
-                                        'retail_price' => $row[5],
-                                        'created_at' => date('Y-m-d H:i:s'),
-                                        'updated_at' => date('Y-m-d H:i:s'),
-                                    );
+                                    $vendor_data = [
+                                        'product_id'       => '',
+                                        'vendor_product_id'=> $row[3],  // item_code
+                                        'matix_id'         => $row[1],
+                                        'vendor_id'        => $vendor_id,
+                                        'price'            => $row[65],
+                                        'active'           => $row[67],
+                                        'retail_price'     => $row[66],
+                                        'created_at'       => date('Y-m-d H:i:s'),
+                                        'updated_at'       => date('Y-m-d H:i:s'),
+                                    ];
+
 
                                     Debugger::debug($vendor_data, 'vendor_data)');
 
