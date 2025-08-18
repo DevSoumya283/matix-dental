@@ -48,9 +48,16 @@ CREATE TABLE skus (
   sku_id BIGINT AUTO_INCREMENT PRIMARY KEY,
   product_id VARCHAR(255) NOT NULL,
   sku_code VARCHAR(255) NOT NULL,
+  vendor_id VARCHAR(255) NOT NULL,
+  vendor_product_id VARCHAR(255) NOT NULL,
   price DECIMAL(10,2) DEFAULT 0.00,
+  retail_price DECIMAL(10,2) DEFAULT 0.00,
   stock_quantity INT DEFAULT 0,
   status ENUM('active', 'inactive') DEFAULT 'active',
+  exclude_from_whitelabels_1 int(11) NULL;
+  exclude_from_whitelabels_2 int(11) NULL;
+  exclude_from_marketplace   int(11) NULL;
+  minimum_threshold          int(11) NULL;
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(matix_id) ON DELETE CASCADE
