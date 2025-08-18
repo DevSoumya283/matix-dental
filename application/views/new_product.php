@@ -45,6 +45,13 @@
             <!-- ADD OPTION TAB -->
             <div class="tab-pane fade" id="addOption">
                 <input type="file" id="baseExcel2" class="form-control mb-3">
+
+                
+                <select class="form-select" aria-label="Default select example" id="vendor_id" name="vendor_id" required>
+                    <option value="">Loading vendors...</option>
+                </select>
+                
+
                 <button id="saveToDb2" class="btn btn-success my-3">Upload Options</button>
                 <a href="<?php echo base_url('export-newoptions'); ?>" class="btn btn-primary my-3">Export Options</a>
 
@@ -162,7 +169,7 @@
                 }),
                 confirmButtonText: 'OK',
                 showConfirmButton: true,
-                allowOutsideClick: false
+                allowOutsideClick: true
             });
         }
 
@@ -356,37 +363,62 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // venodr Load
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("<?php echo base_url('NewProduct/ajax_get_vendors'); ?>")
+                .then(res => res.json())
+                .then(vendors => {
+                    let vendorSelect = document.getElementById("vendor_id");
+                    vendorSelect.innerHTML = '<option value="">-- Select Vendor --</option>';
+                    vendors.forEach(v => {
+                        let opt = document.createElement("option");
+                        opt.value = v.id;
+                        opt.textContent = v.name;
+                        vendorSelect.appendChild(opt);
+                    });
+                })
+                .catch(() => {
+                    alert("Failed to load vendors.");
+                });
+        });
+
         document.getElementById('saveToDb2').addEventListener('click', function() {
             let rows = this.dataset.rows;
+            let vendor_id = document.getElementById('vendor_id').value; 
+
             if (!rows) {
                 showAlert('warning', 'Please upload an Excel file first.');
                 return;
             }
+            if (!vendor_id) {
+                showAlert('warning', 'Please select a vendor.');
+                return;
+            }
 
             fetch("<?php echo base_url('newproduct/save_options_excel'); ?>", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: "rows=" + encodeURIComponent(rows)
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'warning' && data.missing_products) {
-                        showAlert('warning', `Product(s) not found: ${data.missing_products.join(', ')}`);
-                    } else if (data.status === 'success') {
-                        showAlert('success', data.message);
-                    } else if (data.status === 'error') {
-                        showAlert('error', data.message);
-                    }
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "rows=" + encodeURIComponent(rows) + "&vendor_id=" + encodeURIComponent(vendor_id)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'warning' && data.missing_products) {
+                    showAlert('warning', `Product(s) not found: ${data.missing_products.join(', ')}`);
+                } else if (data.status === 'success') {
+                    showAlert('success', data.message);
+                } else if (data.status === 'error') {
+                    showAlert('error', data.message);
+                }
 
-                    location.reload();
-                 
-                })
-                .catch(err => {
-                    showAlert('error', 'Something went wrong while saving data.');
-                });
+                location.reload();
+            })
+            .catch(err => {
+                showAlert('error', 'Something went wrong while saving data.');
+            });
         });
+
 
 
         // 3rd tab 

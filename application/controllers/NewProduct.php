@@ -497,25 +497,73 @@ class NewProduct extends MW_Controller
         }
 
         // 4️⃣ SKU generation
+        // foreach ($values_map as $product_id => $options) {
+        //     $combinations = $this->cartesianProduct(array_values($options));
+
+        //     foreach ($combinations as $combo) {
+        //         $sku_code = $product_id . '-' . implode('-', $combo);
+
+        //         $sku_exists = $this->db->get_where('skus', [
+        //             'product_id' => $product_id,
+        //             'sku_code'   => $sku_code
+        //         ])->row();
+
+        //         if (!$sku_exists) {
+        //             $this->db->insert('skus', [
+        //                 'product_id'      => $product_id,
+        //                 'sku_code'        => $sku_code,
+        //                 'price'           => null,
+        //                 'retail_price'    => null,
+        //                 'stock_quantity'  => null,
+        //                 'status'          => 'active',
+        //                 'exclude_from_whitelabels_1' => 0,
+        //                 'exclude_from_whitelabels_2' => 0,
+        //                 'exclude_from_marketplace' => 0,
+        //                 'minimum_threshold' => null
+        //             ]);
+        //             $sku_id = $this->db->insert_id();
+
+               
+        //             foreach ($combo as $code) {
+        //                 foreach ($options as $opt_values) {
+        //                     $value_id = array_search($code, $opt_values);
+        //                     if ($value_id !== false) {
+        //                         $this->db->insert('sku_option_values', [
+        //                             'sku_id'   => $sku_id,
+        //                             'value_id' => $value_id
+        //                         ]);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // 4️⃣ SKU generation
         foreach ($values_map as $product_id => $options) {
             $combinations = $this->cartesianProduct(array_values($options));
 
             foreach ($combinations as $combo) {
                 $sku_code = $product_id . '-' . implode('-', $combo);
 
-                // Avoid duplicate SKUs
+                // Avoid duplicate SKUs (skus table)
                 $sku_exists = $this->db->get_where('skus', [
                     'product_id' => $product_id,
                     'sku_code'   => $sku_code
                 ])->row();
 
                 if (!$sku_exists) {
+                    // Insert into skus
                     $this->db->insert('skus', [
                         'product_id'      => $product_id,
                         'sku_code'        => $sku_code,
-                        'price'           => 0.00,
-                        'stock_quantity'  => 0,
-                        'status'          => 'active'
+                        'price'           => null,
+                        'retail_price'    => null,
+                        'stock_quantity'  => null,
+                        'status'          => 'active',
+                        'exclude_from_whitelabels_1' => 0,
+                        'exclude_from_whitelabels_2' => 0,
+                        'exclude_from_marketplace'   => 0,
+                        'minimum_threshold'          => null
                     ]);
                     $sku_id = $this->db->insert_id();
 
@@ -531,9 +579,46 @@ class NewProduct extends MW_Controller
                             }
                         }
                     }
+
+                    // 🔹 Insert into product_pricings table
+                    // Get product details first
+                    $product = $this->db->select('id, mpn, matix_id')
+                                        ->where('matix_id', $product_id)
+                                        ->get('products')
+                                        ->row();
+
+                    if ($product) {
+                        // Check if sku already exists in product_pricings
+                        $pricing_exists = $this->db->get_where('product_pricings', [
+                            'product_id' => $product->id,
+                            'sku'        => $sku_code
+                        ])->row();
+
+                        $vendor_id = $this->input->post('vendor_id');
+                        if (!$pricing_exists) {
+                            $this->db->insert('product_pricings', [
+                                'product_id'        => $product->id,
+                                'sku'               => $sku_code,
+                                'vendor_product_id' => $product->mpn,   // mpn from products table
+                                'matix_id'          => $product->matix_id,
+                                'minimum_threshold' => 0,
+                                'vendor_id'         => $vendor_id,
+                                'price'             => null,
+                                'retail_price'      => null,
+                                'active'            => 1,
+                                'quantity'          => null,
+                                'exclude_from_marketplace' => 0,
+                                'exclude_from_whitelabels_1' => 0,
+                                'exclude_from_whitelabels_2' => 0,
+                                'created_at'        => date('Y-m-d H:i:s'),
+                                'updated_at'        => date('Y-m-d H:i:s'),
+                            ]);
+                        }
+                    }
                 }
             }
         }
+
 
         $this->db->trans_complete();
 
@@ -742,4 +827,16 @@ class NewProduct extends MW_Controller
             'data'   => $query->result_array()
         ]);
     }
+
+    public function ajax_get_vendors()
+    {
+        $vendors = $this->db->select('id, name')
+                            ->from('vendors')
+                            ->order_by('name', 'ASC')
+                            ->get()
+                            ->result();
+
+        echo json_encode($vendors);
+    }
+
 }
