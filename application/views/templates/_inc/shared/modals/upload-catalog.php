@@ -4,8 +4,9 @@
         <a href="javascript:void(0);" class="modal__close modal--toggle icon icon--x"><svg class="icon icon--x"><use xlink:href="#icon-x"></use></svg></a>
         <div class="modal__header center center--h align--left">
             <h2 class="fontSize--l">Upload Catalog</h2>
-            <div style="display:inline;"><span class="fontWeight--2 textColor--negative">Warning:</span> Uploading duplicate data will overwrite existing data. It's recommended that you <form name="products_export" method="post" action="<?php echo base_url(); ?>Backup-Products" style="display: inline;"><a class="link fontWeight--2" href="javascript:void(0)" onclick="document.products_export.submit();">download a backup</a> 
-                </form>
+            <div style="display:inline;"><span class="fontWeight--2 textColor--negative">Warning:</span> Uploading duplicate data will overwrite existing data. It's recommended that you <a class="link fontWeight--2 modal--toggle" href="javascript:void(0)" data-target="#exportRangeModal">
+  download a backup
+</a>
                 of your existing catalog before uploading new data.</div>
             <p></p>
         </div>
