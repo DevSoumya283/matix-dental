@@ -1917,7 +1917,7 @@ class SuperAdminDashboard extends MW_Controller {
     public function import() {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
-        $elasticsearch_enabled = false;
+        $elasticsearch_enabled = (ENVIRONMENT === 'production') ? true : false;
         $vendor_id = $this->input->post('vendor_id');
 
      
@@ -2227,7 +2227,9 @@ class SuperAdminDashboard extends MW_Controller {
                         for ($insert_id = $first_insert_id; $insert_id <= $last_id; $insert_id++) {
                             $price_array[$current_loop_counter]['product_id'] = $insert_id;
                             $new_product_array[$current_loop_counter]['mpn'] = (str_replace("-", "", $new_product_array[$current_loop_counter]['mpn']));
-                            $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
+                                if ($elasticsearch_enabled) {
+                                    $this->elasticsearch->add("products", $insert_id, $new_product_array[$current_loop_counter]);
+                                }
                             $current_loop_counter += 1;
                         }
                         $this->db->insert_batch('product_pricings', $price_array);
