@@ -14,6 +14,18 @@
         <link href="<?php echo base_url(); ?>lib/bootstrap-datepicker/bootstrap-datepicker3.standalone.min.css" rel="stylesheet" type="text/css">
         <link href="<?php echo base_url(); ?>lib/animate-css/animate.css" rel="stylesheet" type="text/css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+
+        <style>
+            @media screen and (max-width: 600px) {
+                .panel.panel--centered {
+                    display: block;
+                    margin: 5px 0px 0px 39px;
+                }
+                .panel.panel--m {
+                    width: 70%;
+                }
+            }
+        </style>
     </head>
     <body class="login bg--lightest-gray">
 
@@ -221,13 +233,15 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col col--1-of-2">
+                                    <div class="input__group is--inline">
                                         <div class="input__group is--inline">
                                             <input id="companyAddress2" name="companyAddress2" class="input <?php if(!empty($userDetails->location->address2)){ echo 'not--empty'; }?>" value="<?php echo $userDetails->location->address2; ?>" type="text" placeholder="Unit 3">
                                             <label class="label" for="companyAddress2">Unit/Suite/#</label>
                                         </div>
                                     </div>
-                                    <div class="col col--1-of-2">
+                                </div>
+                                <div class="row">
+                                    <div class="input__group is--inline">
                                         <div class="input__group is--inline">
                                             <input id="companyCity" name="companyCity" class="input <?php if(!empty($userDetails->location->city)){ echo 'not--empty'; }?>" value="<?php echo $userDetails->location->city; ?>" type="text" placeholder="Los Angeles">
                                             <label class="label" for="companyCity">City</label>
@@ -235,7 +249,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col col--1-of-2">
+                                    <div class="input__group is--inline">
                                         <div class="select">
                                             <select name="state" id="locationState" required>
                                                 <option value="default" disabled="" selected>Choose State</option>
@@ -293,7 +307,11 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col col--1-of-2">
+
+                                </div>
+                                <div class="row">
+
+                                    <div class="input__group is--inline">
                                         <div class="input__group is--inline">
                                             <input id="companyZip" name="companyZip" class="input input--zip <?php if(!empty($userDetails->location->zip)){ echo 'not--empty'; }?>" value="<?php echo $userDetails->location->zip; ?>" type="text" placeholder="90210" required>
                                             <label class="label" for="companyZip">Zip</label>
@@ -350,18 +368,21 @@
                                                     </div>
                                                 </div>
                                                 <div class="row">
-                                                    <div class="col col--1-of-2">
+                                                    
                                                         <div class="input__group is--inline">
                                                             <input id="paymentExpiry" name="paymentExpiry" class="input input--cc-exp" type="text" required>
                                                             <label class="label" for="paymentExpiry">Expiry(MM/YY)</label>
                                                         </div>
-                                                    </div>
-                                                    <div class="col col--1-of-2">
+                                                    
+                                                </div>
+                                                <div class="row">
+
+                                                    
                                                         <div class="input__group is--inline">
                                                             <input id="paymentSecurity" name="paymentSecurity" class="input <?php if(!empty($userDetails->first_name)){ echo 'not--empty'; }?>" type="text" required>
                                                             <label class="label" for="paymentSecurity">Security Code</label>
                                                         </div>
-                                                    </div>
+                                                    
                                                 </div>
 
                                             </div>
