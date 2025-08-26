@@ -28,6 +28,7 @@
         <ul class="nav nav-tabs" id="productTab" role="tablist">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#baseProduct">Base Product</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#addOption">Add Option</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#updateprice">Update Price</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#showtoption">Product Option's</button></li>
         </ul>
 
@@ -38,7 +39,7 @@
                 <input type="file" id="baseExcel" class="form-control mb-3">
                 <button id="saveToDb" class="btn btn-success my-3">Save to Database</button>
                 <!-- <button id="exportAllBtn" class="btn btn-primary mt-3">Export All</button> -->
-                <a href="<?php echo base_url('export'); ?>" class="btn btn-primary my-3">Export All</a>
+                <a href="<?php echo base_url('exportproducts'); ?>" class="btn btn-primary my-3">Export All</a>
                 <div id="basePreview"></div>
             </div>
 
@@ -46,11 +47,11 @@
             <div class="tab-pane fade" id="addOption">
                 <input type="file" id="baseExcel2" class="form-control mb-3">
 
-                
+
                 <select class="form-select" aria-label="Default select example" id="vendor_id" name="vendor_id" required>
                     <option value="">Loading vendors...</option>
                 </select>
-                
+
 
                 <button id="saveToDb2" class="btn btn-success my-3">Upload Options</button>
                 <a href="<?php echo base_url('export-newoptions'); ?>" class="btn btn-primary my-3">Export Options</a>
@@ -58,13 +59,20 @@
                 <div id="productTable" class="table-responsive"></div>
             </div>
 
+
+            <!-- Update Price TAB -->
+            <div class="tab-pane fade show active" id="updateprice">
+                <input type="file" id="updatepriceExcel" class="form-control mb-3">
+                <button id="saveupdateprice" class="btn btn-success my-3">Save to Database</button>
+
+                <div id="previewupdateprice"></div>
+            </div>
+
             <!-- UPLOAD TAB -->
 
             <div class="tab-pane fade" id="showtoption">
                 <div id="optionPreview"></div>
             </div>
-
-
 
         </div>
     </div>
@@ -203,7 +211,7 @@
             saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
 
             $.ajax({
-                url: 'upload', // Call your PHP controller method save_data()
+                url: 'uploadproducts', // Call your PHP controller method save_data()
                 type: 'POST',
                 data: {
                     excel_data: JSON.stringify(excelData),
@@ -364,7 +372,7 @@
         });
 
         // venodr Load
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             fetch("<?php echo base_url('NewProduct/ajax_get_vendors'); ?>")
                 .then(res => res.json())
                 .then(vendors => {
@@ -384,7 +392,7 @@
 
         document.getElementById('saveToDb2').addEventListener('click', function() {
             let rows = this.dataset.rows;
-            let vendor_id = document.getElementById('vendor_id').value; 
+            let vendor_id = document.getElementById('vendor_id').value;
 
             if (!rows) {
                 showAlert('warning', 'Please upload an Excel file first.');
@@ -396,27 +404,27 @@
             }
 
             fetch("<?php echo base_url('newproduct/save_options_excel'); ?>", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: "rows=" + encodeURIComponent(rows) + "&vendor_id=" + encodeURIComponent(vendor_id)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'warning' && data.missing_products) {
-                    showAlert('warning', `Product(s) not found: ${data.missing_products.join(', ')}`);
-                } else if (data.status === 'success') {
-                    showAlert('success', data.message);
-                } else if (data.status === 'error') {
-                    showAlert('error', data.message);
-                }
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "rows=" + encodeURIComponent(rows) + "&vendor_id=" + encodeURIComponent(vendor_id)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'warning' && data.missing_products) {
+                        showAlert('warning', `Product(s) not found: ${data.missing_products.join(', ')}`);
+                    } else if (data.status === 'success') {
+                        showAlert('success', data.message);
+                    } else if (data.status === 'error') {
+                        showAlert('error', data.message);
+                    }
 
-                location.reload();
-            })
-            .catch(err => {
-                showAlert('error', 'Something went wrong while saving data.');
-            });
+                    location.reload();
+                })
+                .catch(err => {
+                    showAlert('error', 'Something went wrong while saving data.');
+                });
         });
 
 
@@ -465,6 +473,82 @@
                     } else {
                         document.getElementById('optionPreview').innerHTML = "<div class='alert alert-warning'>No data found.</div>";
                     }
+                });
+        });
+
+
+
+        // update price tab 
+
+        let updatePriceRows = [];
+
+        document.getElementById('updatepriceExcel').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                let data = new Uint8Array(event.target.result);
+                let workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+                let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                updatePriceRows = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1
+                });
+
+                if (updatePriceRows.length > 0) {
+                    let headers = updatePriceRows[0];
+                    let html = "<table class='table table-bordered'><thead><tr>";
+                    headers.forEach(h => html += "<th>" + h + "</th>");
+                    html += "</tr></thead><tbody>";
+
+                    for (let i = 1; i < updatePriceRows.length; i++) {
+                        html += "<tr>";
+                        updatePriceRows[i].forEach(c => html += "<td>" + (c ?? '') + "</td>");
+                        html += "</tr>";
+                    }
+                    html += "</tbody></table>";
+
+                    document.getElementById("previewupdateprice").innerHTML = html;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Save to backend
+        document.getElementById('saveupdateprice').addEventListener('click', function() {
+            if (updatePriceRows.length < 2) {
+                showAlert('error', 'No data to save. Please upload and process an Excel file first.');
+                return;
+            }
+
+            fetch("<?= site_url('update-price/save') ?>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        rows: updatePriceRows
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'warning' && data.missing_products) {
+                        showAlert('warning', `Product(s) not found: ${data.missing_products.join(', ')}`);
+                    } else if (data.status === 'success') {
+                        showAlert('success', data.message);
+                    } else if (data.status === 'error') {
+                        showAlert('error', data.message);
+                    }
+
+                    // 🔄 reload page after showing alert
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                })
+                .catch(err => {
+                    showAlert('error', 'Something went wrong while saving data.');
                 });
         });
     </script>
