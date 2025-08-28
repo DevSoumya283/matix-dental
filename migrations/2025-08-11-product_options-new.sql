@@ -67,6 +67,7 @@ CREATE TABLE product_option_values (
 CREATE TABLE skus (
   sku_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   product_id VARCHAR(191) NOT NULL, -- must match products.matix_id
+  parent_product_id VARCHAR(191) NULL,
   sku_code VARCHAR(191) NOT NULL,
   vendor_id VARCHAR(191) NOT NULL,
   vendor_product_id VARCHAR(191) NOT NULL,
