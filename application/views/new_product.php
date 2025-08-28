@@ -82,7 +82,6 @@
 
             <div class="tab-pane fade" id="varientproduct">
                 <div id="showvarientproduct"></div>
-            </div>
             <div class="container mt-3">
                 <table id="variantProductsTable" class="table table-bordered">
                     <thead>
@@ -96,6 +95,7 @@
                     </thead>
                 </table>
             </div>
+                 </div>
 
         </div>
     </div>
