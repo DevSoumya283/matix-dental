@@ -13,6 +13,9 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet" />
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
     <style>
         table th,
         table td {
@@ -30,6 +33,7 @@
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#addOption">Add Option</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#updateprice">Update Price</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#showtoption">Product Option's</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#varientproduct">Varient Product's</button></li>
         </ul>
 
         <div class="tab-content border border-top-0 p-3 bg-white" style="overflow: scroll;">
@@ -39,7 +43,7 @@
                 <input type="file" id="baseExcel" class="form-control mb-3">
                 <button id="saveToDb" class="btn btn-success my-3">Save to Database</button>
                 <!-- <button id="exportAllBtn" class="btn btn-primary mt-3">Export All</button> -->
-                <a href="<?php echo base_url('exportproducts'); ?>" class="btn btn-primary my-3">Export All</a>
+                <a href="<?php echo base_url('export'); ?>" class="btn btn-primary my-3">Export All</a>
                 <div id="basePreview"></div>
             </div>
 
@@ -61,7 +65,7 @@
 
 
             <!-- Update Price TAB -->
-            <div class="tab-pane fade show active" id="updateprice">
+            <div class="tab-pane fade" id="updateprice">
                 <input type="file" id="updatepriceExcel" class="form-control mb-3">
                 <button id="saveupdateprice" class="btn btn-success my-3">Save to Database</button>
 
@@ -72,6 +76,25 @@
 
             <div class="tab-pane fade" id="showtoption">
                 <div id="optionPreview"></div>
+            </div>
+
+            <!-- Varient Tab -->
+
+            <div class="tab-pane fade" id="varientproduct">
+                <div id="showvarientproduct"></div>
+            </div>
+            <div class="container mt-3">
+                <table id="variantProductsTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Matix ID</th>
+                            <th>Name</th>
+                            <th>MPN</th>
+                            <th>Parent Product</th>
+                            <th>Variants</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
 
         </div>
@@ -211,7 +234,7 @@
             saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
 
             $.ajax({
-                url: 'uploadproducts', // Call your PHP controller method save_data()
+                url: 'upload', // Call your PHP controller method save_data()
                 type: 'POST',
                 data: {
                     excel_data: JSON.stringify(excelData),
@@ -247,7 +270,7 @@
         }
 
         function loadBaseProducts() {
-            fetch("<?php echo base_url('newproduct/get_all_products'); ?>")
+            fetch("<?php echo base_url('get_all_products'); ?>")
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
@@ -292,7 +315,7 @@
 
         // For 2nd Tab
         document.querySelector('[data-bs-target="#addOption"]').addEventListener('shown.bs.tab', function() {
-            fetch("<?php echo base_url('newproduct/get_all_options'); ?>")
+            fetch("<?php echo base_url('get_all_options'); ?>")
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
@@ -373,7 +396,7 @@
 
         // venodr Load
         document.addEventListener("DOMContentLoaded", function() {
-            fetch("<?php echo base_url('NewProduct/ajax_get_vendors'); ?>")
+            fetch("<?php echo base_url('ajax_get_vendors'); ?>")
                 .then(res => res.json())
                 .then(vendors => {
                     let vendorSelect = document.getElementById("vendor_id");
@@ -403,7 +426,7 @@
                 return;
             }
 
-            fetch("<?php echo base_url('newproduct/save_options_excel'); ?>", {
+            fetch("<?php echo base_url('save_options_excel'); ?>", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded"
@@ -432,7 +455,7 @@
         // 3rd tab 
 
         document.querySelector('[data-bs-target="#showtoption"]').addEventListener('shown.bs.tab', function() {
-            fetch("<?= base_url('newproduct/get_all_products_with_options'); ?>")
+            fetch("<?= base_url('get_all_products_with_options'); ?>")
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
@@ -523,7 +546,7 @@
                 return;
             }
 
-            fetch("<?= site_url('update-price/save') ?>", {
+            fetch("<?= base_url('updateskuprice') ?>", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -550,6 +573,102 @@
                 .catch(err => {
                     showAlert('error', 'Something went wrong while saving data.');
                 });
+        });
+
+
+
+        // For Varient Product 
+
+        var parentProducts = {};
+
+        $(document).ready(function() {
+            var table = $('#variantProductsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "<?= site_url('get-products') ?>",
+                    type: "POST"
+                }
+            });
+
+            // Parent product selection
+            $(document).on('change', '.set-parent', function() {
+                var matixId = $(this).data('id');
+                var name = $(this).data('name');
+                var isChecked = $(this).is(':checked') ? 1 : 0;
+
+                $.post("<?= site_url('set-parent-product') ?>", {
+                    matix_id: matixId,
+                    status: isChecked
+                }, function(res) {
+                    var response = JSON.parse(res);
+                    if (response.status === 'success') {
+                        if (isChecked == 1) {
+                            parentProducts[matixId] = name;
+                            // ✅ Add parent option to all variant dropdowns except the parent itself
+                            $('.variant-select').each(function() {
+                                if ($(this).data('id') != matixId) {
+                                    if ($(this).find('option[value="' + matixId + '"]').length == 0) {
+                                        $(this).append('<option value="' + matixId + '">' + name + ' (' + matixId + ')</option>');
+                                    }
+                                }
+                            });
+                        } else {
+                            delete parentProducts[matixId];
+                            // ✅ Remove parent option if unchecked
+                            $('.variant-select option[value="' + matixId + '"]').remove();
+                        }
+                        // Reload table row so UI updates correctly
+                        $('#variantProductsTable').DataTable().ajax.reload(null, false);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                });
+            });
+
+            // Variant product selection - UPDATED
+            $(document).on('change', '.variant-select', function() {
+                var matixId = $(this).data('id');
+                var parentId = $(this).val();
+                var currentRow = $(this).closest('tr');
+
+                if (parentId !== "") {
+                    // Set/Update variant product
+                    $.post("<?= site_url('set-variant-product') ?>", {
+                        matix_id: matixId,
+                        parent_id: parentId
+                    }, function(res) {
+                        var response = JSON.parse(res);
+                        if (response.status === 'success') {
+                            // Replace checkbox with "Variant Product" span
+                            var checkboxCell = currentRow.find('.set-parent').closest('td');
+                            checkboxCell.html('<span class="badge bg-info">Variant Product</span>');
+
+                            // Keep the dropdown but show success message
+                            showAlert('success', 'Parent product updated successfully');
+                        } else {
+                            showAlert('error', response.message);
+                        }
+                    }.bind(this));
+                } else {
+                    // Remove parent relationship (when "-- Select Parent --" is selected)
+                    $.post("<?= base_url('remove-variant-product') ?>", {
+                        matix_id: matixId
+                    }, function(res) {
+                        var response = JSON.parse(res);
+                        if (response.status === 'success') {
+                            // Restore the checkbox to its original state
+                            var checkboxCell = currentRow.find('td').eq(3); // Assuming checkbox is in 4th column (index 3)
+                            var productName = currentRow.find('td').eq(1).text(); // Get product name from 2nd column
+                            checkboxCell.html('<input type="checkbox" class="set-parent" data-id="' + matixId + '" data-name="' + productName + '">');
+
+                            showAlert('success', 'Parent relationship removed successfully');
+                        } else {
+                            showAlert('error', response.message);
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>

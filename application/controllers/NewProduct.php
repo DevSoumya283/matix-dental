@@ -172,7 +172,7 @@ class NewProduct extends MW_Controller
     //         $sql = "SELECT id, matix_id FROM products WHERE mpn = ? LIMIT 1";
     //         $existing_product = $this->db->query($sql, [$mpn])->row();
   
-    //         $matrix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
+    //         $matix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
 
     //         $category_id = $row[12];
     //         $c_id = explode(",", str_replace('"', '', $category_id));
@@ -576,7 +576,7 @@ class NewProduct extends MW_Controller
 
                 foreach ($products as $product) {
                     $option_data = [
-                        isset($product->matix_id) ? $product->matix_id : '', // matrix_id
+                        isset($product->matix_id) ? $product->matix_id : '', // matix_id
                         '', // Option_type empty
                         '', // Option_code empty
                         ''  // Value empty
@@ -604,7 +604,7 @@ class NewProduct extends MW_Controller
     }
     public function get_all_products()
     {
-        $data = $this->db->get('products')->result_array();
+        $data = $this->db->limit(50)->get('products')->result_array();
         echo json_encode(['status' => 'success', 'data' => $data]);
     }
 
@@ -747,4 +747,156 @@ class NewProduct extends MW_Controller
             ->set_content_type('application/json')
             ->set_output(json_encode($summary));
     }
+
+
+    // for Varient Product
+
+    public function get_products() { 
+        $search = $this->input->post('search')['value']; 
+        $start = $this->input->post('start'); 
+        $length = $this->input->post('length'); 
+
+        // ✅ Get all parent products first
+        $parentProducts = $this->db->select('matix_id, name') 
+            ->from('products') 
+            ->where('parent_product', 1) 
+            ->get()->result(); 
+
+        $this->db->from('products'); 
+        if (!empty($search)) { 
+            $this->db->group_start(); 
+            $this->db->like('name', $search); 
+            $this->db->or_like('mpn', $search); 
+            $this->db->group_end(); 
+        } 
+        $totalFiltered = $this->db->count_all_results('', false); 
+        $this->db->limit($length, $start); 
+        $query = $this->db->get(); 
+        $products = $query->result(); 
+
+        $data = []; 
+        foreach ($products as $p) { 
+            $isParent = ($p->parent_product == 1); 
+            
+            // ✅ check if this product already has parent in skus
+            $sku = $this->db->select('parent_product_id') 
+                ->from('skus') 
+                ->where('product_id', $p->matix_id) 
+                ->get()->row(); 
+            $selectedParentId = $sku ? $sku->parent_product_id : null; 
+            $isVariant = !empty($selectedParentId); // Check if this product is a variant
+
+            $row = [ 
+                $p->matix_id, 
+                $p->name, 
+                $p->mpn 
+            ]; 
+
+            // Parent checkbox - UPDATED LOGIC
+            if ($isParent) {
+                $row[] = '<input type="checkbox" class="set-parent" data-id="'.$p->matix_id.'" data-name="'.$p->name.'" checked>';
+            } else if ($isVariant) {
+                $row[] = '<span class="badge bg-primary ">Variant Product</span>';
+            } else {
+                $row[] = '<input type="checkbox" class="set-parent" data-id="'.$p->matix_id.'" data-name="'.$p->name.'">';
+            }
+
+            // Variants dropdown - UPDATED LOGIC
+            if ($isParent) { 
+                $row[] = '<span class="badge bg-success">Parent Product</span>'; 
+            } else { 
+                // Always show dropdown for non-parent products (including variants)
+                $dropdown = '<select class="variant-select form-control" data-id="'.$p->matix_id.'">'; 
+                $dropdown .= '<option value="">-- Select Parent --</option>'; 
+                // ✅ Add all available parents
+                foreach ($parentProducts as $parent) { 
+                    $selected = ($selectedParentId == $parent->matix_id) ? 'selected' : ''; 
+                    $dropdown .= '<option value="'.$parent->matix_id.'" '.$selected.'>'.$parent->name.' ('.$parent->matix_id.')</option>'; 
+                } 
+                $dropdown .= '</select>'; 
+                $row[] = $dropdown; 
+            } 
+
+            $data[] = $row; 
+        } 
+
+        echo json_encode([ 
+            "draw" => intval($this->input->post('draw')), 
+            "recordsTotal" => $this->db->count_all('products'), 
+            "recordsFiltered" => $totalFiltered, 
+            "data" => $data 
+        ]); 
+    } 
+
+    // Update parent product (check / uncheck)
+    public function set_parent_product() { 
+        $matix_id = $this->input->post('matix_id'); 
+        $status = $this->input->post('status'); // 1 = checked, 0 = unchecked
+
+        try { 
+            if ($status == 1) { 
+                // Mark as parent
+                $this->db->where('matix_id', $matix_id); 
+                $update = $this->db->update('products', ['parent_product' => 1]); 
+                if (!$update) { 
+                    throw new Exception("Failed to update parent product"); 
+                } 
+                echo json_encode(['status' => 'success', 'action' => 'set_parent']); 
+            } else { 
+                // Remove parent flag
+                $this->db->where('matix_id', $matix_id); 
+                $update = $this->db->update('products', ['parent_product' => 0]); 
+                if (!$update) { 
+                    throw new Exception("Failed to unset parent product"); 
+                } 
+                // Clear all its variants from skus table
+                $this->db->where('parent_product_id', $matix_id); 
+                $this->db->update('skus', ['parent_product_id' => NULL]); 
+                echo json_encode(['status' => 'success', 'action' => 'unset_parent']); 
+            } 
+        } catch (Exception $e) { 
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]); 
+        } 
+    } 
+
+    // Update variant product in skus
+    public function set_variant_product() { 
+        $matix_id = $this->input->post('matix_id'); // variant product id
+        $parent_id = $this->input->post('parent_id'); // parent product id
+
+        try { 
+            $this->db->where('product_id', $matix_id); 
+            $update = $this->db->update('skus', ['parent_product_id' => $parent_id]); 
+            if (!$update) { 
+                throw new Exception("Failed to update variant product"); 
+            } 
+            echo json_encode(['status' => 'success', 'message' => 'Variant product linked successfully']); 
+        } catch (Exception $e) { 
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]); 
+        } 
+    }
+
+    // NEW METHOD: Remove variant product relationship
+    public function remove_variant_product() { 
+        $matix_id = $this->input->post('matix_id'); // variant product id
+
+        try { 
+            // Check if the product exists in skus table
+            $existing = $this->db->where('product_id', $matix_id)->get('skus')->row();
+            
+            if ($existing) {
+                // Update existing record to remove parent relationship
+                $this->db->where('product_id', $matix_id); 
+                $update = $this->db->update('skus', ['parent_product_id' => NULL]); 
+                if (!$update) { 
+                    throw new Exception("Failed to remove variant product relationship"); 
+                }
+            }
+            
+            echo json_encode(['status' => 'success', 'message' => 'Parent relationship removed successfully']); 
+        } catch (Exception $e) { 
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]); 
+        } 
+    }
+
 }
