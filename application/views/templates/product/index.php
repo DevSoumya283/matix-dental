@@ -1208,45 +1208,68 @@
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
-                    <div class="sidebar__group">
-    <h4>Choose Variant: </h4>
-    <div class="row no--margin-l"> 
-        <select name="variant" id="variantSelect" class="form-control">
-            <option value="">-- Select Variant --</option>
-            <?php foreach($variants as $v): ?>
-                <option value="<?php echo $v->sku_code; ?>" 
-                        data-price="<?php echo $v->price; ?>">
-                    <?php echo $v->option_type; ?> : 
-                    <?php echo $v->value; ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
+                 <?php if (!empty($options)): ?>
+    <?php foreach ($options as $type => $values): ?>
+        <div class="sidebar__group">
+            <h4>Choose <?php echo $type; ?>:</h4>
+            <select class="form-control variantSelect" data-type="<?php echo $type; ?>">
+                <option value="">-- Select <?php echo $type; ?> --</option>
+                <?php foreach ($values as $v): ?>
+                    <option value="<?php echo $v['value_id']; ?>">
+                        <?php echo $v['value']; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
 
-    <!-- Span to show selected SKU -->
-    <div id="selectedSku" style="margin-top:5px;"></div>
-    <!-- Span to show selected price -->
-    <div id="selectedPrice" style="margin-top:5px;"></div>
-</div>
+
+<!-- Selected SKU & Price -->
+<div id="selectedSku" style="margin-top:5px; "></div>
+<div id="selectedPrice" style="margin-top:5px;"></div>
 
 <script>
-document.getElementById('variantSelect').addEventListener('change', function() {
-    var skuCode = this.value;
-    var selectedText = this.options[this.selectedIndex].text; // option_type
-    var price = this.options[this.selectedIndex].getAttribute('data-price'); // ✅ price from data attribute
+document.querySelectorAll('.variantSelect').forEach(function(select) {
+    select.addEventListener('change', function() {
+        let selectedValues = [];
+        let allSelected = true;
 
-    var spanSku = document.getElementById('selectedSku');
-    var spanPrice = document.getElementById('selectedPrice');
+        // collect selected values
+        document.querySelectorAll('.variantSelect').forEach(function(s) {
+            if (s.value) {
+                selectedValues.push(s.value);
+            } else {
+                allSelected = false; // at least one dropdown not chosen
+            }
+        });
 
-    if (skuCode) {
-        spanSku.textContent = "Sku : " + skuCode;
-        spanPrice.textContent = "Price: ₹" + price;
-    } else {
-        spanSku.textContent = "";
-        spanPrice.textContent = "";
-    }
+        // ✅ Fire only if ALL dropdowns have a value
+        if (allSelected && selectedValues.length > 0) {
+            fetch("<?php echo base_url('get_sku_by_options'); ?>", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ values: selectedValues })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('selectedSku').textContent =
+                    data.sku ? "SKU : " + data.sku : "SKU not found";
+                document.getElementById('selectedPrice').textContent =
+                    data.price ? "Price : ₹" + data.price : "";
+            });
+        } else {
+            // Clear until all dropdowns are selected
+            document.getElementById('selectedSku').textContent = "";
+            document.getElementById('selectedPrice').textContent = "";
+        }
+    });
 });
+
+
 </script>
+
+
 
 
 
@@ -1310,6 +1333,7 @@ document.getElementById('variantSelect').addEventListener('change', function() {
                                                         <?php } else { ?>
                                                             <span class="line--main" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
                                                         <?php } ?>
+
                                                         <?php if ($vendors[$i]->policy_name != null) { ?>
                                                             <span class="line--sub"><?php echo $vendors[$i]->policy_name; ?></span>
                                                         <?php } elseif ($vendors[$i]->shipping_price != null) { ?>
