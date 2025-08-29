@@ -33,6 +33,10 @@ class Products extends MW_Controller {
         $this->load->helper('MY_privilege_helper');
         $this->load->library('email');
         $this->load->helper('my_email_helper');
+
+
+        $this->load->model('Product_varients');
+
     }
 
     //Function to apply all filtering and sorting.
@@ -453,6 +457,9 @@ class Products extends MW_Controller {
                 //// Debugger::debug($relatedProducts);
 
                 $data['related_products'] = $relatedProducts;
+
+                $data['variants'] = $this->Product_varients->get_variant_dropdown($product_id);
+
 
              
 

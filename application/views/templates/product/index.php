@@ -1202,14 +1202,59 @@
                 <!-- hidden on mobile -->
                 <div class="sidebar col-md-4 col-xs-12  d-none d-sm-block">
                     <div class="sidebar__group">
-                        <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
+                        <h4>Choose Qty1:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
                             <input type="number" name="quantity" class="input input--qty not--empty width--50 sqty" min="1" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
                     <div class="sidebar__group">
-                        <h4>Purchase from:</h4>
+    <h4>Choose Variant: </h4>
+    <div class="row no--margin-l"> 
+        <select name="variant" id="variantSelect" class="form-control">
+            <option value="">-- Select Variant --</option>
+            <?php foreach($variants as $v): ?>
+                <option value="<?php echo $v->sku_code; ?>" 
+                        data-price="<?php echo $v->price; ?>">
+                    <?php echo $v->option_type; ?> : 
+                    <?php echo $v->value; ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <!-- Span to show selected SKU -->
+    <div id="selectedSku" style="margin-top:5px;"></div>
+    <!-- Span to show selected price -->
+    <div id="selectedPrice" style="margin-top:5px;"></div>
+</div>
+
+<script>
+document.getElementById('variantSelect').addEventListener('change', function() {
+    var skuCode = this.value;
+    var selectedText = this.options[this.selectedIndex].text; // option_type
+    var price = this.options[this.selectedIndex].getAttribute('data-price'); // ✅ price from data attribute
+
+    var spanSku = document.getElementById('selectedSku');
+    var spanPrice = document.getElementById('selectedPrice');
+
+    if (skuCode) {
+        spanSku.textContent = "Sku : " + skuCode;
+        spanPrice.textContent = "Price: ₹" + price;
+    } else {
+        spanSku.textContent = "";
+        spanPrice.textContent = "";
+    }
+});
+</script>
+
+
+
+
+
+
+                    <div class="sidebar__group">
+                        <h4>Purchase from1:</h4>
                         <div id="vendor_list_container" class="list__combo">
                             <ul class="list list--box has--btn">
                                 <?php
@@ -1326,6 +1371,7 @@
                                     <?php } ?>
                         </div>
                     </div>
+
                     <?php } ?>
                     <!-- Save to List -->
                     <!-- if ($_SESSION['role_id'] == '3' || $_SESSION['role_id'] == '4' || $_SESSION['role_id'] == '5' || $_SESSION['role_id'] == '6' || $_SESSION['role_id'] == '7' || $_SESSION['role_id'] == '8' || $_SESSION['role_id'] == '9' || $_SESSION['role_id'] == '10') {   ?> -->
