@@ -98,21 +98,22 @@ class ProductsUpload extends MW_Controller {
                 $retail_price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['retail_price'] : '';
 
                 $products_data = [
-                    $product->id ?? '',
-                    $product->mpn ?? '',
-                    $product->item_code ?? '',
-                    $product->name ?? '',
-                    strip_tags($product->description ?? ''),
-                    strip_tags($product->extended_description ?? ''),
-                    $product->keywords ?? '',
-                    $product->manufacturer ?? '',
-                    $product->shipping_restrictions ?? '',
-                    $product->brand ?? '',
-                    $product->license_required ?? '',
-                    $product->category_id ?? '',
-                    $product->base_price ?? '',
-                    $product->active ?? ''
+                    isset($product->id) ? $product->id : '',
+                    isset($product->mpn) ? $product->mpn : '',
+                    isset($product->item_code) ? $product->item_code : '',
+                    isset($product->name) ? $product->name : '',
+                    isset($product->description) ? strip_tags($product->description) : '',
+                    isset($product->extended_description) ? strip_tags($product->extended_description) : '',
+                    isset($product->keywords) ? $product->keywords : '',
+                    isset($product->manufacturer) ? $product->manufacturer : '',
+                    isset($product->shipping_restrictions) ? $product->shipping_restrictions : '',
+                    isset($product->brand) ? $product->brand : '',
+                    isset($product->license_required) ? $product->license_required : '',
+                    isset($product->category_id) ? $product->category_id : '',
+                    isset($product->base_price) ? $product->base_price : '',
+                    isset($product->active) ? $product->active : ''
                 ];
+
 
                 $writer->addRow($products_data);
             }
@@ -377,15 +378,16 @@ class ProductsUpload extends MW_Controller {
         $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns);
 
         foreach ($products as $product) {
-            $price = $pricing_map[$product->id]['price'] ?? '';
-            $retail_price = $pricing_map[$product->id]['retail_price'] ?? '';
+          $price = isset($pricing_map[$product->id]['price']) ? $pricing_map[$product->id]['price'] : '';
+          $retail_price = isset($pricing_map[$product->id]['retail_price']) ? $pricing_map[$product->id]['retail_price'] : '';
+
 
             $options_str = isset($options_map[$product->id]) ? implode(',', $options_map[$product->id]) : '';
 
             $products_data = [
-                $product->id ?? '',
-                $product->mpn ?? '',                
-                $product->name ?? '',                
+                isset($product->id) ? $product->id : '',
+                isset($product->mpn) ? $product->mpn : '',
+                isset($product->name) ? $product->name : '',
                 $options_str
             ];
 
@@ -434,8 +436,9 @@ class ProductsUpload extends MW_Controller {
 
             $row_data = array_combine($headers, $row);
 
-            $mpn = trim($row_data['mpn'] ?? '');
-            $product_id = trim($row_data['id'] ?? '');
+          $mpn = isset($row_data['mpn']) ? trim($row_data['mpn']) : '';
+          $product_id = isset($row_data['id']) ? trim($row_data['id']) : '';
+
 
             if (!$product_id || !$mpn) {
                 $skipped[] = $row_index;
@@ -449,7 +452,7 @@ class ProductsUpload extends MW_Controller {
                 continue;
             }
 
-            $option_string = $row_data['options'] ?? '';
+            $option_string = isset($row_data['options']) ? $row_data['options'] : '';
             if (empty(trim($option_string))) continue;
 
             $options = explode(',', $option_string);
@@ -494,7 +497,7 @@ class ProductsUpload extends MW_Controller {
         foreach ($data as $row) {
             $row_data = [];
             foreach ($headers as $head) {
-                $row_data[] = '"' . str_replace('"', '""', $row[$head] ?? '') . '"';
+                    $row_data[] = '"' . str_replace('"', '""', isset($row[$head]) ? $row[$head] : '') . '"';
             }
             $output .= implode($delimiter, $row_data) . $newline;
         }
@@ -542,25 +545,26 @@ class ProductsUpload extends MW_Controller {
         if (!empty($skus)) {
             // Export SKUs with linked option values
             foreach ($skus as $sku) {
-                $row = [
-                        'id' => $product['id'],
-                        'mpn' => $product['mpn'],
-                        'name' => $product['name'],
-                        'item_code' => $product['item_code'] ?? '',
-                        'description' => $product['description'] ?? '',
-                        'extended_description' => $product['extended_description'] ?? '',
-                        'keywords' => $product['keywords'] ?? '',
-                        'manufacturer' => $product['manufacturer'] ?? '',
-                        'shipping_restrictions' => $product['shipping_restrictions'] ?? '',
-                        'brand' => $product['brand'] ?? '',
-                        'license_required' => $product['license_required'] ?? '',
-                        'category_id' => $product['category_id'] ?? '',
-                        'base_price' => $product['base_price'] ?? '',
-                        'price' => $sku['price'] ?? '',
-                        'retail_price' => $sku['retail_price'] ?? '',
-                        'stocks' => $sku['stock_quantity'] ?? '',
-                        'sku' => $sku['sku'] ?? '',
-                    ];
+               $row = [
+                    'id' => isset($product['id']) ? $product['id'] : '',
+                    'mpn' => isset($product['mpn']) ? $product['mpn'] : '',
+                    'name' => isset($product['name']) ? $product['name'] : '',
+                    'item_code' => isset($product['item_code']) ? $product['item_code'] : '',
+                    'description' => isset($product['description']) ? $product['description'] : '',
+                    'extended_description' => isset($product['extended_description']) ? $product['extended_description'] : '',
+                    'keywords' => isset($product['keywords']) ? $product['keywords'] : '',
+                    'manufacturer' => isset($product['manufacturer']) ? $product['manufacturer'] : '',
+                    'shipping_restrictions' => isset($product['shipping_restrictions']) ? $product['shipping_restrictions'] : '',
+                    'brand' => isset($product['brand']) ? $product['brand'] : '',
+                    'license_required' => isset($product['license_required']) ? $product['license_required'] : '',
+                    'category_id' => isset($product['category_id']) ? $product['category_id'] : '',
+                    'base_price' => isset($product['base_price']) ? $product['base_price'] : '',
+                    'price' => isset($sku['price']) ? $sku['price'] : '',
+                    'retail_price' => isset($sku['retail_price']) ? $sku['retail_price'] : '',
+                    'stocks' => isset($sku['stock_quantity']) ? $sku['stock_quantity'] : '',
+                    'sku' => isset($sku['sku']) ? $sku['sku'] : '',
+                ];
+
 
 
                 // Initialize option columns blank
@@ -575,7 +579,7 @@ class ProductsUpload extends MW_Controller {
                     $opt_val = $this->db->get_where('product_option_values', ['id' => $option_value_id])->row();
                     if ($opt_val) {
                         $option_id = $opt_val->option_id;
-                        $option_name = ucfirst($option_names[$option_id] ?? 'Option ' . $option_id);
+                        $option_name = ucfirst(isset($option_names[$option_id]) ? 'Option ' . $option_id: Null);
                         $row[$option_name] = $opt_val->value;
                     }
                 }
@@ -585,24 +589,25 @@ class ProductsUpload extends MW_Controller {
         } else {
             // No SKUs — create 1 blank row with options for user to fill
             $row = [
-                    'id' => $product['id'],
-                    'mpn' => $product['mpn'],
-                    'name' => $product['name'],
-                    'item_code' => $product['item_code'] ?? '',
-                    'description' => $product['description'] ?? '',
-                    'extended_description' => $product['extended_description'] ?? '',
-                    'keywords' => $product['keywords'] ?? '',
-                    'manufacturer' => $product['manufacturer'] ?? '',
-                    'shipping_restrictions' => $product['shipping_restrictions'] ?? '',
-                    'brand' => $product['brand'] ?? '',
-                    'license_required' => $product['license_required'] ?? '',
-                    'category_id' => $product['category_id'] ?? '',
-                    'base_price' => $product['base_price'] ?? '',
-                    'price' => $sku['price'] ?? '',
-                    'retail_price' => $sku['retail_price'] ?? '',
-                    'stocks' => $sku['stock_quantity'] ?? '',
-                    'sku' => $sku['sku'] ?? '',
-                ];
+                'id' => isset($product['id']) ? $product['id'] : '',
+                'mpn' => isset($product['mpn']) ? $product['mpn'] : '',
+                'name' => isset($product['name']) ? $product['name'] : '',
+                'item_code' => isset($product['item_code']) ? $product['item_code'] : '',
+                'description' => isset($product['description']) ? $product['description'] : '',
+                'extended_description' => isset($product['extended_description']) ? $product['extended_description'] : '',
+                'keywords' => isset($product['keywords']) ? $product['keywords'] : '',
+                'manufacturer' => isset($product['manufacturer']) ? $product['manufacturer'] : '',
+                'shipping_restrictions' => isset($product['shipping_restrictions']) ? $product['shipping_restrictions'] : '',
+                'brand' => isset($product['brand']) ? $product['brand'] : '',
+                'license_required' => isset($product['license_required']) ? $product['license_required'] : '',
+                'category_id' => isset($product['category_id']) ? $product['category_id'] : '',
+                'base_price' => isset($product['base_price']) ? $product['base_price'] : '',
+                'price' => isset($sku['price']) ? $sku['price'] : '',
+                'retail_price' => isset($sku['retail_price']) ? $sku['retail_price'] : '',
+                'stocks' => isset($sku['stock_quantity']) ? $sku['stock_quantity'] : '',
+                'sku' => isset($sku['sku']) ? $sku['sku'] : '',
+            ];
+
 
             foreach ($option_names as $opt_name) {
                 $row[ucfirst($opt_name)] = '';
@@ -665,21 +670,22 @@ class ProductsUpload extends MW_Controller {
 
                 // Insert new child product for each SKU
                 $child_product_data = [
-                    'parent_product_id' => $parent_product_id,
-                    'mpn' => $mpn,
-                    'item_code' => $row['item_code'] ?? '',
-                    'description' => $row['description'] ?? '',
-                    'extended_description' => $row['extended_description'] ?? '',
-                    'keywords' => $row['keywords'] ?? '',
-                    'manufacturer' => $row['manufacturer'] ?? '',
-                    'shipping_restrictions' => $row['shipping_restrictions'] ?? '',
-                    'brand' => $row['brand'] ?? '',
-                    'license_required' => $row['license_required'] ?? '',
-                    'category_id' => $row['category_id'] ?? '',
-                    'base_price' => $row['base_price'] ?? '',
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
+                    'parent_product_id'     => $parent_product_id,
+                    'mpn'                   => $mpn,
+                    'item_code'             => isset($row['item_code']) ? $row['item_code'] : '',
+                    'description'           => isset($row['description']) ? $row['description'] : '',
+                    'extended_description'  => isset($row['extended_description']) ? $row['extended_description'] : '',
+                    'keywords'              => isset($row['keywords']) ? $row['keywords'] : '',
+                    'manufacturer'          => isset($row['manufacturer']) ? $row['manufacturer'] : '',
+                    'shipping_restrictions' => isset($row['shipping_restrictions']) ? $row['shipping_restrictions'] : '',
+                    'brand'                 => isset($row['brand']) ? $row['brand'] : '',
+                    'license_required'      => isset($row['license_required']) ? $row['license_required'] : '',
+                    'category_id'           => isset($row['category_id']) ? $row['category_id'] : '',
+                    'base_price'            => isset($row['base_price']) ? $row['base_price'] : '',
+                    'created_at'            => date('Y-m-d H:i:s'),
+                    'updated_at'            => date('Y-m-d H:i:s'),
                 ];
+
 
                 $child_product_inserts[] = $child_product_data;
 
@@ -687,10 +693,11 @@ class ProductsUpload extends MW_Controller {
                 $sku_data = [
                     'product_id' => $parent_product_id, // Link the SKU to the parent product
                     'sku_code' => $sku_code,
-                    'price' => $row['price'] ?? 0,
-                    'name' => $row['name'] ?? NULL,
-                    'retail_price' => $row['retail_price'] ?? 0,
-                    'stock_quantity' => $row['stocks'] ?? 0,
+                    'price'          => isset($row['price']) ? $row['price'] : 0,
+                    'name'           => isset($row['name']) ? $row['name'] : null,
+                    'retail_price'   => isset($row['retail_price']) ? $row['retail_price'] : 0,
+                    'stock_quantity' => isset($row['stocks']) ? $row['stocks'] : 0,
+
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ];
@@ -880,10 +887,11 @@ public function update_sku_from_csv()
 
         $this->db->where('sku_code', $row_data['sku_code']);
         $this->db->update('skus', [
-            'price'          => $row_data['price'] ?? null,
-            'retail_price'   => $row_data['retail_price'] ?? null,
-            'stock_quantity' => $row_data['stock_quantity'] ?? null,
-            'image' => $row_data['image'] ?? null
+            'price'          => isset($row_data['price']) ? $row_data['price'] : null,
+            'retail_price'   => isset($row_data['retail_price']) ? $row_data['retail_price'] : null,
+            'stock_quantity' => isset($row_data['stock_quantity']) ? $row_data['stock_quantity'] : null,
+            'image'          => isset($row_data['image']) ? $row_data['image'] : null
+
         ]);
     }
 
