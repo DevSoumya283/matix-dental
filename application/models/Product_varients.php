@@ -68,7 +68,7 @@ class Product_varients extends MY_Model
 
         $matix_id = $product->matix_id;
 
-        $this->db->select('s.sku_id, s.sku_code, s.price, COUNT(DISTINCT sov.value_id) as matched_count, 
+        $this->db->select('s.sku_id, s.sku_code, s.price, s.retail_price, COUNT(DISTINCT sov.value_id) as matched_count, 
                        (SELECT COUNT(*) FROM sku_option_values WHERE sku_id = s.sku_id) as total_options');
         $this->db->from('skus s');
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');

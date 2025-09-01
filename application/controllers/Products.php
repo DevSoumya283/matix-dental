@@ -486,7 +486,8 @@ public function get_sku_by_options()
 
     echo json_encode([
         'sku'   => isset( $sku->sku_code) ? $sku->sku_code : null,
-        'price' => isset($sku->price) ? $sku->price : null
+        'price' => isset($sku->price) ? $sku->price : null,
+        'retail_price' => isset($sku->retail_price) ? $sku->retail_price : null
     ]);
 }
 

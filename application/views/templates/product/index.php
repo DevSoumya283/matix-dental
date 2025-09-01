@@ -765,6 +765,11 @@
                                     }
                                 }
                                 ?>
+
+                                <tr id="skuRow" style="display:none;">
+                                    <td>Sku</td>
+                                    <td id="selectedSku1"></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1224,8 +1229,8 @@
     <?php endforeach; ?>
 <?php endif; ?>
 
-<div id="selectedSku" style="margin-top:5px;"></div>
-<div id="selectedPrice" style="margin-top:5px;"></div>
+<div id="selectedSku" style="margin:5px; color: red;"></div>
+<!-- <div id="selectedPrice" style="margin-top:5px;"></div> -->
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -1253,12 +1258,28 @@ $(document).on('change', '.variantSelect', function () {
             },
             success: function (data) {
                 if (data.sku) {
-                    $('#selectedSku').text("SKU : " + data.sku);
-                    $('#selectedPrice').text("Price : ₹" + data.price);
+                    $('#skuRow').show();
+                    $('#selectedSku1').text(data.sku);
+                    $('.retail-price').text("$"+data.price);
+                    $('.sale-price').text("$"+ data.retail_price); 
+                   
                 } else {
-                    $('#selectedSku').text("SKU not found");
-                    $('#selectedPrice').text("");
+                    $('#skuRow').hide();
+                    
+                    // Show message immediately
+                        $('#selectedSku').text("Product Not Found").show();
+
+                    // Hide after 3 seconds
+                    setTimeout(function () {
+                        $('#selectedSku').fadeOut(function () {
+                            $(this).text("").show(); // reset text and show for future use
+                        });
+                    }, 3000);
+
+                    $('#selectedSku1').text("");
+                    
                 }
+
             }
         });
     } else {
