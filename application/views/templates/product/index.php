@@ -1224,50 +1224,50 @@
     <?php endforeach; ?>
 <?php endif; ?>
 
-
-<!-- Selected SKU & Price -->
-<div id="selectedSku" style="margin-top:5px; "></div>
+<div id="selectedSku" style="margin-top:5px;"></div>
 <div id="selectedPrice" style="margin-top:5px;"></div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-document.querySelectorAll('.variantSelect').forEach(function(select) {
-    select.addEventListener('change', function() {
-        let selectedValues = [];
-        let allSelected = true;
+$(document).on('change', '.variantSelect', function () {
+    let selectedValues = [];
+    let allSelected = true;
 
-        // collect selected values
-        document.querySelectorAll('.variantSelect').forEach(function(s) {
-            if (s.value) {
-                selectedValues.push(s.value);
-            } else {
-                allSelected = false; // at least one dropdown not chosen
-            }
-        });
-
-        // ✅ Fire only if ALL dropdowns have a value
-        if (allSelected && selectedValues.length > 0) {
-            fetch("<?php echo base_url('get_sku_by_options'); ?>", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ values: selectedValues })
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('selectedSku').textContent =
-                    data.sku ? "SKU : " + data.sku : "SKU not found";
-                document.getElementById('selectedPrice').textContent =
-                    data.price ? "Price : ₹" + data.price : "";
-            });
+    $('.variantSelect').each(function () {
+        if ($(this).val()) {
+            selectedValues.push($(this).val());
         } else {
-            // Clear until all dropdowns are selected
-            document.getElementById('selectedSku').textContent = "";
-            document.getElementById('selectedPrice').textContent = "";
+            allSelected = false;
         }
     });
+
+    // Send AJAX even if not all selected
+    if (selectedValues.length > 0) {
+        $.ajax({
+            url: "<?php echo base_url('get_sku_by_options'); ?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+                values: selectedValues,
+                product_id: "<?php echo $product_id; ?>"
+            },
+            success: function (data) {
+                if (data.sku) {
+                    $('#selectedSku').text("SKU : " + data.sku);
+                    $('#selectedPrice').text("Price : ₹" + data.price);
+                } else {
+                    $('#selectedSku').text("SKU not found");
+                    $('#selectedPrice').text("");
+                }
+            }
+        });
+    } else {
+        $('#selectedSku').text("");
+        $('#selectedPrice').text("");
+    }
 });
-
-
 </script>
+
 
 
 

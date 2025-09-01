@@ -474,26 +474,21 @@ class Products extends MW_Controller {
 
         }
     }
-    public function product_detail($product_id)
-{
-    $data['options'] = $this->Product_varients->get_product_options($product_id);
-    $this->load->view('products/product_detail', $data);
-}
+
 
 // AJAX endpoint
 public function get_sku_by_options()
 {
-    $data = json_decode($this->input->raw_input_stream, true);
-    $values = $data['values'] ?? [];
+    $values = $this->input->post('values'); // no raw_input_stream
+    $product_id = $this->input->post('product_id');
 
-    $sku = $this->Product_varients->get_sku_by_values($values);
+    $sku = $this->Product_varients->get_sku_by_values($product_id, $values);
 
     echo json_encode([
-        'sku'   => $sku->sku_code ?? null,
-        'price' => $sku->price ?? null
+        'sku'   => isset( $sku->sku_code) ? $sku->sku_code : null,
+        'price' => isset($sku->price) ? $sku->price : null
     ]);
 }
-
 
     public function get_productimage() { //get products image
         $product_id = $this->input->post('pro_id');
