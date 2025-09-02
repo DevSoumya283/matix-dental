@@ -305,6 +305,7 @@ class NewProduct extends MW_Controller
             if (!$option) {
                 $this->db->insert('product_options', [
                     'option_type' => $option_type,
+                    'product_id'      => $product_id,
                     'option_code' => $option_code
                 ]);
                 $option_id = $this->db->insert_id();
@@ -402,7 +403,7 @@ class NewProduct extends MW_Controller
                     // Insert into skus
                     $this->db->insert('skus', [
                         'product_id'      => $product_id,
-                        'parent_id'       => $product_id,
+                        'parent_product_id'       => $product_id,
                         'sku_code'        => $sku_code,
                         'price'           => null,
                         'retail_price'    => null,
@@ -439,29 +440,36 @@ class NewProduct extends MW_Controller
                         // Check if sku already exists in product_pricings
                         $pricing_exists = $this->db->get_where('product_pricings', [
                             'product_id' => $product->id,
-                            'sku'        => $sku_code
+                            // 'sku'        => $sku_code
                         ])->row();
 
                         $vendor_id = $this->input->post('vendor_id');
-                        // if (!$pricing_exists) {
-                        //     $this->db->insert('product_pricings', [
-                        //         'product_id'        => $product->id,
-                        //         'sku'               => $sku_code,
-                        //         'vendor_product_id' => $product->mpn,   // mpn from products table
-                        //         'matix_id'          => $product->matix_id,
-                        //         'minimum_threshold' => 0,
-                        //         'vendor_id'         => $vendor_id,
-                        //         'price'             => null,
-                        //         'retail_price'      => null,
-                        //         'active'            => 1,
-                        //         'quantity'          => null,
-                        //         'exclude_from_marketplace' => 0,
-                        //         'exclude_from_whitelabels_1' => 0,
-                        //         'exclude_from_whitelabels_2' => 0,
-                        //         'created_at'        => date('Y-m-d H:i:s'),
-                        //         'updated_at'        => date('Y-m-d H:i:s'),
-                        //     ]);
-                        // }
+                        if (!$pricing_exists) {
+                            $this->db->insert('product_pricings', [
+                                'product_id'        => $product->id,
+                                'sku'               => $sku_code,
+                                'vendor_product_id' => $product->mpn,   // mpn from products table
+                                'matix_id'          => $product->matix_id,
+                                'minimum_threshold' => 0,
+                                'vendor_id'         => $vendor_id,
+                                'price'             => null,
+                                'retail_price'      => null,
+                                'active'            => 1,
+                                'quantity'          => null,
+                                'exclude_from_marketplace' => 0,
+                                'exclude_from_whitelabels_1' => 0,
+                                'exclude_from_whitelabels_2' => 0,
+                                'created_at'        => date('Y-m-d H:i:s'),
+                                'updated_at'        => date('Y-m-d H:i:s'),
+                            ]);
+                        }
+                        else{
+                            $this->db->update('product_pricings', [
+                                'sku'               => $sku_code,
+                                'created_at'        => date('Y-m-d H:i:s'),
+                                'updated_at'        => date('Y-m-d H:i:s'),
+                            ]);
+                        }
                     }
                 }
             }
