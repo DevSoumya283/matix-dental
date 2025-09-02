@@ -54,6 +54,34 @@ class Product_varients extends MY_Model
     }
 
 
+    // public function get_sku_by_values($product_id, $values = [])
+    // {
+    //     if (empty($values)) {
+    //         return null;
+    //     }
+
+    //     // get matrix_id
+    //     $this->db->select('matix_id');
+    //     $this->db->where('id', $product_id);
+    //     $product = $this->db->get('products')->row();
+    //     if (!$product) return null;
+
+    //     $matix_id = $product->matix_id;
+
+    //     $this->db->select('s.sku_id, s.sku_code, s.price, s.retail_price, COUNT(DISTINCT sov.value_id) as matched_count, 
+    //                    (SELECT COUNT(*) FROM sku_option_values WHERE sku_id = s.sku_id) as total_options');
+    //     $this->db->from('skus s');
+    //     $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+    //     $this->db->where('s.product_id', $matix_id);
+    //     $this->db->where_in('sov.value_id', $values);
+    //     $this->db->group_by('s.sku_id');
+    //     $this->db->having('matched_count = ' . count($values));     // must match all selected
+    //     $this->db->having('matched_count = total_options');        // must not have extra options
+
+    //     return $this->db->get()->row();
+    // }
+
+
     public function get_sku_by_values($product_id, $values = [])
     {
         if (empty($values)) {
@@ -68,10 +96,12 @@ class Product_varients extends MY_Model
 
         $matix_id = $product->matix_id;
 
-        $this->db->select('s.sku_id, s.sku_code, s.price, s.retail_price, COUNT(DISTINCT sov.value_id) as matched_count, 
+        $this->db->select('s.sku_id, s.sku_code, pp.price, pp.retail_price, 
+                       COUNT(DISTINCT sov.value_id) as matched_count, 
                        (SELECT COUNT(*) FROM sku_option_values WHERE sku_id = s.sku_id) as total_options');
         $this->db->from('skus s');
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+        $this->db->join('product_pricings pp', 'pp.sku = s.sku_code AND pp.matix_id = s.product_id', 'left');
         $this->db->where('s.product_id', $matix_id);
         $this->db->where_in('sov.value_id', $values);
         $this->db->group_by('s.sku_id');
