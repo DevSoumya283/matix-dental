@@ -81,33 +81,89 @@ class Product_varients extends MY_Model
     //     return $this->db->get()->row();
     // }
 
+    // showing price from pricing table
+
+    // public function get_sku_by_values($product_id, $values = [])
+    // {
+    //     if (empty($values)) {
+    //         return null;
+    //     }
+
+    //     // get matrix_id
+    //     $this->db->select('matix_id');
+    //     $this->db->where('id', $product_id);
+    //     $product = $this->db->get('products')->row();
+    //     if (!$product) return null;
+
+    //     $matix_id = $product->matix_id;
+
+    //     $this->db->select('s.sku_id, s.sku_code, pp.price, pp.retail_price, 
+    //                    COUNT(DISTINCT sov.value_id) as matched_count, 
+    //                    (SELECT COUNT(*) FROM sku_option_values WHERE sku_id = s.sku_id) as total_options');
+    //     $this->db->from('skus s');
+    //     $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+    //     $this->db->join('product_pricings pp', 'pp.sku = s.sku_code AND pp.matix_id = s.product_id', 'left');
+    //     $this->db->where('s.product_id', $matix_id);
+    //     $this->db->where_in('sov.value_id', $values);
+    //     $this->db->group_by('s.sku_id');
+    //     $this->db->having('matched_count = ' . count($values));     // must match all selected
+    //     $this->db->having('matched_count = total_options');        // must not have extra options
+
+    //     return $this->db->get()->row();
+    // }
+
+    // showing options 
 
     public function get_sku_by_values($product_id, $values = [])
-    {
-        if (empty($values)) {
-            return null;
-        }
+{
+    if (empty($values)) {
+        return null;
+    }
 
-        // get matrix_id
-        $this->db->select('matix_id');
-        $this->db->where('id', $product_id);
-        $product = $this->db->get('products')->row();
-        if (!$product) return null;
+    // get matrix_id
+    $this->db->select('matix_id');
+    $this->db->where('id', $product_id);
+    $product = $this->db->get('products')->row();
+    if (!$product) return null;
 
-        $matix_id = $product->matix_id;
+    $matix_id = $product->matix_id;
 
-        $this->db->select('s.sku_id, s.sku_code, pp.price, pp.retail_price, 
+    // main query to get SKU + prices
+    $this->db->select('s.sku_id, s.sku_code, pp.price, pp.retail_price, 
                        COUNT(DISTINCT sov.value_id) as matched_count, 
                        (SELECT COUNT(*) FROM sku_option_values WHERE sku_id = s.sku_id) as total_options');
-        $this->db->from('skus s');
-        $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
-        $this->db->join('product_pricings pp', 'pp.sku = s.sku_code AND pp.matix_id = s.product_id', 'left');
-        $this->db->where('s.product_id', $matix_id);
-        $this->db->where_in('sov.value_id', $values);
-        $this->db->group_by('s.sku_id');
-        $this->db->having('matched_count = ' . count($values));     // must match all selected
-        $this->db->having('matched_count = total_options');        // must not have extra options
+    $this->db->from('skus s');
+    $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+    $this->db->join('product_pricings pp', 'pp.sku = s.sku_code AND pp.matix_id = s.product_id', 'left');
+    $this->db->where('s.product_id', $matix_id);
+    $this->db->where_in('sov.value_id', $values);
+    $this->db->group_by('s.sku_id');
+    $this->db->having('matched_count = ' . count($values));
+    $this->db->having('matched_count = total_options');
 
-        return $this->db->get()->row();
+    $sku = $this->db->get()->row();
+
+    if (!$sku) {
+        return null;
     }
+
+    // fetch option_type:value pairs for this SKU
+    $this->db->select('po.option_type, pov.value');
+    $this->db->from('sku_option_values sov');
+    $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
+    $this->db->join('product_options po', 'pov.option_id = po.option_id');
+    $this->db->where('sov.sku_id', $sku->sku_id);
+    $options = $this->db->get()->result();
+
+    $option_pairs = [];
+    foreach ($options as $opt) {
+        $option_pairs[$opt->option_type] = $opt->value;
+    }
+
+    // attach options to SKU object
+    $sku->options = $option_pairs;
+
+    return $sku;
+}
+
 }

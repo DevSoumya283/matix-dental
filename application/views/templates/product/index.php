@@ -470,307 +470,298 @@
                         </h3>
                         <table class="table table--horizontal table--align-lr">
                             <tbody>
-                                <?php if ($product->manufacturer != null) { ?>
-                                    <tr>
-                                        <td width="40%">Manufacturer</td>
-                                        <td width="60%"><?php echo $product->manufacturer; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->mpn)) { ?>
-                                    <tr>
-                                        <td>MPN</td>
-                                        <td><?php echo $product->mpn; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->license_required)) { ?>
-                                    <tr>
-                                        <td>License Required</td>
-                                        <td><?php echo (strtolower($product->license_required) == "yes") ? "Required" : "Not Required"; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->quantity_per_box)) { ?>
-                                    <tr>
-                                        <td>Quantity/Box</td>
-                                        <td><?php echo $product->quantity_per_box; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                    <?php if(!empty($product->returnable)) { ?>
-                                    <tr>
-                                        <td>Returnable</td>
-                                        <td>
-                                            <?php echo $product->returnable; ?>
-                                        </td>
-                                    </tr>
-                                    <?php } ?>
-                                <?php if (!empty($product->weight)) { ?>
-                                    <tr>
-                                        <td>Weight</td>
-                                        <td><?php echo $product->weight; ?> <?php echo $product->weight_type; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->contents)) { ?>
-                                    <tr>
-                                        <td>Contents</td>
-                                        <td><?php echo $product->contents; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->msds_location)) { ?>
-                                    <tr>
-                                        <td>MSDS</td>
-                                        <td>
-                                            <?php
-                                            if (!empty($product->msds_location)) {
-                                                $msds = $product->msds_location;
-                                                ;
-                                                $msds_location = explode(" ", $msds);
-                                                for ($i = 0; $i < count($msds_location); $i++) {
-                                                    ?>
-                                                    <a class="link" href="<?php echo $msds_location[$i] ?>" target="_blank">MSDS
-                                                    </a><br />
-                                                <?php } ?>
-                                                <?php
-                                            } else {
-                                                echo "";
-                                            }
-                                            ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->size)) { ?>
-                                    <tr>
-                                        <td>Size</td>
-                                        <td><?php echo $product->size; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->color)) { ?>
-                                    <tr>
-                                        <td>Color</td>
-                                        <td><?php echo $product->color; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->fluoride)) { ?>
-                                    <tr>
-                                        <td>Fluoride</td>
-                                        <td><?php echo $product->fluoride; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->flavor)) { ?>
-                                    <tr>
-                                        <td>Flavor</td>
-                                        <td><?php echo $product->flavor; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->shade)) { ?>
-                                    <tr>
-                                        <td>Shade</td>
-                                        <td><?php echo $product->shade; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->grit)) { ?>
-                                    <tr>
-                                        <td>Grit</td>
-                                        <td><?php echo $product->grit; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->set_rate)) { ?>
-                                    <tr>
-                                        <td>Set Rate</td>
-                                        <td><?php echo $product->set_rate; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->viscosity)) { ?>
-                                    <tr>
-                                        <td>Viscosity</td>
-                                        <td><?php echo $product->viscosity; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->firmness)) { ?>
-                                    <tr>
-                                        <td>Firmness</td>
-                                        <td><?php echo $product->firmness; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->grit)) { ?>
-                                    <tr>
-                                        <td>Grit</td>
-                                        <td><?php echo $product->grit; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->tip_finish)) { ?>
-                                    <tr>
-                                        <td>Tip Finish</td>
-                                        <td><?php echo $product->tip_finish; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->tip_diameter)) { ?>
-                                    <tr>
-                                        <td>Tip Diameter</td>
-                                        <td><?php echo $product->tip_diameter; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->tip_material)) { ?>
-                                    <tr>
-                                        <td>Tip Material</td>
-                                        <td><?php echo $product->tip_material; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->head_diameter)) { ?>
-                                    <tr>
-                                        <td>Head Diameter</td>
-                                        <td><?php echo $product->head_diameter; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->head_length)) { ?>
-                                    <tr>
-                                        <td>Head Length</td>
-                                        <td><?php echo $product->head_length; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->diameter)) { ?>
-                                    <tr>
-                                        <td>Diameter</td>
-                                        <td><?php echo $product->diameter; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->category_code)) { ?>
-                                    <tr>
-                                        <td>Category Code</td>
-                                        <td><?php echo $product->category_code; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->arch)) { ?>
-                                    <tr>
-                                        <td>Arch</td>
-                                        <td><?php echo $product->arch; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->shaft_dimensions)) { ?>
-                                    <tr>
-                                        <td>Shaft Dimensions</td>
-                                        <td><?php echo $product->shaft_dimensions; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->shaft_description)) { ?>
-                                    <tr>
-                                        <td>Shaft Description</td>
-                                        <td><?php echo $product->shaft_description; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->blade_description)) { ?>
-                                    <tr>
-                                        <td>Blade Description</td>
-                                        <td><?php echo $product->blade_description; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->anatomic_use)) { ?>
-                                    <tr>
-                                        <td>Anatomic Use</td>
-                                        <td><?php echo $product->anatomic_use; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->instrument_description)) { ?>
-                                    <tr>
-                                        <td>Instrument Description</td>
-                                        <td><?php echo $product->instrument_description; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->palm_thickness)) { ?>
-                                    <tr>
-                                        <td>Palm Thickness</td>
-                                        <td><?php echo $product->palm_thickness; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->finger_thickness)) { ?>
-                                    <tr>
-                                        <td>Finger Thickness</td>
-                                        <td><?php echo $product->finger_thickness; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->texture)) { ?>
-                                    <tr>
-                                        <td>Texture</td>
-                                        <td><?php echo $product->texture; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->delivery_system)) { ?>
-                                    <tr>
-                                        <td>Delivery System</td>
-                                        <td><?php echo $product->delivery_system; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->volume)) { ?>
-                                    <tr>
-                                        <td>Volume</td>
-                                        <td><?php echo $product->volume; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->dimensions)) { ?>
-                                    <tr>
-                                        <td>Dimensions</td>
-                                        <td><?php echo $product->dimensions; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->handle_size)) { ?>
-                                    <tr>
-                                        <td>Handle Size</td>
-                                        <td><?php echo $product->handle_size; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->handle_finish)) { ?>
-                                    <tr>
-                                        <td>Handle Finish</td>
-                                        <td><?php echo $product->handle_finish; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->stone_type)) { ?>
-                                    <tr>
-                                        <td>Stone Type</td>
-                                        <td><?php echo $product->stone_type; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->stone_separation_time)) { ?>
-                                    <tr>
-                                        <td>Stone Separation Time</td>
-                                        <td><?php echo $product->stone_separation_time; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->setting_time)) { ?>
-                                    <tr>
-                                        <td>Setting Time</td>
-                                        <td><?php echo $product->setting_time; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->band_thickness)) { ?>
-                                    <tr>
-                                        <td>Band Thickness</td>
-                                        <td><?php echo $product->band_thickness; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php if (!empty($product->tax_per_state)) { ?>
-                                    <tr>
-                                        <td>Tax Per State</td>
-                                        <td><?php echo $product->tax_per_state; ?></td>
-                                    </tr>
-                                <?php } ?>
-                                <?php
-                                if (!empty($custom_fields)) {
-                                    for ($i = 0; $i < count($custom_fields); $i++) {
-                                        ?>
-                                        <?php if (!empty($custom_fields[$i]->field) && !empty($custom_fields[$i]->value)) { ?>
-                                            <tr>
-                                                <td><?php echo $custom_fields[$i]->field; ?></td>
-                                                <td><?php echo $custom_fields[$i]->value; ?></td>
-                                            </tr>
-                                        <?php } ?>
-                                        <?php
-                                    }
-                                }
-                                ?>
+    <?php if ($product->manufacturer != null) { ?>
+        <tr>
+            <td width="40%">Manufacturer</td>
+            <td width="60%" id="manufacturer"><?php echo $product->manufacturer; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->mpn)) { ?>
+        <tr>
+            <td>MPN</td>
+            <td id="mpn"><?php echo $product->mpn; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->license_required)) { ?>
+        <tr>
+            <td>License Required</td>
+            <td id="license_required"><?php echo (strtolower($product->license_required) == "yes") ? "Required" : "Not Required"; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->quantity_per_box)) { ?>
+        <tr>
+            <td>Quantity/Box</td>
+            <td id="quantity_per_box"><?php echo $product->quantity_per_box; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if(!empty($product->returnable)) { ?>
+        <tr>
+            <td>Returnable</td>
+            <td id="returnable"><?php echo $product->returnable; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->weight)) { ?>
+        <tr>
+            <td>Weight</td>
+            <td id="weight"><?php echo $product->weight; ?> <?php echo $product->weight_type; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->contents)) { ?>
+        <tr>
+            <td>Contents</td>
+            <td id="contents"><?php echo $product->contents; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->msds_location)) { ?>
+        <tr>
+            <td>MSDS</td>
+            <td id="msds_location">
+                <?php
+                if (!empty($product->msds_location)) {
+                    $msds = $product->msds_location;
+                    $msds_location = explode(" ", $msds);
+                    for ($i = 0; $i < count($msds_location); $i++) {
+                        ?>
+                        <a class="link" href="<?php echo $msds_location[$i] ?>" target="_blank">MSDS</a><br />
+                    <?php } ?>
+                <?php } ?>
+            </td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->size)) { ?>
+        <tr>
+            <td>Size</td>
+            <td id="size"><?php echo $product->size; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->color)) { ?>
+        <tr>
+            <td>Color</td>
+            <td id="color"><?php echo $product->color; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->fluoride)) { ?>
+        <tr>
+            <td>Fluoride</td>
+            <td id="fluoride"><?php echo $product->fluoride; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->flavor)) { ?>
+        <tr>
+            <td>Flavor</td>
+            <td id="flavor"><?php echo $product->flavor; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->shade)) { ?>
+        <tr>
+            <td>Shade</td>
+            <td id="shade"><?php echo $product->shade; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->grit)) { ?>
+        <tr>
+            <td>Grit</td>
+            <td id="grit"><?php echo $product->grit; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->set_rate)) { ?>
+        <tr>
+            <td>Set Rate</td>
+            <td id="set_rate"><?php echo $product->set_rate; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->viscosity)) { ?>
+        <tr>
+            <td>Viscosity</td>
+            <td id="viscosity"><?php echo $product->viscosity; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->firmness)) { ?>
+        <tr>
+            <td>Firmness</td>
+            <td id="firmness"><?php echo $product->firmness; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->tip_finish)) { ?>
+        <tr>
+            <td>Tip Finish</td>
+            <td id="tip_finish"><?php echo $product->tip_finish; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->tip_diameter)) { ?>
+        <tr>
+            <td>Tip Diameter</td>
+            <td id="tip_diameter"><?php echo $product->tip_diameter; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->tip_material)) { ?>
+        <tr>
+            <td>Tip Material</td>
+            <td id="tip_material"><?php echo $product->tip_material; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->head_diameter)) { ?>
+        <tr>
+            <td>Head Diameter</td>
+            <td id="head_diameter"><?php echo $product->head_diameter; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->head_length)) { ?>
+        <tr>
+            <td>Head Length</td>
+            <td id="head_length"><?php echo $product->head_length; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->diameter)) { ?>
+        <tr>
+            <td>Diameter</td>
+            <td id="diameter"><?php echo $product->diameter; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->category_code)) { ?>
+        <tr>
+            <td>Category Code</td>
+            <td id="category_code"><?php echo $product->category_code; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->arch)) { ?>
+        <tr>
+            <td>Arch</td>
+            <td id="arch"><?php echo $product->arch; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->shaft_dimensions)) { ?>
+        <tr>
+            <td>Shaft Dimensions</td>
+            <td id="shaft_dimensions"><?php echo $product->shaft_dimensions; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->shaft_description)) { ?>
+        <tr>
+            <td>Shaft Description</td>
+            <td id="shaft_description"><?php echo $product->shaft_description; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->blade_description)) { ?>
+        <tr>
+            <td>Blade Description</td>
+            <td id="blade_description"><?php echo $product->blade_description; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->anatomic_use)) { ?>
+        <tr>
+            <td>Anatomic Use</td>
+            <td id="anatomic_use"><?php echo $product->anatomic_use; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->instrument_description)) { ?>
+        <tr>
+            <td>Instrument Description</td>
+            <td id="instrument_description"><?php echo $product->instrument_description; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->palm_thickness)) { ?>
+        <tr>
+            <td>Palm Thickness</td>
+            <td id="palm_thickness"><?php echo $product->palm_thickness; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->finger_thickness)) { ?>
+        <tr>
+            <td>Finger Thickness</td>
+            <td id="finger_thickness"><?php echo $product->finger_thickness; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->texture)) { ?>
+        <tr>
+            <td>Texture</td>
+            <td id="texture"><?php echo $product->texture; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->delivery_system)) { ?>
+        <tr>
+            <td>Delivery System</td>
+            <td id="delivery_system"><?php echo $product->delivery_system; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->volume)) { ?>
+        <tr>
+            <td>Volume</td>
+            <td id="volume"><?php echo $product->volume; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->dimensions)) { ?>
+        <tr>
+            <td>Dimensions</td>
+            <td id="dimensions"><?php echo $product->dimensions; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->handle_size)) { ?>
+        <tr>
+            <td>Handle Size</td>
+            <td id="handle_size"><?php echo $product->handle_size; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->handle_finish)) { ?>
+        <tr>
+            <td>Handle Finish</td>
+            <td id="handle_finish"><?php echo $product->handle_finish; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->stone_type)) { ?>
+        <tr>
+            <td>Stone Type</td>
+            <td id="stone_type"><?php echo $product->stone_type; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->stone_separation_time)) { ?>
+        <tr>
+            <td>Stone Separation Time</td>
+            <td id="stone_separation_time"><?php echo $product->stone_separation_time; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->setting_time)) { ?>
+        <tr>
+            <td>Setting Time</td>
+            <td id="setting_time"><?php echo $product->setting_time; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->band_thickness)) { ?>
+        <tr>
+            <td>Band Thickness</td>
+            <td id="band_thickness"><?php echo $product->band_thickness; ?></td>
+        </tr>
+    <?php } ?>
+    <?php if (!empty($product->tax_per_state)) { ?>
+        <tr>
+            <td>Tax Per State</td>
+            <td id="tax_per_state"><?php echo $product->tax_per_state; ?></td>
+        </tr>
+    <?php } ?>
 
-                                <tr id="skuRow" style="display:none;">
-                                    <td>Sku</td>
-                                    <td id="selectedSku1"></td>
-                                </tr>
-                            </tbody>
+    <?php
+    if (!empty($custom_fields)) {
+        for ($i = 0; $i < count($custom_fields); $i++) {
+            if (!empty($custom_fields[$i]->field) && !empty($custom_fields[$i]->value)) {
+                ?>
+                <tr>
+                    <td><?php echo $custom_fields[$i]->field; ?></td>
+                    <td id="<?php echo strtolower(str_replace(' ', '_', $custom_fields[$i]->field)); ?>">
+                        <?php echo $custom_fields[$i]->value; ?>
+                    </td>
+                </tr>
+                <?php
+            }
+        }
+    }
+    ?>
+
+    <tr id="skuRow" style="display:none;">
+        <td>Sku</td>
+        <td id="selectedSku1"></td>
+    </tr>
+</tbody>
+
                         </table>
                     </div>
                     <!-- /Product Details -->
@@ -1207,7 +1198,7 @@
                 <!-- hidden on mobile -->
                 <div class="sidebar col-md-4 col-xs-12  d-none d-sm-block">
                     <div class="sidebar__group">
-                        <h4>Choose Qty1:<?php // echo $regular_price; ?></h4>
+                        <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
                             <input type="number" name="quantity" class="input input--qty not--empty width--50 sqty" min="1" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
@@ -1263,6 +1254,19 @@ $(document).on('change', '.variantSelect', function () {
                     $('.retail-price').text("$"+data.price);
                     $('.sale-price').text("$"+ data.retail_price); 
                    
+                    console.log(data.options);
+                    // update Size if present
+                    if (data.options) {
+                        Object.keys(data.options).forEach(function(optionType) {
+                            let optionValue = data.options[optionType];
+                            // convert optionType (e.g., "Size") to lowercase id selector (e.g., "#size")
+                            let id = "#" + optionType.toLowerCase();
+                            if ($(id).length) {
+                                $(id).text(optionValue);
+                            }
+                        });
+                    }
+
                 } else {
                     $('#skuRow').hide();
                     
