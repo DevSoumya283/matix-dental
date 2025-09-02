@@ -16,6 +16,7 @@ class NewProduct extends MW_Controller
         $this->load->database();
         $this->load->helper(['url', 'file']);
         $this->load->model('Productdata_model');
+        $this->load->model('Products_model');
         $this->load->model('ProductNormalizer_model');
         $this->load->library('ion_auth');
 
@@ -31,210 +32,231 @@ class NewProduct extends MW_Controller
 
     // For 1st tab 
 
-    // public function export()
-    // {
-    //     set_time_limit(0);
-    //     ini_set("memory_limit", "512M");
 
-    //     // --- Range handling ---
-    //     $range = $this->input->post('range');
-    //     if ($range && strpos($range, '-') !== false) {
-    //         list($start, $end) = explode('-', $range);
-    //         $offset = is_numeric($start) ? (int)$start : 0;
-    //         $limit  = (is_numeric($end) ? (int)$end : 10) - $offset;
-    //     } else {
-    //         $offset = 0;
-    //         $limit  = 10;
-    //     }
-    //     if ($limit <= 0) $limit = 10;
 
-    //     // --- Headers ---
-    //     $headerRow = [
-    //         'id','matix_id','mpn','item_code','name','description',
-    //         'extended_description','keywords','manufacturer',
-    //         'shipping_restrictions','brand','license_required',
-    //         'category_id','base_price','active'
-    //     ];
+    public function export_new()
+    {
+        set_time_limit(0);
+        ini_set("memory_limit", "12288M");
 
-    //     $filename = 'products_' . time() . '.csv';
+         $range = $this->input->get('range');
+            if ($range && strpos($range, '-') !== false) {
+            list($start, $end) = explode('-', $range);
+            $offset = is_numeric($start) ? (int)$start : 0;
+            $limit  = (is_numeric($end) ? (int)$end : 10) - $offset;
+        } else {
+            $offset = 0;
+            $limit  = 10;
+        }
+        if ($limit <= 0) $limit = 10;
 
-    //     header('Content-Type: text/csv; charset=utf-8');
-    //     header('Content-Disposition: attachment; filename="' . $filename . '"');
-    //     header('Pragma: no-cache');
-    //     header('Expires: 0');
+            // Optional: validate range
+            if (!is_numeric($limit) || !is_numeric($offset)) {
+                show_error("Invalid range values.");
+                return;
+            }
 
-    //     $output = fopen('php://output', 'w');
-    //     fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-    //     fputcsv($output, $headerRow);
+        $headerRow = array(
+             'id', 'matix_id', 'mpn', 'item_code', 'name', 'description',
+            'extended_description', 'keywords', 'manufacturer',
+            'shipping_restrictions', 'brand', 'license_required',
+            'category_id', 'base_price', 'active'
+        );
 
-    //     // --- Data ---
-    //     $products = $this->Products_model->get_all($limit, $offset);
-    //     if ($products) {
-    //         $mpns = array_filter(array_column($products, 'id'));
-    //         $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns);
+        $random_name = rand(1, 10000000000);
+        $filename = $random_name . '.xlsx';
+        $uploadPath = FCPATH . 'assets/uploads/';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0775, true);
+        }
 
-    //         foreach ($products as $p) {
-    //             $products_data = [
-    //                 $p->id ?? '',
-    //                 $p->matix_id ?? '',
-    //                 $p->mpn ?? '',
-    //                 $p->item_code ?? '',
-    //                 $p->name ?? '',
-    //                 strip_tags($p->description ?? ''),
-    //                 strip_tags($p->extended_description ?? ''),
-    //                 $p->keywords ?? '',
-    //                 $p->manufacturer ?? '',
-    //                 $p->shipping_restrictions ?? '',
-    //                 $p->brand ?? '',
-    //                 $p->license_required ?? '',
-    //                 $p->category_id ?? '',
-    //                 $p->base_price ?? '',
-    //                 $p->active ?? ''
-    //             ];
-    //             fputcsv($output, $products_data);
-    //         }
-    //     }
+        $file_path = $uploadPath . $filename;
+        $writer = WriterFactory::create(Type::XLSX);
+        $writer->openToFile($file_path);
+        $writer->addRow($headerRow);
+        $products = $this->Products_model->get_all($limit, $offset);
+        $mpns = array_filter(array_column($products, 'id'));
+        $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns);
+        foreach ($products as $product) {
+                $price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['price'] : '';
+                $retail_price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['retail_price'] : '';
 
-    //     fclose($output);
-    //     exit;
-    // }
+                $products_data = [
+                            $product->id,
+                            $product->matix_id,
+                            $product->mpn,
+                            $product->item_code,
+                            $product->name,
+                            strip_tags($product->description),
+                            strip_tags($product->extended_description),
+                            $product->keywords,
+                            $product->manufacturer,
+                            $product->shipping_restrictions, // Changed from product_procedures
+                            $product->brand,
+                            $product->license_required,
+                            $product->category_id,
+                            $product->base_price, // You'll need to get this from somewhere
+                            $product->active
+                        ];
+                $writer->addRow($products_data);
+            }
+        
 
-    // public function save_data()
-        // {
-        //     $excel_data = $this->input->post('excel_data');
-        //     $file_name = $this->input->post('file_name');
-        //     $vendor_id = '8';
-        //     $elasticsearch_enabled = false;
+        $writer->close();
 
-        //     if (!$excel_data) {
-        //         echo json_encode(['status' => 'error', 'message' => 'No data to save']);
-        //         return;
-        //     }
-
-        //     $decoded_data = json_decode($excel_data, true);
-
-        //     if ($decoded_data === null) {
-        //         echo json_encode(['status' => 'error', 'message' => 'Invalid JSON format']);
-        //         return;
-        //     }
-
-        //     $empty_rows = [];
-        //     $new_product_array = [];
-
-        //     foreach ($decoded_data as $i => $row) {
-        //         if ($i === 0) continue;
-
-        //         $mpn = $row[2];
-        //         if (empty($mpn)) {
-        //             $empty_rows[] = $i;
-        //             continue;
-        //         }
-
-        //         $vendors_product_id = $row[4];
-
-        //         // $existing_product = $this->Products_model->select('id', 'matix_id')->get_by(['mpn' => $mpn]);
-                
-        //         $sql = "SELECT id, matix_id FROM products WHERE mpn = ? LIMIT 1";
-        //         $existing_product = $this->db->query($sql, [$mpn])->row();
+        // Force download
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/force-download');
+        header("Content-Disposition: attachment; filename=\"" . basename($filename) . "\";");
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file_path));
+        ob_clean();
+        flush();
+        readfile($file_path);
+        exit;
+    }
     
-        //         $matix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
 
-        //         $category_id = $row[12];
-        //         $c_id = explode(",", str_replace('"', '', $category_id));
-        //         $categories_list = [];
 
-        //         foreach ($c_id as $cid) {
-        //             $cid = trim($cid);
-        //             if ($cid !== "") {
-        //                 $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
-        //                         FROM categories AS t1
-        //                         LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
-        //                         LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
-        //                         LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
-        //                         LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
-        //                         WHERE t1.id = ' . $cid;
+    public function save_data()
+        {
+            $excel_data = $this->input->post('excel_data');
+            $file_name = $this->input->post('file_name');
+            $vendor_id = '8';
+            $elasticsearch_enabled = false;
 
-        //                 $output = $this->db->query($query)->result();
+            if (!$excel_data) {
+                echo json_encode(['status' => 'error', 'message' => 'No data to save']);
+                return;
+            }
 
-        //                 if (!empty($output)) {
-        //                     foreach (['lev1_id', 'lev2_id', 'lev3_id', 'lev4_id', 'lev5_id'] as $lev) {
-        //                         if (!empty($output[0]->$lev)) {
-        //                             $categories_list[] = $output[0]->$lev;
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
+            $decoded_data = json_decode($excel_data, true);
 
-        //         $categories_list = array_unique($categories_list);
-        //         $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
+            if ($decoded_data === null) {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid JSON format']);
+                return;
+            }
 
-        //         $random_number =  rand(1111111, 9999999);
-        //         $product_data = [
-        //             'item_code' => $row[3],
-        //             'matix_id' => !empty($row[3]) ? $row[3] : 'p-' . $random_number,
-        //             'parent_product' => '1',
-        //             'name' => $row[4],
-        //             'description' => $row[5],
-        //             'extended_description' => $row[6],
-        //             'keywords' => $row[7],
-        //             'manufacturer' => $row[8],
-        //             'shipping_restrictions' => $row[9],
-        //             'brand' => $row[10],
-        //             'license_required' => ucfirst(strtolower($row[11])),
-        //             'category_id' => $categories,
-        //             'base_price' => $row[13],
-        //             'active' => $row[14],
-        //             'updated_at' => date('Y-m-d H:i:s')
-        //         ];
+            $empty_rows = [];
+            $new_product_array = [];
 
-        //         // Only set these on insert
-        //         if (!$existing_product) {
-        //             $product_data['mpn'] = $mpn;
-        //             $product_data['created_at'] = date('Y-m-d H:i:s');
-        //             $new_product_array[] = $product_data;
+            foreach ($decoded_data as $i => $row) {
+                if ($i === 0) continue;
 
-        //             if (count($new_product_array) == 100) {
-        //                 $this->db->insert_batch('products', $new_product_array);
-        //                 $first_insert_id = $this->db->insert_id();
-        //                 for ($j = 0; $j < count($new_product_array); $j++) {
-        //                     $new_id = $first_insert_id + $j;
-        //                     if ($elasticsearch_enabled) {
-        //                         $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
-        //                     }
-        //                 }
-        //                 $new_product_array = [];
-        //             }
-        //         } else {
-        //             // Update existing product — don't touch mpn or matix_id
-        //             $this->db->update('products', $product_data, ['id' => $existing_product->id]);
+                $mpn = $row[2];
+                if (empty($mpn)) {
+                    $empty_rows[] = $i;
+                    continue;
+                }
 
-        //             if ($elasticsearch_enabled) {
-        //                 $this->elasticsearch->add("products", $existing_product->id, $product_data);
-        //             }
-        //         }
-        //     }
+                $vendors_product_id = $row[4];
 
-        //     // Final insert batch
-        //     if (!empty($new_product_array)) {
-        //         $this->db->insert_batch('products', $new_product_array);
-        //         $first_insert_id = $this->db->insert_id();
-        //         for ($j = 0; $j < count($new_product_array); $j++) {
-        //             $new_id = $first_insert_id + $j;
-        //             if ($elasticsearch_enabled) {
-        //                 $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
-        //             }
-        //         }
-        //     }
+                // $existing_product = $this->Products_model->select('id', 'matix_id')->get_by(['mpn' => $mpn]);
+                
+                $sql = "SELECT id, matix_id FROM products WHERE mpn = ? LIMIT 1";
+                $existing_product = $this->db->query($sql, [$mpn])->row();
+    
+                $matix_id_value = $existing_product ? $existing_product->id : 'p-' . time();
 
-        //     $response = ['status' => 'success', 'message' => 'Products uploaded successfully.'];
-        //     if (count($empty_rows) > 0) {
-        //         $response['warning'] = 'Some rows were skipped because MPNs were blank.';
-        //         $response['skipped_rows'] = $empty_rows;
-        //     }
+                $category_id = $row[12];
+                $c_id = explode(",", str_replace('"', '', $category_id));
+                $categories_list = [];
 
-        //     echo json_encode($response);
-    // }
+                foreach ($c_id as $cid) {
+                    $cid = trim($cid);
+                    if ($cid !== "") {
+                        $query = 'SELECT t1.id as lev1_id, t2.id as lev2_id, t3.id as lev3_id, t4.id as lev4_id, t5.id as lev5_id
+                                FROM categories AS t1
+                                LEFT JOIN categories AS t2 ON t2.id = t1.parent_id
+                                LEFT JOIN categories AS t3 ON t3.id = t2.parent_id
+                                LEFT JOIN categories AS t4 ON t4.id = t3.parent_id
+                                LEFT JOIN categories AS t5 ON t5.id = t4.parent_id
+                                WHERE t1.id = ' . $cid;
+
+                        $output = $this->db->query($query)->result();
+
+                        if (!empty($output)) {
+                            foreach (['lev1_id', 'lev2_id', 'lev3_id', 'lev4_id', 'lev5_id'] as $lev) {
+                                if (!empty($output[0]->$lev)) {
+                                    $categories_list[] = $output[0]->$lev;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $categories_list = array_unique($categories_list);
+                $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
+
+                $random_number =  rand(1111111, 9999999);
+                $product_data = [
+                    'item_code' => $row[3],
+                    'matix_id' => !empty($row[3]) ? $row[3] : 'p-' . $random_number,
+                    'parent_product' => '1',
+                    'name' => $row[4],
+                    'description' => $row[5],
+                    'extended_description' => $row[6],
+                    'keywords' => $row[7],
+                    'manufacturer' => $row[8],
+                    'shipping_restrictions' => $row[9],
+                    'brand' => $row[10],
+                    'license_required' => ucfirst(strtolower($row[11])),
+                    'category_id' => $categories,
+                    'base_price' => $row[13],
+                    'active' => $row[14],
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+
+                // Only set these on insert
+                if (!$existing_product) {
+                    $product_data['mpn'] = $mpn;
+                    $product_data['created_at'] = date('Y-m-d H:i:s');
+                    $new_product_array[] = $product_data;
+
+                    if (count($new_product_array) == 100) {
+                        $this->db->insert_batch('products', $new_product_array);
+                        $first_insert_id = $this->db->insert_id();
+                        for ($j = 0; $j < count($new_product_array); $j++) {
+                            $new_id = $first_insert_id + $j;
+                            if ($elasticsearch_enabled) {
+                                $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
+                            }
+                        }
+                        $new_product_array = [];
+                    }
+                } else {
+                    // Update existing product — don't touch mpn or matix_id
+                    $this->db->update('products', $product_data, ['id' => $existing_product->id]);
+
+                    if ($elasticsearch_enabled) {
+                        $this->elasticsearch->add("products", $existing_product->id, $product_data);
+                    }
+                }
+            }
+
+            // Final insert batch
+            if (!empty($new_product_array)) {
+                $this->db->insert_batch('products', $new_product_array);
+                $first_insert_id = $this->db->insert_id();
+                for ($j = 0; $j < count($new_product_array); $j++) {
+                    $new_id = $first_insert_id + $j;
+                    if ($elasticsearch_enabled) {
+                        $this->elasticsearch->add("products", $new_id, $new_product_array[$j]);
+                    }
+                }
+            }
+
+            $response = ['status' => 'success', 'message' => 'Products uploaded successfully.'];
+            if (count($empty_rows) > 0) {
+                $response['warning'] = 'Some rows were skipped because MPNs were blank.';
+                $response['skipped_rows'] = $empty_rows;
+            }
+
+            echo json_encode($response);
+    }
 
 
     // Preview the uploaded Excel
@@ -305,7 +327,6 @@ class NewProduct extends MW_Controller
             if (!$option) {
                 $this->db->insert('product_options', [
                     'option_type' => $option_type,
-                    'product_id'      => $product_id,
                     'option_code' => $option_code
                 ]);
                 $option_id = $this->db->insert_id();
@@ -440,36 +461,29 @@ class NewProduct extends MW_Controller
                         // Check if sku already exists in product_pricings
                         $pricing_exists = $this->db->get_where('product_pricings', [
                             'product_id' => $product->id,
-                            // 'sku'        => $sku_code
+                            'sku'        => $sku_code
                         ])->row();
 
                         $vendor_id = $this->input->post('vendor_id');
-                        if (!$pricing_exists) {
-                            $this->db->insert('product_pricings', [
-                                'product_id'        => $product->id,
-                                'sku'               => $sku_code,
-                                'vendor_product_id' => $product->mpn,   // mpn from products table
-                                'matix_id'          => $product->matix_id,
-                                'minimum_threshold' => 0,
-                                'vendor_id'         => $vendor_id,
-                                'price'             => null,
-                                'retail_price'      => null,
-                                'active'            => 1,
-                                'quantity'          => null,
-                                'exclude_from_marketplace' => 0,
-                                'exclude_from_whitelabels_1' => 0,
-                                'exclude_from_whitelabels_2' => 0,
-                                'created_at'        => date('Y-m-d H:i:s'),
-                                'updated_at'        => date('Y-m-d H:i:s'),
-                            ]);
-                        }
-                        else{
-                            $this->db->update('product_pricings', [
-                                'sku'               => $sku_code,
-                                'created_at'        => date('Y-m-d H:i:s'),
-                                'updated_at'        => date('Y-m-d H:i:s'),
-                            ]);
-                        }
+                        // if (!$pricing_exists) {
+                        //     $this->db->insert('product_pricings', [
+                        //         'product_id'        => $product->id,
+                        //         'sku'               => $sku_code,
+                        //         'vendor_product_id' => $product->mpn,   // mpn from products table
+                        //         'matix_id'          => $product->matix_id,
+                        //         'minimum_threshold' => 0,
+                        //         'vendor_id'         => $vendor_id,
+                        //         'price'             => null,
+                        //         'retail_price'      => null,
+                        //         'active'            => 1,
+                        //         'quantity'          => null,
+                        //         'exclude_from_marketplace' => 0,
+                        //         'exclude_from_whitelabels_1' => 0,
+                        //         'exclude_from_whitelabels_2' => 0,
+                        //         'created_at'        => date('Y-m-d H:i:s'),
+                        //         'updated_at'        => date('Y-m-d H:i:s'),
+                        //     ]);
+                        // }
                     }
                 }
             }
