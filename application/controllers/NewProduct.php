@@ -284,7 +284,7 @@ class NewProduct extends MW_Controller
         }
     }
 
-    public function save_options_excel()
+       public function save_options_excel()
     {
         $rows = json_decode($this->input->post('rows'), true);
         if (!$rows || count($rows) < 2) {
@@ -327,6 +327,7 @@ class NewProduct extends MW_Controller
             if (!$option) {
                 $this->db->insert('product_options', [
                     'option_type' => $option_type,
+                    'product_id'      => $product_id,
                     'option_code' => $option_code
                 ]);
                 $option_id = $this->db->insert_id();
@@ -365,48 +366,6 @@ class NewProduct extends MW_Controller
             $values_map[$product_id][$option_type][$value_id] = $option_code;
         }
 
-        // 4️⃣ SKU generation
-        // foreach ($values_map as $product_id => $options) {
-        //     $combinations = $this->cartesianProduct(array_values($options));
-
-        //     foreach ($combinations as $combo) {
-        //         $sku_code = $product_id . '-' . implode('-', $combo);
-
-        //         $sku_exists = $this->db->get_where('skus', [
-        //             'product_id' => $product_id,
-        //             'sku_code'   => $sku_code
-        //         ])->row();
-
-        //         if (!$sku_exists) {
-        //             $this->db->insert('skus', [
-        //                 'product_id'      => $product_id,
-        //                 'sku_code'        => $sku_code,
-        //                 'price'           => null,
-        //                 'retail_price'    => null,
-        //                 'stock_quantity'  => null,
-        //                 'status'          => 'active',
-        //                 'exclude_from_whitelabels_1' => 0,
-        //                 'exclude_from_whitelabels_2' => 0,
-        //                 'exclude_from_marketplace' => 0,
-        //                 'minimum_threshold' => null
-        //             ]);
-        //             $sku_id = $this->db->insert_id();
-
-
-        //             foreach ($combo as $code) {
-        //                 foreach ($options as $opt_values) {
-        //                     $value_id = array_search($code, $opt_values);
-        //                     if ($value_id !== false) {
-        //                         $this->db->insert('sku_option_values', [
-        //                             'sku_id'   => $sku_id,
-        //                             'value_id' => $value_id
-        //                         ]);
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
         // 4️⃣ SKU generation
         foreach ($values_map as $product_id => $options) {
             $combinations = $this->cartesianProduct(array_values($options));
