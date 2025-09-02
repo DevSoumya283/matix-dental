@@ -284,7 +284,7 @@ class NewProduct extends MW_Controller
         }
     }
 
-       public function save_options_excel()
+    public function save_options_excel()
     {
         $rows = json_decode($this->input->post('rows'), true);
         if (!$rows || count($rows) < 2) {
@@ -416,15 +416,8 @@ class NewProduct extends MW_Controller
                         ->get('products')
                         ->row();
 
-                    if ($product) {
-                        // Check if sku already exists in product_pricings
-                        $pricing_exists = $this->db->get_where('product_pricings', [
-                            'product_id' => $product->id,
-                            // 'sku'        => $sku_code
-                        ])->row();
 
                         $vendor_id = $this->input->post('vendor_id');
-                        if (!$pricing_exists) {
                             $this->db->insert('product_pricings', [
                                 'product_id'        => $product->id,
                                 'sku'               => $sku_code,
@@ -442,15 +435,9 @@ class NewProduct extends MW_Controller
                                 'created_at'        => date('Y-m-d H:i:s'),
                                 'updated_at'        => date('Y-m-d H:i:s'),
                             ]);
-                        }
-                        else{
-                            $this->db->update('product_pricings', [
-                                'sku'               => $sku_code,
-                                'created_at'        => date('Y-m-d H:i:s'),
-                                'updated_at'        => date('Y-m-d H:i:s'),
-                            ]);
-                        }
-                    }
+                        
+                        
+                    
                 }
             }
         }
