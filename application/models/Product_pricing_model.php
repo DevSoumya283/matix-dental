@@ -122,19 +122,47 @@ class Product_pricing_model extends MY_Model {
 
     public function getPricesMarketplace($productId)
     {
-       $prices= $this->db->select('pp.*, 
-                  COALESCE(pp.price, p.base_price) AS price,
-                  COALESCE(pp.retail_price, p.base_price) AS retail_price')
-         ->from('product_pricings pp')
-         ->join('products p', 'pp.product_id = p.id')
-         ->where('pp.product_id', $productId)
-         ->where('pp.sku IS NOT NULL')
-         ->where('pp.active', 1)
-         ->where('pp.exclude_from_marketplace', 0)
-         ->get()
-         ->result();
-
-
+        // First find available SKUs with stock for this product
+        $this->db->select('s.sku_code, s.stock_quantity');
+        $this->db->from('skus s');
+        $this->db->where('s.product_id', 'p-'.$productId);
+        $this->db->where('s.stock_quantity >', 0);
+        $this->db->where('s.stock_quantity IS NOT NULL');
+        $this->db->order_by('s.stock_quantity DESC, s.sku_id ASC'); // Prioritize highest stock
+        $this->db->limit(1);
+        
+        $sku = $this->db->get()->row();
+        
+        if ($sku) {
+            // Get pricing for this specific SKU
+            $prices = $this->db->select('pp.*, 
+                        COALESCE(pp.price, p.base_price) AS price,
+                        COALESCE(pp.retail_price, p.base_price) AS retail_price')
+                    ->from('product_pricings pp')
+                    ->join('products p', 'pp.product_id = p.id')
+                    ->where('pp.product_id', $productId)
+                    ->where('pp.sku', $sku->sku_code) // Match the specific SKU
+                    ->where('pp.active', 1)
+                    ->where('pp.exclude_from_marketplace', 0)
+                    ->get()
+                    ->result();
+        } else {
+            // Fallback: Get any pricing for the product (even without stock)
+            $prices = $this->db->select('pp.*, 
+                        COALESCE(pp.price, p.base_price) AS price,
+                        COALESCE(pp.retail_price, p.base_price) AS retail_price')
+                    ->from('product_pricings pp')
+                    ->join('products p', 'pp.product_id = p.id')
+                    ->where('pp.product_id', $productId)
+                    ->where('pp.sku IS NOT NULL')
+                    ->where('pp.active', 1)
+                    ->where('pp.exclude_from_marketplace', 0)
+                    ->order_by('pp.price ASC') // Get cheapest available
+                    ->limit(1)
+                    ->get()
+                    ->result();
+        }
+        
         return $prices;
     }
 

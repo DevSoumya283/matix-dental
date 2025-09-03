@@ -49,7 +49,7 @@ ADD COLUMN parent_product VARCHAR(191) NOT NULL DEFAULT '0';
 -- Product options table
 CREATE TABLE product_options (
   option_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  product_id VARCHAR(191) NOT NULL ,
+  product_id VARCHAR(191)  NULL ,
   option_type VARCHAR(255) NOT NULL,
   option_code VARCHAR(191) NOT NULL 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -95,9 +95,10 @@ CREATE TABLE skus (
 
 -- SKU option values mapping table
 CREATE TABLE sku_option_values (
+  id BIGINT UNSIGNED  AUTO_INCREMENT PRIMARY KEY ,
   sku_id BIGINT UNSIGNED NOT NULL,
   value_id BIGINT UNSIGNED NOT NULL,
-  PRIMARY KEY (sku_id, value_id),
+  UNIQUE KEY unique_sku_value (sku_id, value_id),  -- Unique constraint instead of composite PK
   CONSTRAINT fk_sov_sku
     FOREIGN KEY (sku_id) REFERENCES skus(sku_id) ON DELETE CASCADE,
   CONSTRAINT fk_sov_value

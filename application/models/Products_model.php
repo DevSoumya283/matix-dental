@@ -331,46 +331,89 @@ class Products_model extends MY_Model {
 
         $matix_id = $product->matix_id;
 
-        // 2) Fetch ALL options + values, then take FIRST value for each option_type
-        $this->db->select('po.option_id, po.option_type, po.option_code, pov.value_id, pov.value');
-        $this->db->from('product_option_values pov');
-        $this->db->join('product_options po', 'po.option_id = pov.option_id', 'inner');
-        $this->db->where('pov.product_id', $matix_id);
-        $this->db->order_by('po.option_type ASC, pov.value_id ASC'); // first inserted value comes first
-        $rows = $this->db->get()->result();
+                // 2) First find available SKUs with stock for this product
+        $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+        $this->db->from('skus s');
+        $this->db->where('s.product_id', $matix_id);
+        $this->db->where('s.stock_quantity >', 0);
+        $this->db->where('s.stock_quantity IS NOT NULL');
+        $this->db->order_by('s.stock_quantity DESC, s.sku_id ASC'); // Prioritize highest stock
+        $this->db->limit(1);
 
-        $options = [];
-        foreach ($rows as $row) {
-            $type = $row->option_type;
-            if (!isset($options[$type])) {
-                // assign only the first value for each option type
+        $sku = $this->db->get()->row();
+
+        if ($sku) {
+            $product->sku = $sku->sku_code;
+            $product->quantity_per_box = $sku->stock_quantity;
+            
+            // 3) Now get the option values for this SKU
+            $this->db->select('sov.value_id, pov.value, po.option_type, po.option_code');
+            $this->db->from('sku_option_values sov');
+            $this->db->join('product_option_values pov', 'pov.value_id = sov.value_id', 'inner');
+            $this->db->join('product_options po', 'po.option_id = pov.option_id', 'inner');
+            $this->db->where('sov.sku_id', $sku->sku_id);
+            $this->db->order_by('po.option_type ASC, pov.value_id ASC');
+            
+            $option_rows = $this->db->get()->result();
+            
+            // Assign option values to product object
+            foreach ($option_rows as $row) {
                 $key = $this->snake_case($row->option_type);
                 $product->$key = $row->value;
-                $options[$type] = $row; // save full row in case we need value_id for SKU
             }
-        }
-
-        // 3) Use the FIRST option’s first value to fetch SKU + quantity
-        if (!empty($options)) {
-            $firstOption = reset($options); // first option row
-            $value_id    = (int)$firstOption->value_id;
-
+            
+        } else {
+            // Fallback: Try to find ANY SKU for this product (even with 0 stock)
             $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
             $this->db->from('skus s');
-            $this->db->join('sku_option_values sov', 'sov.sku_id = s.sku_id', 'inner');
-            $this->db->where('s.product_id', $matix_id); // matix_id used in your schema
-            $this->db->where('sov.value_id', $value_id);
-            $this->db->order_by('s.sku_id', 'ASC');
+            $this->db->where('s.product_id', $matix_id);
+            $this->db->where('s.stock_quantity IS NOT NULL');
+            $this->db->order_by('s.sku_id ASC');
             $this->db->limit(1);
-
-            $sku = $this->db->get()->row();
-
-            if ($sku) {
-                $product->sku          = $sku->sku_code;
-                $product->quantity_per_box     = $sku->stock_quantity;
+            
+            $sku_fallback = $this->db->get()->row();
+            
+            if ($sku_fallback) {
+                $product->sku = $sku_fallback->sku_code;
+                $product->quantity_per_box = $sku_fallback->stock_quantity;
+                
+                // Get option values for fallback SKU
+                $this->db->select('sov.value_id, pov.value, po.option_type, po.option_code');
+                $this->db->from('sku_option_values sov');
+                $this->db->join('product_option_values pov', 'pov.value_id = sov.value_id', 'inner');
+                $this->db->join('product_options po', 'po.option_id = pov.option_id', 'inner');
+                $this->db->where('sov.sku_id', $sku_fallback->sku_id);
+                $this->db->order_by('po.option_type ASC, pov.value_id ASC');
+                
+                $option_rows = $this->db->get()->result();
+                
+                foreach ($option_rows as $row) {
+                    $key = $this->snake_case($row->option_type);
+                    $product->$key = $row->value;
+                }
             } else {
-                $product->sku      = null;
+                $product->sku = null;
                 $product->quantity_per_box = null;
+                
+                // 4) If no SKU found at all, just get the first option values for display
+                $this->db->select('po.option_id, po.option_type, po.option_code, pov.value_id, pov.value');
+                $this->db->from('product_option_values pov');
+                $this->db->join('product_options po', 'po.option_id = pov.option_id', 'inner');
+                $this->db->where('pov.product_id', $matix_id);
+                $this->db->order_by('po.option_type ASC, pov.value_id ASC');
+                $this->db->limit(5); // Limit to avoid too many options
+                
+                $option_rows = $this->db->get()->result();
+                
+                $options = [];
+                foreach ($option_rows as $row) {
+                    $type = $row->option_type;
+                    if (!isset($options[$type])) {
+                        $key = $this->snake_case($row->option_type);
+                        $product->$key = $row->value;
+                        $options[$type] = true;
+                    }
+                }
             }
         }
 
