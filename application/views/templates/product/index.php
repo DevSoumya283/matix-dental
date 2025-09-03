@@ -1204,94 +1204,102 @@
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
-                 <?php if (!empty($options)): ?>
-    <?php foreach ($options as $type => $values): ?>
-        <div class="sidebar__group">
-            <h4>Choose <?php echo $type; ?>:</h4>
-            <select class="form-control variantSelect" data-type="<?php echo $type; ?>">
-                <option value="">-- Select <?php echo $type; ?> --</option>
-                <?php foreach ($values as $v): ?>
-                    <option value="<?php echo $v['value_id']; ?>">
-                        <?php echo $v['value']; ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-    <?php endforeach; ?>
+                    <?php // Initial dropdowns – pass $options from get_product_options($product_id) ?>
+<?php if (!empty($options)): ?>
+  <?php foreach ($options as $type => $values): ?>
+    <div class="sidebar__group">
+      <h4>Choose <?php echo $type; ?>:</h4>
+      <select class="form-control variantSelect" data-type="<?php echo $type; ?>">
+        <option value="">-- Select <?php echo $type; ?> --</option>
+        <?php foreach ($values as $v): ?>
+          <option value="<?php echo (int)$v['value_id']; ?>">
+            <?php echo htmlspecialchars($v['value'], ENT_QUOTES, 'UTF-8'); ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+  <?php endforeach; ?>
 <?php endif; ?>
 
-<div id="selectedSku" style="margin:5px; color: red;"></div>
-<!-- <div id="selectedPrice" style="margin-top:5px;"></div> -->
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).on('change', '.variantSelect', function () {
-    let selectedValues = [];
-    let allSelected = true;
+(function($){
 
-    $('.variantSelect').each(function () {
-        if ($(this).val()) {
-            selectedValues.push($(this).val());
-        } else {
-            allSelected = false;
-        }
+  function collectSelected() {
+    const vals = [];
+    $('.variantSelect').each(function(){
+      const v = $(this).val();
+      if (v) vals.push(parseInt(v, 10));
+    });
+    return vals;
+  }
+
+  function rebuildSelect(selectEl, type, availableList) {
+    const prev = selectEl.val() || '';
+    selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
+
+    const ids = new Set((availableList || []).map(o => String(o.value_id)));
+    (availableList || []).forEach(function(opt){
+      const $o = $('<option>', { value: opt.value_id, text: opt.value });
+      selectEl.append($o);
     });
 
-    // Send AJAX even if not all selected
-    if (selectedValues.length > 0) {
-        $.ajax({
-            url: "<?php echo base_url('get_sku_by_options'); ?>",
-            type: "POST",
-            dataType: "json",
-            data: {
-                values: selectedValues,
-                product_id: "<?php echo $product_id; ?>"
-            },
-            success: function (data) {
-                if (data.sku) {
-                    $('#skuRow').show();
-                    $('#selectedSku1').text(data.sku);
-                    $('.retail-price').text("$"+data.price);
-                    $('.sale-price').text("$"+ data.retail_price); 
-                   
-                    console.log(data.options);
-                    // update Size if present
-                    if (data.options) {
-                        Object.keys(data.options).forEach(function(optionType) {
-                            let optionValue = data.options[optionType];
-                            // convert optionType (e.g., "Size") to lowercase id selector (e.g., "#size")
-                            let id = "#" + optionType.toLowerCase();
-                            if ($(id).length) {
-                                $(id).text(optionValue);
-                            }
-                        });
-                    }
-
-                } else {
-                    $('#skuRow').hide();
-                    
-                    // Show message immediately
-                        $('#selectedSku').text("Product Not Found").show();
-
-                    // Hide after 3 seconds
-                    setTimeout(function () {
-                        $('#selectedSku').fadeOut(function () {
-                            $(this).text("").show(); // reset text and show for future use
-                        });
-                    }, 3000);
-
-                    $('#selectedSku1').text("");
-                    
-                }
-
-            }
-        });
+    // keep previous selection if still valid
+    if (prev && ids.has(prev)) {
+      selectEl.val(prev);
     } else {
-        $('#selectedSku').text("");
-        $('#selectedPrice').text("");
+      // selection no longer valid → clear
+      selectEl.val('');
     }
-});
+  }
+
+  function updateUI(data) {
+    // Dynamic options for each type
+    if (data.available) {
+      $('.variantSelect').each(function(){
+        const type = $(this).data('type');
+        rebuildSelect($(this), type, data.available[type] || []);
+      });
+    }
+
+    // SKU + price (only when a full SKU is identified)
+    if (data.sku) {
+      $('#skuRow').show();
+      $('#selectedSku1').text(data.sku);
+      if (typeof data.price !== 'undefined' && data.price !== null) {
+        $('.retail-price').text('$' + data.price);
+      }
+      if (typeof data.retail_price !== 'undefined' && data.retail_price !== null) {
+        $('.sale-price, .regular-price').text('$' + data.retail_price);
+      }
+    } else {
+      $('#skuRow').hide();
+      $('#selectedSku1').text('');
+    }
+  }
+
+  $(document).on('change', '.variantSelect', function(){
+    const values = collectSelected();
+
+    $.ajax({
+      url: "<?php echo base_url('get_sku_by_options'); ?>",
+      type: "POST",
+      dataType: "json",
+      data: {
+        values: values,
+        product_id: "<?php echo $product_id; ?>"
+      },
+      success: function(res){
+        updateUI(res);
+      }
+    });
+  });
+
+})(jQuery);
 </script>
+
 
 
 

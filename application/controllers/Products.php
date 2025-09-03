@@ -482,20 +482,43 @@ class Products extends MW_Controller {
 
 
 // AJAX endpoint
-    public function get_sku_by_options()
-    {
-        $values = $this->input->post('values'); 
-        $product_id = $this->input->post('product_id');
+    // public function get_sku_by_options()
+    // {
+    //     $values = $this->input->post('values'); 
+    //     $product_id = $this->input->post('product_id');
 
-        $sku = $this->Product_varients->get_sku_by_values($product_id, $values);
+    //     $sku = $this->Product_varients->get_sku_by_values($product_id, $values);
 
-        echo json_encode([
-            'sku'   => isset( $sku->sku_code) ? $sku->sku_code : null,
-            'price' => isset($sku->price) ? $sku->price : null,
-            'retail_price' => isset($sku->retail_price) ? $sku->retail_price : null,
-            'options' => isset($sku->options) ? $sku->options : null
-        ]);
-    }
+    //     echo json_encode([
+    //         'sku'   => isset( $sku->sku_code) ? $sku->sku_code : null,
+    //         'price' => isset($sku->price) ? $sku->price : null,
+    //         'retail_price' => isset($sku->retail_price) ? $sku->retail_price : null,
+    //         'options' => isset($sku->options) ? $sku->options : null
+    //     ]);
+    // }
+    // application/controllers/Products.php  (or your controller)
+public function get_sku_by_options()
+{
+    $values     = $this->input->post('values');
+    $product_id = $this->input->post('product_id');
+
+    if (!is_array($values)) $values = [];
+    // sanitize to ints
+    $values = array_values(array_unique(array_map('intval', $values)));
+
+    $this->load->model('Product_varients');
+
+    $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
+    $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
+
+    echo json_encode([
+        'sku'          => $sku ? $sku->sku_code : null,
+        'price'        => $sku ? $sku->price : null,
+        'retail_price' => $sku ? $sku->retail_price : null,
+        'options'      => $sku ? $sku->options : null,
+        'available'    => $availableOptions
+    ]);
+}
 
     public function get_productimage() { //get products image
         $product_id = $this->input->post('pro_id');
