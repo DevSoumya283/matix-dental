@@ -41,12 +41,17 @@ ADD UNIQUE KEY uq_matix_id (matix_id);
 --     FOREIGN KEY (parent_product_id) REFERENCES products2(id) ON DELETE SET NULL
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE products
+ADD COLUMN parent_product VARCHAR(191) NOT NULL DEFAULT '0';
+
+
 -- -----------------------------------------------------------------------
 -- Product options table
 CREATE TABLE product_options (
   option_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(191) NOT NULL ,
   option_type VARCHAR(255) NOT NULL,
-  option_code VARCHAR(191) NOT NULL UNIQUE
+  option_code VARCHAR(191) NOT NULL 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Option values (linked to product via matix_id)
@@ -54,6 +59,7 @@ CREATE TABLE product_option_values (
   value_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   option_id BIGINT UNSIGNED NOT NULL,
   product_id VARCHAR(191) NOT NULL, -- must match products.matix_id
+  mpn VARCHAR(191)  NULL, 
   value VARCHAR(255) NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -70,10 +76,11 @@ CREATE TABLE skus (
   parent_product_id VARCHAR(191) NULL,
   sku_code VARCHAR(191) NOT NULL,
   vendor_id VARCHAR(191) NOT NULL,
-  vendor_product_id VARCHAR(191) NOT NULL,
+  mpn VARCHAR(191) NOT NULL,
   price DECIMAL(10,2) DEFAULT 0.00,
   retail_price DECIMAL(10,2) DEFAULT 0.00,
   stock_quantity INT DEFAULT 0,
+  image VARCHAR(255)  NULL,
   status ENUM('active', 'inactive') DEFAULT 'active',
   exclude_from_whitelabels_1 INT(11) NULL,
   exclude_from_whitelabels_2 INT(11) NULL,
