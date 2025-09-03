@@ -298,58 +298,130 @@ class Product_varients extends MY_Model
      * If no selection, same as get_product_options().
      */
     public function get_available_options($product_id, $selectedValues = [])
-    {
-        $selectedValues = array_values(array_unique(array_map('intval', (array)$selectedValues)));
+{
+    // sanitize selected ids
+    $selectedValues = array_values(array_unique(array_map('intval', (array)$selectedValues)));
 
-        // matrix id
-        $this->db->select('matix_id');
-        $this->db->where('id', $product_id);
-        $product = $this->db->get('products')->row();
-        if (!$product) return [];
+    // 1) get matix_id
+    $this->db->select('matix_id');
+    $this->db->where('id', $product_id);
+    $product = $this->db->get('products')->row();
+    if (!$product) return ['all' => [], 'valid' => []];
+    $matix_id = $product->matix_id;
 
-        $matix_id = $product->matix_id;
+    // 2) ALL values for the product family (used to always show all options)
+    $this->db->select('po.option_type, pov.value_id, pov.value');
+    $this->db->from('skus s');
+    $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+    $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
+    $this->db->join('product_options po', 'pov.option_id = po.option_id');
+    $this->db->where('s.product_id', $matix_id);
+    $this->db->order_by('po.option_type, pov.value');
+    $rows_all = $this->db->get()->result();
 
-        if (empty($selectedValues)) {
-            // No selection yet → all available from in-stock SKUs
-            return $this->get_product_options($product_id);
+    $all = [];
+    $valueIdToType = [];
+    foreach ($rows_all as $r) {
+        $all[$r->option_type][$r->value_id] = [
+            'value_id' => (int)$r->value_id,
+            'value'    => $r->value
+        ];
+        $valueIdToType[(int)$r->value_id] = $r->option_type;
+    }
+    foreach ($all as $k => $vals) {
+        $all[$k] = array_values($vals);
+    }
+
+    // 3) Map selected values to their option_type (group selected by type)
+    $selected_by_type = [];
+    if (!empty($selectedValues)) {
+        foreach ($selectedValues as $vid) {
+            $vid = (int)$vid;
+            if (isset($valueIdToType[$vid])) {
+                $selected_by_type[$valueIdToType[$vid]][] = $vid;
+            } else {
+                // fallback lookup if value_id not present in $valueIdToType
+                $this->db->select('po.option_type');
+                $this->db->from('product_option_values pov');
+                $this->db->join('product_options po', 'pov.option_id = po.option_id');
+                $this->db->where('pov.value_id', $vid);
+                $row = $this->db->get()->row();
+                if ($row) $selected_by_type[$row->option_type][] = $vid;
+            }
+        }
+    }
+
+    // 4) For each option_type compute valid values while EXCLUDING the selection(s) of that same option_type.
+    $valid = [];
+    // initialize keys so we always return same set of keys
+    foreach ($all as $type => $vals) {
+        $valid[$type] = [];
+    }
+
+    foreach ($all as $type => $vals) {
+        // filter_values = selectedValues EXCLUDING selections that belong to this $type
+        $filter_values = [];
+        foreach ($selectedValues as $sv) {
+            $sv = (int)$sv;
+            if (!empty($selected_by_type[$type]) && in_array($sv, $selected_by_type[$type], true)) {
+                // skip (exclude the selection of the same type)
+                continue;
+            }
+            $filter_values[] = $sv;
         }
 
-        // Find SKUs that contain ALL selected value_ids (same SKU), and are in stock
-        $this->db->select('s.sku_id, COUNT(DISTINCT sov.value_id) AS matched_count');
+        // Find SKUs that contain ALL filter_values and are in-stock
+        $this->db->select('s.sku_id');
         $this->db->from('skus s');
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->where('s.product_id', $matix_id);
         $this->db->where('s.stock_quantity >', 0);
-        $this->db->where_in('sov.value_id', $selectedValues);
-        $this->db->group_by('s.sku_id');
-        $this->db->having('matched_count = ' . count($selectedValues));
+
+        if (!empty($filter_values)) {
+            $this->db->where_in('sov.value_id', $filter_values);
+            $this->db->group_by('s.sku_id');
+            // ensure the sku contains all filter values
+            $this->db->having('COUNT(DISTINCT sov.value_id) = ' . count($filter_values));
+        } else {
+            // no filter_values => all in-stock SKUs for family
+            $this->db->group_by('s.sku_id');
+        }
+
         $skuRows = $this->db->get()->result_array();
+        if (empty($skuRows)) {
+            $valid[$type] = [];
+            continue;
+        }
+        $sku_ids = array_column($skuRows, 'sku_id');
 
-        if (empty($skuRows)) return []; // nothing compatible
-
-        $sku_ids = array_map(function($r){ return (int)$r['sku_id']; }, $skuRows);
-
-        // From those SKUs, get all option values that remain possible
-        $this->db->select('po.option_type, pov.value_id, pov.value');
+        // collect values for this option_type from those SKUs
+        $this->db->select('DISTINCT pov.value_id, pov.value', FALSE);
         $this->db->from('sku_option_values sov');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
         $this->db->join('product_options po', 'pov.option_id = po.option_id');
+        $this->db->join('skus s', 'sov.sku_id = s.sku_id');
         $this->db->where_in('sov.sku_id', $sku_ids);
-        $this->db->order_by('po.option_type, pov.value');
-        $rows = $this->db->get()->result();
+        $this->db->where('po.option_type', $type);
+        $this->db->where('s.stock_quantity >', 0);
+        $this->db->order_by('pov.value');
+        $rows2 = $this->db->get()->result();
 
-        $available = [];
-        foreach ($rows as $r) {
-            $available[$r->option_type][$r->value_id] = [
-                'value_id' => $r->value_id,
-                'value'    => $r->value
+        $tmp = [];
+        foreach ($rows2 as $r2) {
+            $tmp[(int)$r2->value_id] = [
+                'value_id' => (int)$r2->value_id,
+                'value'    => $r2->value
             ];
         }
-        foreach ($available as $k => $vals) {
-            $available[$k] = array_values($vals); // unique by value_id
-        }
-        return $available;
+        $valid[$type] = array_values($tmp);
     }
+
+    return [
+        'all'   => $all,   // all option values for the product family (always shown)
+        'valid' => $valid  // option values that are compatible with current selection and in-stock
+    ];
+}
+
 
 
 }

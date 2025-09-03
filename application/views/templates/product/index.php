@@ -1238,35 +1238,44 @@
     return vals;
   }
 
-  function rebuildSelect(selectEl, type, availableList) {
-    const prev = selectEl.val() || '';
+  function rebuildSelect(selectEl, type, allList, validList) {
+    const prev = selectEl.val() ? String(selectEl.val()) : '';
     selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
 
-    const ids = new Set((availableList || []).map(o => String(o.value_id)));
-    (availableList || []).forEach(function(opt){
-      const $o = $('<option>', { value: opt.value_id, text: opt.value });
+    const validIds = new Set((validList || []).map(o => String(o.value_id)));
+    const allIds   = new Set((allList || []).map(o => String(o.value_id)));
+
+    (allList || []).forEach(function(opt) {
+      const id = String(opt.value_id);
+      const isValid = validIds.has(id);
+      const text = opt.value + (isValid ? '' : ' (Stock Not Available)');
+      const $o = $('<option>', { value: id, text: text, title: isValid ? opt.value : opt.value + ' — Stock Not Available' });
+      if (!isValid) {
+        $o.prop('disabled', true);
+      }
       selectEl.append($o);
     });
 
-    // keep previous selection if still valid
-    if (prev && ids.has(prev)) {
+    // Keep previous selection if it still exists in 'all' (we keep even if currently invalid)
+    if (prev && allIds.has(prev)) {
       selectEl.val(prev);
     } else {
-      // selection no longer valid → clear
       selectEl.val('');
     }
   }
 
   function updateUI(data) {
-    // Dynamic options for each type
     if (data.available) {
-      $('.variantSelect').each(function(){
+      const all   = data.available.all || {};
+      const valid = data.available.valid || {};
+
+      $('.variantSelect').each(function() {
         const type = $(this).data('type');
-        rebuildSelect($(this), type, data.available[type] || []);
+        rebuildSelect($(this), type, all[type] || [], valid[type] || []);
       });
     }
 
-    // SKU + price (only when a full SKU is identified)
+    // SKU + price (only when fully matched SKU found)
     if (data.sku) {
       $('#skuRow').show();
       $('#selectedSku1').text(data.sku);
