@@ -310,6 +310,80 @@ class Products_model extends MY_Model {
         return $result;
     }
 
+    //2025
+
+    public function product_with_options($productIdOrMatixId)
+    {
+        if (empty($productIdOrMatixId)) return null;
+
+        // 1) Only these columns from products
+        $this->db->from('products');
+        $this->db->select('id, matix_id, mpn, item_code, name, description, extended_description, manufacturer, shipping_restrictions, brand, license_required, category_id,base_price,returnable');
+        if (ctype_digit((string)$productIdOrMatixId)) {
+            $this->db->where('id', (int)$productIdOrMatixId);
+        } else {
+            $this->db->where('matix_id', $productIdOrMatixId);
+        }
+
+        $product = $this->db->get()->row(); 
+       
+        if (!$product) return null;
+
+        $matix_id = $product->matix_id;
+
+        // 2) Fetch ALL options + values, then take FIRST value for each option_type
+        $this->db->select('po.option_id, po.option_type, po.option_code, pov.value_id, pov.value');
+        $this->db->from('product_option_values pov');
+        $this->db->join('product_options po', 'po.option_id = pov.option_id', 'inner');
+        $this->db->where('pov.product_id', $matix_id);
+        $this->db->order_by('po.option_type ASC, pov.value_id ASC'); // first inserted value comes first
+        $rows = $this->db->get()->result();
+
+        $options = [];
+        foreach ($rows as $row) {
+            $type = $row->option_type;
+            if (!isset($options[$type])) {
+                // assign only the first value for each option type
+                $key = $this->snake_case($row->option_type);
+                $product->$key = $row->value;
+                $options[$type] = $row; // save full row in case we need value_id for SKU
+            }
+        }
+
+        // 3) Use the FIRST option’s first value to fetch SKU + quantity
+        if (!empty($options)) {
+            $firstOption = reset($options); // first option row
+            $value_id    = (int)$firstOption->value_id;
+
+            $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+            $this->db->from('skus s');
+            $this->db->join('sku_option_values sov', 'sov.sku_id = s.sku_id', 'inner');
+            $this->db->where('s.product_id', $matix_id); // matix_id used in your schema
+            $this->db->where('sov.value_id', $value_id);
+            $this->db->order_by('s.sku_id', 'ASC');
+            $this->db->limit(1);
+
+            $sku = $this->db->get()->row();
+
+            if ($sku) {
+                $product->sku          = $sku->sku_code;
+                $product->quantity_per_box     = $sku->stock_quantity;
+            } else {
+                $product->sku      = null;
+                $product->quantity_per_box = null;
+            }
+        }
+
+        return $product; // stdClass with options as flat props
+    }
+
+    private function snake_case($label)
+    {
+        $label = strtolower(trim($label));
+        $label = preg_replace('/[^a-z0-9]+/i', '_', $label);
+        $label = preg_replace('/_+/', '_', $label);
+        return trim($label, '_');
+    }
 
 
 }

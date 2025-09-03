@@ -296,8 +296,16 @@ class NewProduct extends MW_Controller
         array_shift($rows);
 
         $missing_products = [];
-        $options_map = []; // [product_id => [option_type => option_id]]
-        $values_map  = []; // [product_id => [option_type => [value_id => option_code]]]
+        $options_map = []; 
+        $values_map  = []; 
+
+        // 1️⃣ Pre-fetch ALL existing options once
+        $existing_options = $this->db->get('product_options')->result_array();
+        $option_cache = [];
+        
+        foreach ($existing_options as $option) {
+            $option_cache[$option['option_type']][$option['option_code']] = $option['option_id'];
+        }
 
         $this->db->trans_start();
 
@@ -311,79 +319,78 @@ class NewProduct extends MW_Controller
                 continue; // skip incomplete
             }
 
-            // 1️⃣ Check product exists
-            $product_exists = $this->db->get_where('products', ['matix_id' => $product_id])->row();
-            if (!$product_exists) {
+            // 2️⃣ Check product exists
+            $product = $this->db->get_where('products', ['matix_id' => $product_id])->row();
+            if (!$product) {
                 $missing_products[] = $product_id;
                 continue;
             }
 
-            // 2️⃣ Get or insert option (global uniqueness by type + code)
-            $option = $this->db->get_where('product_options', [
-                'option_type' => $option_type,
-                'option_code' => $option_code
-            ])->row();
-
-            if (!$option) {
+            // 3️⃣ Find option in cache or insert new
+            if (isset($option_cache[$option_type][$option_code])) {
+                $option_id = $option_cache[$option_type][$option_code];
+            } else {
+                // Insert new globally unique option
                 $this->db->insert('product_options', [
                     'option_type' => $option_type,
-                    'product_id'      => $product_id,
-                    'option_code' => $option_code
+                    'option_code' => $option_code,
+                    'product_id'  => null // Set as global option
                 ]);
                 $option_id = $this->db->insert_id();
-            } else {
-                $option_id = $option->option_id;
+                
+                // Add to cache for subsequent use
+                $option_cache[$option_type][$option_code] = $option_id;
+                $options_map[$option_type][$option_code] = $option_id;
             }
-            $options_map[$product_id][$option_type] = $option_id;
 
-            // 3️⃣ Get or insert value (unique per option_id + value)
+            // 4️⃣ Get or insert value (product-specific)
             $value_row = $this->db->get_where('product_option_values', [
                 'option_id' => $option_id,
+                'product_id' => $product->matix_id, // Use actual product ID
                 'value'     => $value
             ])->row();
 
             if (!$value_row) {
                 $this->db->insert('product_option_values', [
                     'option_id'  => $option_id,
-                    'product_id' => $product_id,
+                    'product_id' => $product->matix_id,
                     'value'      => $value
                 ]);
                 $value_id = $this->db->insert_id();
             } else {
                 $value_id = $value_row->value_id;
-
-                // Update product_id if different
-                if ($value_row->product_id != $product_id) {
-                    $this->db->update(
-                        'product_option_values',
-                        ['product_id' => $product_id],
-                        ['value_id' => $value_id]
-                    );
-                }
             }
 
             // Map for SKU creation
             $values_map[$product_id][$option_type][$value_id] = $option_code;
         }
 
-        // 4️⃣ SKU generation
+        // 5️⃣ SKU generation (your existing code remains the same)
         foreach ($values_map as $product_id => $options) {
             $combinations = $this->cartesianProduct(array_values($options));
+            
+            // Get product details once
+            $product = $this->db->select('id, mpn, matix_id')
+                ->where('matix_id', $product_id)
+                ->get('products')
+                ->row();
+            
+            if (!$product) continue;
 
             foreach ($combinations as $combo) {
                 $sku_code = $product_id . '-' . implode('-', $combo);
 
-                // Avoid duplicate SKUs (skus table)
+                // Avoid duplicate SKUs
                 $sku_exists = $this->db->get_where('skus', [
-                    'product_id' => $product_id,
+                    'product_id' => $product->matix_id,
                     'sku_code'   => $sku_code
                 ])->row();
 
                 if (!$sku_exists) {
                     // Insert into skus
                     $this->db->insert('skus', [
-                        'product_id'      => $product_id,
-                        'parent_product_id'       => $product_id,
+                        'product_id'      => $product->matix_id,
+                        'parent_product_id' => $product->matix_id,
                         'sku_code'        => $sku_code,
                         'price'           => null,
                         'retail_price'    => null,
@@ -409,39 +416,28 @@ class NewProduct extends MW_Controller
                         }
                     }
 
-                    // 🔹 Insert into product_pricings table
-                    // Get product details first
-                    $product = $this->db->select('id, mpn, matix_id')
-                        ->where('matix_id', $product_id)
-                        ->get('products')
-                        ->row();
-
-
-                        $vendor_id = $this->input->post('vendor_id');
-                            $this->db->insert('product_pricings', [
-                                'product_id'        => $product->id,
-                                'sku'               => $sku_code,
-                                'vendor_product_id' => $product->mpn,   // mpn from products table
-                                'matix_id'          => $product->matix_id,
-                                'minimum_threshold' => 0,
-                                'vendor_id'         => $vendor_id,
-                                'price'             => null,
-                                'retail_price'      => null,
-                                'active'            => 1,
-                                'quantity'          => null,
-                                'exclude_from_marketplace' => 0,
-                                'exclude_from_whitelabels_1' => 0,
-                                'exclude_from_whitelabels_2' => 0,
-                                'created_at'        => date('Y-m-d H:i:s'),
-                                'updated_at'        => date('Y-m-d H:i:s'),
-                            ]);
-                        
-                        
-                    
+                    // Insert into product_pricings
+                    $vendor_id = $this->input->post('vendor_id');
+                    $this->db->insert('product_pricings', [
+                        'product_id'        => $product->id,
+                        'sku'               => $sku_code,
+                        'vendor_product_id' => $product->mpn,
+                        'matix_id'          => $product->matix_id,
+                        'minimum_threshold' => 0,
+                        'vendor_id'         => $vendor_id,
+                        'price'             => null,
+                        'retail_price'      => null,
+                        'active'            => 1,
+                        'quantity'          => null,
+                        'exclude_from_marketplace' => 0,
+                        'exclude_from_whitelabels_1' => 0,
+                        'exclude_from_whitelabels_2' => 0,
+                        'created_at'        => date('Y-m-d H:i:s'),
+                        'updated_at'        => date('Y-m-d H:i:s'),
+                    ]);
                 }
             }
         }
-
 
         $this->db->trans_complete();
 

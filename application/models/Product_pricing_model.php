@@ -125,6 +125,7 @@ class Product_pricing_model extends MY_Model {
         $sql = "SELECT *
                 FROM product_pricings AS pp
                 WHERE pp.product_id = $productId
+                AND pp.sku IS NOT NULL
                 AND pp.active = 1
                 AND pp.exclude_from_marketplace = 0
                 ";
