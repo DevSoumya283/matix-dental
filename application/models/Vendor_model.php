@@ -195,10 +195,11 @@ class Vendor_model extends MY_Model {
     {
         $params = [':productId' => $productId];
 
-        $sql = "SELECT pp.price, pp.vendor_id, pp.retail_price, v.name, pc.title, pc.conditions, so.shipping_price, so.shipping_type, vp.policy_name
+        $sql = "SELECT  COALESCE(pp.price, p.base_price) as price,COALESCE(pp.retail_price, p.base_price) as retail_price, pp.vendor_id,  v.name, pc.title, pc.conditions, so.shipping_price, so.shipping_type, vp.policy_name
                 FROM product_pricings pp
                 LEFT JOIN vendors v
                     ON pp.vendor_id = v.id
+                LEFT JOIN products p ON pp.product_id = p.id 
                 LEFT JOIN promo_codes pc
                     ON pp.product_id = pc.product_id
                 LEFT JOIN vendor_policies vp
@@ -206,6 +207,7 @@ class Vendor_model extends MY_Model {
                 LEFT JOIN shipping_options so
                     ON v.id = so.vendor_id
                 WHERE pp.product_id = :productId
+                AND pp.sku IS NOT NULL
                 AND v.active = 1
                 AND pp.active = 1
                 ";

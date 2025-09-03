@@ -755,11 +755,13 @@
         }
     }
     ?>
-
-    <tr id="skuRow" style="display:none;">
+<?php if (!empty($product->sku)) { ?>
+    <tr id="skuRow">
         <td>Sku</td>
-        <td id="selectedSku1"></td>
+        <td id="selectedSku1"><?php echo $product->sku; ?></td>
     </tr>
+    <?php } ?>
+
 </tbody>
 
                         </table>

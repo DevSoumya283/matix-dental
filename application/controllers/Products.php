@@ -33,8 +33,6 @@ class Products extends MW_Controller {
         $this->load->helper('MY_privilege_helper');
         $this->load->library('email');
         $this->load->helper('my_email_helper');
-
-
         $this->load->model('Product_varients');
 
     }
@@ -299,11 +297,9 @@ class Products extends MW_Controller {
                 $data['three_star'] = $this->Review_model->get_many_by(array('model_name' => 'products', 'model_id' => $product_id, 'rating' => '3'));
                 $data['four_star'] = $this->Review_model->get_many_by(array('model_name' => 'products', 'model_id' => $product_id, 'rating' => '4'));
                 $data['five_star'] = $this->Review_model->get_many_by(array('model_name' => 'products', 'model_id' => $product_id, 'rating' => '5'));
-                $vendors = ('SELECT a.price,a.vendor_id,a.retail_price,b.name,b.id,c.title,c.conditions,d.shipping_price,d.shipping_type,f.policy_name FROM product_pricings a LEFT JOIN vendors b ON a.vendor_id=b.id LEFT JOIN promo_codes c ON a.product_id=c.product_id  LEFT JOIN vendor_policies f ON b.id=f.vendor_id LEFT JOIN shipping_options d ON b.id=d.vendor_id where a.product_id=' . $product_id . ' and b.active=1 and a.active=1' . ((!empty($this->config->item('whitelabel_vendor_id'))) ? " and a.vendor_id = " . $this->config->item('whitelabel_vendor_id') : "" ) . ' group by a.price,b.id');
 
                 $data['vendors'] = $this->Vendor_model->loadVendorPricings($product_id);
-                // $data['vendors'] = $this->db->query($vendors)->result();
-
+               
                 if ($data['vendors'] != null) { //get active vendors ,shipping and promo details
                     for ($i = 0; $i < count($data['vendors']); $i++) {
                         $data['vendors'][$i]->promo_title = "";
@@ -480,45 +476,28 @@ class Products extends MW_Controller {
         }
     }
 
+    public function get_sku_by_options()
+    {
+        $values     = $this->input->post('values');
+        $product_id = $this->input->post('product_id');
 
-// AJAX endpoint
-    // public function get_sku_by_options()
-    // {
-    //     $values = $this->input->post('values'); 
-    //     $product_id = $this->input->post('product_id');
+        if (!is_array($values)) $values = [];
+        // sanitize to ints
+        $values = array_values(array_unique(array_map('intval', $values)));
 
-    //     $sku = $this->Product_varients->get_sku_by_values($product_id, $values);
+        $this->load->model('Product_varients');
 
-    //     echo json_encode([
-    //         'sku'   => isset( $sku->sku_code) ? $sku->sku_code : null,
-    //         'price' => isset($sku->price) ? $sku->price : null,
-    //         'retail_price' => isset($sku->retail_price) ? $sku->retail_price : null,
-    //         'options' => isset($sku->options) ? $sku->options : null
-    //     ]);
-    // }
-    // application/controllers/Products.php  (or your controller)
-public function get_sku_by_options()
-{
-    $values     = $this->input->post('values');
-    $product_id = $this->input->post('product_id');
+        $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
+        $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
 
-    if (!is_array($values)) $values = [];
-    // sanitize to ints
-    $values = array_values(array_unique(array_map('intval', $values)));
-
-    $this->load->model('Product_varients');
-
-    $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
-    $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
-
-    echo json_encode([
-        'sku'          => $sku ? $sku->sku_code : null,
-        'price'        => $sku ? $sku->price : null,
-        'retail_price' => $sku ? $sku->retail_price : null,
-        'options'      => $sku ? $sku->options : null,
-        'available'    => $availableOptions
-    ]);
-}
+        echo json_encode([
+            'sku'          => $sku ? $sku->sku_code : null,
+            'price'        => $sku ? $sku->price : null,
+            'retail_price' => $sku ? $sku->retail_price : null,
+            'options'      => $sku ? $sku->options : null,
+            'available'    => $availableOptions
+        ]);
+    }
 
     public function get_productimage() { //get products image
         $product_id = $this->input->post('pro_id');

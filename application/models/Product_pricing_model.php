@@ -122,15 +122,18 @@ class Product_pricing_model extends MY_Model {
 
     public function getPricesMarketplace($productId)
     {
-        $sql = "SELECT *
-                FROM product_pricings AS pp
-                WHERE pp.product_id = $productId
-                AND pp.sku IS NOT NULL
-                AND pp.active = 1
-                AND pp.exclude_from_marketplace = 0
-                ";
+       $prices= $this->db->select('pp.*, 
+                  COALESCE(pp.price, p.base_price) AS price,
+                  COALESCE(pp.retail_price, p.base_price) AS retail_price')
+         ->from('product_pricings pp')
+         ->join('products p', 'pp.product_id = p.id')
+         ->where('pp.product_id', $productId)
+         ->where('pp.sku IS NOT NULL')
+         ->where('pp.active', 1)
+         ->where('pp.exclude_from_marketplace', 0)
+         ->get()
+         ->result();
 
-        $prices = $this->db->query($sql)->result();
 
         return $prices;
     }

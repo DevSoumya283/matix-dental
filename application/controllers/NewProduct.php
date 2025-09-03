@@ -346,7 +346,7 @@ class NewProduct extends MW_Controller
             // 4️⃣ Get or insert value (product-specific)
             $value_row = $this->db->get_where('product_option_values', [
                 'option_id' => $option_id,
-                'product_id' => $product->matix_id, // Use actual product ID
+                'product_id' => $product->matix_id, 
                 'value'     => $value
             ])->row();
 
@@ -354,6 +354,7 @@ class NewProduct extends MW_Controller
                 $this->db->insert('product_option_values', [
                     'option_id'  => $option_id,
                     'product_id' => $product->matix_id,
+                    'mpn'        => $product->mpn, 
                     'value'      => $value
                 ]);
                 $value_id = $this->db->insert_id();
@@ -389,8 +390,9 @@ class NewProduct extends MW_Controller
                 if (!$sku_exists) {
                     // Insert into skus
                     $this->db->insert('skus', [
-                        'product_id'      => $product->matix_id,
+                        'product_id'        => $product->matix_id,
                         'parent_product_id' => $product->matix_id,
+                        'mpn'             => $product->mpn,
                         'sku_code'        => $sku_code,
                         'price'           => null,
                         'retail_price'    => null,
@@ -631,6 +633,9 @@ class NewProduct extends MW_Controller
             if (isset($rowData['retail_price'])) {
                 $skuUpdate['retail_price'] = $rowData['retail_price'];
                 $pricingUpdate['retail_price'] = $rowData['retail_price'];
+            }
+            if (isset($rowData['Image'])) {
+                $skuUpdate['image'] = $rowData['Image'];
             }
 
             // 🔹 SKUs table
