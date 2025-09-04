@@ -1248,15 +1248,19 @@
     (allList || []).forEach(function(opt) {
       const id = String(opt.value_id);
       const isValid = validIds.has(id);
-      const text = opt.value + (isValid ? '' : ' (Stock Not Available)');
-      const $o = $('<option>', { value: id, text: text, title: isValid ? opt.value : opt.value + ' — Stock Not Available' });
-      if (!isValid) {
-        $o.prop('disabled', true);
+      let text = opt.value;
+
+      if (!isValid || opt.stock === 0 || opt.stock === null) {
+        text += ' (Stock Not Available)';
+      }
+
+      const $o = $('<option>', { value: id, text: text });
+      if (!isValid || opt.stock === 0 || opt.stock === null) {
+        $o.prop('disabled', true).css('color','red');
       }
       selectEl.append($o);
     });
 
-    // Keep previous selection if it still exists in 'all' (we keep even if currently invalid)
     if (prev && allIds.has(prev)) {
       selectEl.val(prev);
     } else {
@@ -1291,6 +1295,23 @@
     }
   }
 
+  // ✅ Trigger first render on page load
+  $(function(){
+    $.ajax({
+      url: "<?php echo base_url('get_sku_by_options'); ?>",
+      type: "POST",
+      dataType: "json",
+      data: {
+        values: [], // no selection on first load
+        product_id: "<?php echo $product_id; ?>"
+      },
+      success: function(res){
+        updateUI(res);
+      }
+    });
+  });
+
+  // ✅ Trigger AJAX refresh on change
   $(document).on('change', '.variantSelect', function(){
     const values = collectSelected();
 
@@ -1310,6 +1331,7 @@
 
 })(jQuery);
 </script>
+
 
 
 

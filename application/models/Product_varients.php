@@ -216,13 +216,12 @@ class Product_varients extends MY_Model
 
         $matix_id = $product->matix_id;
 
-        $this->db->select('po.option_type, po.option_code, pov.value_id, pov.value');
+        $this->db->select('po.option_type, po.option_code, pov.value_id, pov.value, s.stock_quantity');
         $this->db->from('skus s');
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
         $this->db->join('product_options po', 'pov.option_id = po.option_id');
         $this->db->where('s.product_id', $matix_id);
-        $this->db->where('s.stock_quantity >', 0); // only in-stock
         $this->db->order_by('po.option_type, pov.value');
         $rows = $this->db->get()->result();
 
@@ -230,14 +229,16 @@ class Product_varients extends MY_Model
         foreach ($rows as $r) {
             $options[$r->option_type][$r->value_id] = [
                 'value_id' => $r->value_id,
-                'value'    => $r->value
+                'value'    => $r->value,
+                'stock'    => (int)$r->stock_quantity
             ];
         }
         foreach ($options as $k => $vals) {
-            $options[$k] = array_values($vals); // unique by value_id
+            $options[$k] = array_values($vals);
         }
         return $options;
     }
+
 
     /** Return a concrete SKU iff ALL selected values match one in-stock SKU */
     public function get_sku_by_values($product_id, $values = [])
