@@ -1238,8 +1238,8 @@
     return vals;
   }
 
-  function rebuildSelect(selectEl, type, allList, validList) {
-    const prev = selectEl.val() ? String(selectEl.val()) : '';
+  function rebuildSelect(selectEl, type, allList, validList, preselectedId = null) {
+    const prev = preselectedId ? String(preselectedId) : (selectEl.val() ? String(selectEl.val()) : '');
     selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
 
     const validIds = new Set((validList || []).map(o => String(o.value_id)));
@@ -1268,18 +1268,25 @@
     }
   }
 
-  function updateUI(data) {
+  function updateUI(data, preselect = false) {
     if (data.available) {
       const all   = data.available.all || {};
       const valid = data.available.valid || {};
 
       $('.variantSelect').each(function() {
         const type = $(this).data('type');
-        rebuildSelect($(this), type, all[type] || [], valid[type] || []);
+        let preselectedId = null;
+
+        // 🔥 On first load (preselect=true), choose first valid option
+        if (preselect && valid[type] && valid[type].length > 0) {
+          preselectedId = valid[type][0].value_id;
+        }
+
+        rebuildSelect($(this), type, all[type] || [], valid[type] || [], preselectedId);
       });
     }
 
-    // SKU + price (only when fully matched SKU found)
+    // SKU + price
     if (data.sku) {
       $('#skuRow').show();
       $('#selectedSku1').text(data.sku);
@@ -1295,18 +1302,35 @@
     }
   }
 
-  // ✅ Trigger first render on page load
+  // ✅ Trigger first render on page load with auto-selection
   $(function(){
     $.ajax({
       url: "<?php echo base_url('get_sku_by_options'); ?>",
       type: "POST",
       dataType: "json",
       data: {
-        values: [], // no selection on first load
+        values: [], // no selection initially
         product_id: "<?php echo $product_id; ?>"
       },
       success: function(res){
-        updateUI(res);
+        updateUI(res, true); // true = preselect first valid SKU
+
+        // 🔥 After preselect, trigger another AJAX to lock correct SKU + price
+        const values = collectSelected();
+        if (values.length > 0) {
+          $.ajax({
+            url: "<?php echo base_url('get_sku_by_options'); ?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+              values: values,
+              product_id: "<?php echo $product_id; ?>"
+            },
+            success: function(res2){
+              updateUI(res2, false);
+            }
+          });
+        }
       }
     });
   });
@@ -1331,6 +1355,7 @@
 
 })(jQuery);
 </script>
+
 
 
 
