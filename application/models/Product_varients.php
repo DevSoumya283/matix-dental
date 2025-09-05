@@ -298,7 +298,6 @@ class Product_varients extends MY_Model
 
     public function get_available_options_for_model($product_id, $selectedValues = [])
     {
-        // sanitize selected ids
         $selectedValues = array_values(array_unique(array_map('intval', (array)$selectedValues)));
 
         // 1) get matix_id
@@ -308,8 +307,8 @@ class Product_varients extends MY_Model
         if (!$product) return ['all' => [], 'valid' => []];
         $matix_id = $product->matix_id;
 
-        // 2) ALL values for the product family (used to always show all options)
-        $this->db->select('po.option_type, pov.value_id, pov.value, s.stock_quantity');
+        // 2) ALL options (regardless of stock)
+        $this->db->select('po.option_type, pov.value_id, pov.value');
         $this->db->from('skus s');
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
@@ -323,8 +322,7 @@ class Product_varients extends MY_Model
         foreach ($rows_all as $r) {
             $all[$r->option_type][$r->value_id] = [
                 'value_id' => (int)$r->value_id,
-                'value'    => $r->value,
-                'stock'    => (int)$r->stock_quantity
+                'value'    => $r->value
             ];
             $valueIdToType[(int)$r->value_id] = $r->option_type;
         }
@@ -332,38 +330,23 @@ class Product_varients extends MY_Model
             $all[$k] = array_values($vals);
         }
 
-        // 3) Map selected values to their option_type
+        // 3) Group selected values by type
         $selected_by_type = [];
-        if (!empty($selectedValues)) {
-            foreach ($selectedValues as $vid) {
-                $vid = (int)$vid;
-                if (isset($valueIdToType[$vid])) {
-                    $selected_by_type[$valueIdToType[$vid]][] = $vid;
-                } else {
-                    // fallback lookup
-                    $this->db->select('po.option_type');
-                    $this->db->from('product_option_values pov');
-                    $this->db->join('product_options po', 'pov.option_id = po.option_id');
-                    $this->db->where('pov.value_id', $vid);
-                    $row = $this->db->get()->row();
-                    if ($row) $selected_by_type[$row->option_type][] = $vid;
-                }
+        foreach ($selectedValues as $vid) {
+            if (isset($valueIdToType[$vid])) {
+                $selected_by_type[$valueIdToType[$vid]][] = $vid;
             }
         }
 
-        // 4) For each option_type compute valid values
+        // 4) VALID options (must exist in at least one in-stock SKU)
         $valid = [];
         foreach ($all as $type => $vals) {
-            $valid[$type] = [];
-
-            // exclude same-type selections
             $filter_values = [];
             foreach ($selectedValues as $sv) {
-                $sv = (int)$sv;
                 if (!empty($selected_by_type[$type]) && in_array($sv, $selected_by_type[$type], true)) {
                     continue;
                 }
-                $filter_values[] = $sv;
+                $filter_values[] = (int)$sv;
             }
 
             $this->db->select('s.sku_id');
@@ -387,8 +370,7 @@ class Product_varients extends MY_Model
             }
             $sku_ids = array_column($skuRows, 'sku_id');
 
-            // collect values for this option_type from those SKUs
-            $this->db->select('DISTINCT pov.value_id, pov.value, s.stock_quantity', FALSE);
+            $this->db->select('DISTINCT pov.value_id, pov.value', FALSE);
             $this->db->from('sku_option_values sov');
             $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
             $this->db->join('product_options po', 'pov.option_id = po.option_id');
@@ -403,8 +385,7 @@ class Product_varients extends MY_Model
             foreach ($rows2 as $r2) {
                 $tmp[(int)$r2->value_id] = [
                     'value_id' => (int)$r2->value_id,
-                    'value'    => $r2->value,
-                    'stock'    => (int)$r2->stock_quantity
+                    'value'    => $r2->value
                 ];
             }
             $valid[$type] = array_values($tmp);
@@ -415,6 +396,7 @@ class Product_varients extends MY_Model
             'valid' => $valid
         ];
     }
+
 
     /**
  * Return the first in-stock SKU for the product family (with prices and option pairs),
@@ -465,6 +447,6 @@ class Product_varients extends MY_Model
         $sku->options = $option_pairs;
 
         return $sku;
-}
+    }
 
 }

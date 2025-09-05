@@ -40,7 +40,7 @@
         
                         <div class="row cf margin--s no--margin-r no--margin-b no--margin-l add_location">
 
-                            <a class=" modal--toggle btn btn--m btn--primary float--right"   data-target="#productOptionModal">Add Location</a>
+                            <a class=" modal--toggle btn btn--m btn--primary float--right"  id="saveOptionsBtn" data-target="#productOptionModal">Save</a>
 
                         </div>
       </div>

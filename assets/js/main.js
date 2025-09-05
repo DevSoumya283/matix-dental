@@ -2622,23 +2622,29 @@ function collectSelected() {
 
 // rebuild select box
 function rebuildSelect($select, type, allList, validList, preselectedId = null) {
-  const prev = $select.val() || "";
+  const prev = preselectedId ? String(preselectedId) : ($select.val() ? String($select.val()) : "");
   $select.empty().append(`<option value="">-- Select ${type} --</option>`);
 
   const validIds = new Set((validList || []).map(o => String(o.value_id)));
+  const allIds   = new Set((allList || []).map(o => String(o.value_id)));
 
   (allList || []).forEach(opt => {
     const id = String(opt.value_id);
-    const $opt = $("<option>").val(id).text(opt.value);
+    let text = opt.value;
+    const $opt = $("<option>").val(id);
 
-    if (!validIds.has(id) || (opt.stock !== undefined && opt.stock === 0)) {
+    // ❌ If not in validIds OR stock=0 → disable
+    if (!validIds.has(id) || opt.stock === 0 || opt.stock === null) {
+      text += " (Stock Not Available)";
       $opt.prop("disabled", true).css("color", "red");
-      $opt.text(opt.value + " (Out of Stock)");
     }
+
+    $opt.text(text);
     $select.append($opt);
   });
 
-  if (prev && $select.find(`option[value="${prev}"]`).length) {
+  // keep selection if still valid
+  if (prev && allIds.has(prev)) {
     $select.val(prev);
   } else if (preselectedId && $select.find(`option[value="${preselectedId}"]`).length) {
     $select.val(String(preselectedId));
@@ -2647,7 +2653,6 @@ function rebuildSelect($select, type, allList, validList, preselectedId = null) 
   }
 }
 
-// update UI
 function updateUI(data, preselect = false) {
   const $variantSelectors = $("#variantSelectors");
   if (!data.available) return;
@@ -2657,6 +2662,7 @@ function updateUI(data, preselect = false) {
 
   $.each(all, function (type, list) {
     let $select = $variantSelectors.find(`select[data-type="${type}"]`);
+
     if ($select.length === 0) {
       const $col = $("<div>").addClass("col-md-4");
       const $label = $("<label>").addClass("form-label").text(type);
@@ -2666,51 +2672,57 @@ function updateUI(data, preselect = false) {
       $col.append($label).append($select);
       $variantSelectors.append($col);
 
-      // onchange AJAX reload
+      // ✅ onchange refresh → blocks others automatically
       $select.on("change", function () {
         const values = collectSelected();
         $.ajax({
           url: base_url + "get_sku_by_options_for_model",
           type: "POST",
-          data: { values: JSON.stringify(values), product_id: currentProductId },
+          data: { values: values, product_id: currentProductId },
           dataType: "json",
           success: function (res) {
             updateUI(res, false);
-            liveUpdateBtn(); // update button immediately after change
-          },
-          error: function (xhr) {
-            console.error("AJAX error", xhr);
+            liveUpdateBtn();
           }
         });
       });
     }
 
     let preselectedId = null;
-    if (preselect && data.options && data.options[type]) {
-      preselectedId = data.options[type].value_id;
-    } else if (preselect && valid[type] && valid[type].length > 0) {
-      const inStock = valid[type].find(v => (v.stock !== undefined ? v.stock > 0 : true));
-      if (inStock) preselectedId = inStock.value_id;
+    if (preselect && valid[type] && valid[type].length > 0) {
+      preselectedId = valid[type][0].value_id;
     }
 
     rebuildSelect($select, type, all[type] || [], valid[type] || [], preselectedId);
   });
 
-  if (data.sku) {
+  // ✅ SKU + price only when all dropdowns have selection
+  if (data.sku && $(".variantSelect").filter(function(){return $(this).val();}).length === $(".variantSelect").length) {
     selectedSku = data.sku;
     basePrice   = parseFloat(data.price);
     $("#skuRow").show();
     $("#selectedSku1").text(data.sku);
     $(".retail-price").text("$" + data.price);
+
+    if (data.retail_price) $(".sale-price, .regular-price").text("$" + data.retail_price);
+    if (data.vendor) {
+      $(".vendor_ratings").text(data.vendor.name);
+      $(".v_id").html(data.vendor.vendor_id);
+      $(".v_price")
+        .attr("data-price", data.vendor.price)
+        .attr("data-retail-price", data.vendor.retail_price)
+        .text("$" + data.vendor.price);
+    }
   } else {
     selectedSku = null;
     basePrice   = null;
     $("#skuRow").hide();
+    $("#selectedSku1").text("");
   }
 
-  //  After UI build, update button immediately
   liveUpdateBtn();
 }
+
 
 //  function to update the button data live
 function liveUpdateBtn() {
@@ -2767,7 +2779,24 @@ $(document).on("click", ".add_cart", function (e) {
     dataType: "json",
     success: function (res) {
       updateUI(res, true);
+      
+        const values = collectSelected();
+        if (values.length > 0) {
+          $.ajax({
+            url: base_url + "get_sku_by_options_for_model",
+            type: "POST",
+            dataType: "json",
+            data: {
+              values: values,
+              product_id: currentProductId
+            },
+            success: function(res2){
+              updateUI(res2, false);
       $("#productOptionModal").addClass("open");
+
+            }
+          });
+        }
     },
     error: function (xhr) {
       console.error("Failed to load options", xhr);
@@ -2798,17 +2827,17 @@ $("#saveOptionsBtn").on("click", function (e) {
   console.log('kk');
 
   // close product option modal
-  $("#productOptionModal").removeClass("open");
+  $("#productOptionModal").removeClass("open, is-visible");
 
   // open chooseLocationModal same style as .add_location click
-  $("#chooseLocationModal").addClass("open");
-  $("#chooseRequestListModal").removeClass("open");
+  $("#chooseLocationModal").addClass("open, is-visible");
+  $("#chooseRequestListModal").hide();
 });
 
 
 // close modal
 
-$("#closeOptionModal, #optionModalOverlay,#saveOptionsBtn").on("click", function () {
+$("#closeOptionModal, #optionModalOverlay, #saveOptionsBtn").on("click", function () {
   $("#productOptionModal").removeClass("open");
 });
 
