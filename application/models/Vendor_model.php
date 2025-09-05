@@ -193,46 +193,94 @@ class Vendor_model extends MY_Model {
 
     public function loadVendorPricings($productId)
     {
-        $params = [':productId' => $productId];
-
-        $sql = "SELECT  COALESCE(pp.price, p.base_price) as price,COALESCE(pp.retail_price, p.base_price) as retail_price, pp.vendor_id,  v.name, pc.title, pc.conditions, so.shipping_price, so.shipping_type, vp.policy_name
-                FROM product_pricings pp
-                LEFT JOIN vendors v
-                    ON pp.vendor_id = v.id
-                LEFT JOIN products p ON pp.product_id = p.id 
-                LEFT JOIN promo_codes pc
-                    ON pp.product_id = pc.product_id
-                LEFT JOIN vendor_policies vp
-                    ON v.id = vp.vendor_id
-                LEFT JOIN shipping_options so
-                    ON v.id = so.vendor_id
-                WHERE pp.product_id = :productId
-                AND pp.sku IS NOT NULL
-                AND v.active = 1
-                AND pp.active = 1
-                ";
-
-        if(!empty($this->config->item('whitelabel_vendor_id'))){
-            $sql .= "AND pp.vendor_id = :vendorId
-                    ";
-            $params[':vendorId'] = $this->config->item('whitelabel_vendor_id');
+        // First get available SKU
+        $sku_result = $this->db->select('sku_code')
+                            ->from('skus')
+                            ->where('product_id', 'p-'.$productId)
+                            ->where('stock_quantity >', 0)
+                            ->where('stock_quantity IS NOT NULL')
+                            ->order_by('stock_quantity DESC, sku_id ASC')
+                            ->limit(1)
+                            ->get()
+                            ->row();
+        if(empty($sku_result))return Null;      
+        $sku_code = $sku_result ? $sku_result->sku_code : null;
+        
+        $this->db->select('COALESCE(pp.price, p.base_price) as price,
+                        COALESCE(pp.retail_price, p.base_price) as retail_price, 
+                        pp.vendor_id, v.name, pc.title, pc.conditions, 
+                        so.shipping_price, so.shipping_type, vp.policy_name');
+        
+        $this->db->from('product_pricings pp');
+        $this->db->join('vendors v', 'pp.vendor_id = v.id', 'left');
+        $this->db->join('products p', 'pp.product_id = p.id', 'left');
+        $this->db->join('promo_codes pc', 'pp.product_id = pc.product_id', 'left');
+        $this->db->join('vendor_policies vp', 'v.id = vp.vendor_id', 'left');
+        $this->db->join('shipping_options so', 'v.id = so.vendor_id', 'left');
+        
+        $this->db->where('pp.product_id', $productId); // ✅ Specific table
+        $this->db->where('v.active', 1);
+        $this->db->where('pp.active', 1);
+        
+        // Add SKU condition
+        if ($sku_code) {
+            $this->db->where('pp.sku', $sku_code);
         } else {
-            $sql .= "AND CONCAT(v.id, '-', 0, '-', pp.product_id) NOT IN (
-                            SELECT DISTINCT CONCAT(pse.vendor_id, '-', 0, '-', pp.product_id)
-                            FROM product_site_exclusion AS pse
-                            JOIN product_pricings AS pp
-                                ON pp.id = pse.product_pricing_id
-                        )
-                    ";
-            // $sql .= "AND pp.exclude_from_marketplace = 0
-                    // ";
+            $this->db->where('pp.sku IS NOT NULL');
         }
+        
+        // Whitelabel vendor filter
+        $whitelabel_vendor_id = $this->config->item('whitelabel_vendor_id');
+        if (!empty($whitelabel_vendor_id)) {
+            $this->db->where('pp.vendor_id', $whitelabel_vendor_id);
+        } else {
+            $this->db->where("CONCAT(v.id, '-', 0, '-', pp.product_id) NOT IN (
+                SELECT DISTINCT CONCAT(pse.vendor_id, '-', 0, '-', pse.product_pricing_id)
+                FROM product_site_exclusion pse
+                WHERE pse.product_pricing_id = " . $this->db->escape($productId) . "
+            )");
+        }
+        
+        $this->db->group_by('pp.price, v.id');
+        
+        return $this->db->get()->result();
+    }
 
+    public function vendorPricingsBySku($skucode)
+    {
+        $params = [':skuCode' => $skucode];
 
-        $sql .= "GROUP BY pp.price, v.id";
+        $sql = "SELECT COALESCE(pp.price, p.base_price) as price, 
+                    COALESCE(pp.retail_price, p.base_price) as retail_price, 
+                    pp.vendor_id, v.name, pc.title, pc.conditions, 
+                    so.shipping_price, so.shipping_type, vp.policy_name
+                FROM product_pricings pp
+                LEFT JOIN vendors v ON pp.vendor_id = v.id
+                LEFT JOIN products p ON pp.product_id = p.id 
+                LEFT JOIN promo_codes pc ON pp.product_id = pc.product_id
+                LEFT JOIN vendor_policies vp ON v.id = vp.vendor_id
+                LEFT JOIN shipping_options so ON v.id = so.vendor_id
+                WHERE pp.sku = :skuCode  -- Changed from sku to sku_code
+                AND v.active = 1
+                AND pp.active = 1";
+
+        if (!empty($this->config->item('whitelabel_vendor_id'))) {
+            $params[':vendorId'] = $this->config->item('whitelabel_vendor_id');
+            $sql .= " AND pp.vendor_id = :vendorId";
+            
+            $sql .= " AND CONCAT(v.id, '-', 0, '-', pp.product_id) NOT IN (
+                        SELECT DISTINCT CONCAT(pse.vendor_id, '-', 0, '-', pp.product_id)
+                        FROM product_site_exclusion AS pse
+                        JOIN product_pricings AS pp ON pp.id = pse.product_pricing_id
+                    )";
+            
+            // Uncomment if you need this condition
+            // $sql .= " AND pp.exclude_from_marketplace = 0";
+        }
+        
+        $sql .= " GROUP BY pp.price, v.id";
 
         $result = $this->PDOhandler->query($sql, $params, 'fetchAll');
         return $result;
     }
-
 }
