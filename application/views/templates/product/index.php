@@ -289,7 +289,7 @@
                                                             ?>
                                                             <span class="line--main has--promo<?php if($clubPrice){ echo 'club--price'; } ?>" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
                                                         <?php } else { ?>
-                                                            <span class="line--main" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
+                                                            <span class="line--main v_price" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
                                                         <?php } ?>
                                                         <?php if ($vendors[$i]->policy_name != null) { ?>
                                                             <span class="line--sub"><?php echo $vendors[$i]->policy_name; ?></span>
@@ -1223,151 +1223,7 @@
   <?php endforeach; ?>
 <?php endif; ?>
 
-
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-(function($){
-
-  function collectSelected() {
-    const vals = [];
-    $('.variantSelect').each(function(){
-      const v = $(this).val();
-      if (v) vals.push(parseInt(v, 10));
-    });
-    return vals;
-  }
-
-  function rebuildSelect(selectEl, type, allList, validList, preselectedId = null) {
-    const prev = preselectedId ? String(preselectedId) : (selectEl.val() ? String(selectEl.val()) : '');
-    selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
-
-    const validIds = new Set((validList || []).map(o => String(o.value_id)));
-    const allIds   = new Set((allList || []).map(o => String(o.value_id)));
-
-    (allList || []).forEach(function(opt) {
-      const id = String(opt.value_id);
-      const isValid = validIds.has(id);
-      let text = opt.value;
-
-      if (!isValid || opt.stock === 0 || opt.stock === null) {
-        text += ' (Stock Not Available)';
-      }
-
-      const $o = $('<option>', { value: id, text: text });
-      if (!isValid || opt.stock === 0 || opt.stock === null) {
-        $o.prop('disabled', true).css('color','red');
-      }
-      selectEl.append($o);
-    });
-
-    if (prev && allIds.has(prev)) {
-      selectEl.val(prev);
-    } else {
-      selectEl.val('');
-    }
-  }
-
-  function updateUI(data, preselect = false) {
-    if (data.available) {
-      const all   = data.available.all || {};
-      const valid = data.available.valid || {};
-
-      $('.variantSelect').each(function() {
-        const type = $(this).data('type');
-        let preselectedId = null;
-
-        // 🔥 On first load (preselect=true), choose first valid option
-        if (preselect && valid[type] && valid[type].length > 0) {
-          preselectedId = valid[type][0].value_id;
-        }
-
-        rebuildSelect($(this), type, all[type] || [], valid[type] || [], preselectedId);
-      });
-    }
-
-    // SKU + price
-    if (data.sku) {
-      $('#skuRow').show();
-      $('#selectedSku1').text(data.sku);
-      if (typeof data.price !== 'undefined' && data.price !== null) {
-        $('.retail-price').text('$' + data.price);
-      }
-      if (typeof data.retail_price !== 'undefined' && data.retail_price !== null) {
-        $('.sale-price, .regular-price').text('$' + data.retail_price);
-      }
-    } else {
-      $('#skuRow').hide();
-      $('#selectedSku1').text('');
-    }
-  }
-
-  // ✅ Trigger first render on page load with auto-selection
-  $(function(){
-    $.ajax({
-      url: "<?php echo base_url('get_sku_by_options'); ?>",
-      type: "POST",
-      dataType: "json",
-      data: {
-        values: [], // no selection initially
-        product_id: "<?php echo $product_id; ?>"
-      },
-      success: function(res){
-        updateUI(res, true); // true = preselect first valid SKU
-
-        // 🔥 After preselect, trigger another AJAX to lock correct SKU + price
-        const values = collectSelected();
-        if (values.length > 0) {
-          $.ajax({
-            url: "<?php echo base_url('get_sku_by_options'); ?>",
-            type: "POST",
-            dataType: "json",
-            data: {
-              values: values,
-              product_id: "<?php echo $product_id; ?>"
-            },
-            success: function(res2){
-              updateUI(res2, false);
-            }
-          });
-        }
-      }
-    });
-  });
-
-  // ✅ Trigger AJAX refresh on change
-  $(document).on('change', '.variantSelect', function(){
-    const values = collectSelected();
-
-    $.ajax({
-      url: "<?php echo base_url('get_sku_by_options'); ?>",
-      type: "POST",
-      dataType: "json",
-      data: {
-        values: values,
-        product_id: "<?php echo $product_id; ?>"
-      },
-      success: function(res){
-        updateUI(res);
-      }
-    });
-  });
-
-})(jQuery);
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-                    <div class="sidebar__group">
+<div class="sidebar__group">
                         <h4>Purchase from1:</h4>
                         <div id="vendor_list_container" class="list__combo">
                             <ul class="list list--box has--btn">
@@ -1422,7 +1278,7 @@
                                                             ?>
                                                             <span class="line--main has--promo<?php if($clubPrice){ echo 'club--price'; } ?>" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
                                                         <?php } else { ?>
-                                                            <span class="line--main" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
+                                                            <span class="line--main v_price" id="vendor_price_<?php echo $vendors[$i]->vendor_id; ?>" data-price="<?php echo $regular_price; ?>" data-retail-price="<?php echo $retail_price; ?>">$<?php echo number_format($regular_price, 2); ?></span>
                                                         <?php } ?>
 
                                                         <?php if ($vendors[$i]->policy_name != null) { ?>
@@ -1757,7 +1613,141 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
             }
         })
     </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+(function($){
 
+  function collectSelected() {
+    const vals = [];
+    $('.variantSelect').each(function(){
+      const v = $(this).val();
+      if (v) vals.push(parseInt(v, 10));
+    });
+    return vals;
+  }
+
+  function rebuildSelect(selectEl, type, allList, validList, preselectedId = null) {
+    const prev = preselectedId ? String(preselectedId) : (selectEl.val() ? String(selectEl.val()) : '');
+    selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
+
+    const validIds = new Set((validList || []).map(o => String(o.value_id)));
+    const allIds   = new Set((allList || []).map(o => String(o.value_id)));
+
+    (allList || []).forEach(function(opt) {
+      const id = String(opt.value_id);
+      const isValid = validIds.has(id);
+      let text = opt.value;
+
+      if (!isValid || opt.stock === 0 || opt.stock === null) {
+        text += ' (Stock Not Available)';
+      }
+
+      const $o = $('<option>', { value: id, text: text });
+      if (!isValid || opt.stock === 0 || opt.stock === null) {
+        $o.prop('disabled', true).css('color','red');
+      }
+      selectEl.append($o);
+    });
+
+    if (prev && allIds.has(prev)) {
+      selectEl.val(prev);
+    } else {
+      selectEl.val('');
+    }
+  }
+
+  function updateUI(data, preselect = false) {
+    if (data.available) {
+      const all   = data.available.all || {};
+      const valid = data.available.valid || {};
+
+      $('.variantSelect').each(function() {
+        const type = $(this).data('type');
+        let preselectedId = null;
+
+        if (preselect && valid[type] && valid[type].length > 0) {
+          preselectedId = valid[type][0].value_id;
+        }
+
+        rebuildSelect($(this), type, all[type] || [], valid[type] || [], preselectedId);
+      });
+    }
+
+    // SKU + price
+    if (data.sku) {
+      $('#skuRow').show();
+      $('#selectedSku1').text(data.sku);
+      if (typeof data.price !== 'undefined' && data.price !== null) {
+        $('.retail-price').text('$' + data.price);
+      }      
+      if (typeof data.retail_price !== 'undefined' && data.retail_price !== null) {
+        $('.sale-price, .regular-price').text('$' + data.retail_price);
+      }
+       if(data.vendor){               
+        $('.vendor_ratings').text(data.vendor.name);
+        $('.v_id').html(data.vendor.vendor_id);
+        $('.v_price')
+        .attr('data-price', data.vendor.price)
+        .attr('data-retail-price', data.vendor.retail_price)
+        .text('$' +data.vendor.price);
+        }
+    } else {
+      $('#skuRow').hide();
+      $('#selectedSku1').text('');
+    }
+  }
+
+  $(function(){
+    $.ajax({
+      url: "<?php echo base_url('get_sku_by_options'); ?>",
+      type: "POST",
+      dataType: "json",
+      data: {
+        values: [], // no selection initially
+        product_id: "<?php echo $product_id; ?>"
+      },
+      success: function(res){
+        updateUI(res, true); // true = preselect first valid SKU
+
+        const values = collectSelected();
+        if (values.length > 0) {
+          $.ajax({
+            url: "<?php echo base_url('get_sku_by_options'); ?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+              values: values,
+              product_id: "<?php echo $product_id; ?>"
+            },
+            success: function(res2){
+              updateUI(res2, false);
+            }
+          });
+        }
+      }
+    });
+  });
+
+  // ✅ Trigger AJAX refresh on change
+  $(document).on('change', '.variantSelect', function(){
+    const values = collectSelected();
+
+    $.ajax({
+      url: "<?php echo base_url('get_sku_by_options'); ?>",
+      type: "POST",
+      dataType: "json",
+      data: {
+        values: values,
+        product_id: "<?php echo $product_id; ?>"
+      },
+      success: function(res){
+        updateUI(res);
+      }
+    });
+  });
+
+})(jQuery);
+</script>
 <script>
 (function ($){
     $(document).ready(function() {
