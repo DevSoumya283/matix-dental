@@ -2604,7 +2604,223 @@ $(document).ready(function () {
       },
     });
   });
+
+let currentProductId = null;
+let selectedSku = null;
+let basePrice = null;
+
+// collect selected option values
+function collectSelected() {
+  const vals = [];
+  $("#variantSelectors .variantSelect").each(function () {
+    if ($(this).val()) {
+      vals.push(parseInt($(this).val(), 10));
+    }
+  });
+  return vals;
+}
+
+// rebuild select box
+function rebuildSelect($select, type, allList, validList, preselectedId = null) {
+  const prev = $select.val() || "";
+  $select.empty().append(`<option value="">-- Select ${type} --</option>`);
+
+  const validIds = new Set((validList || []).map(o => String(o.value_id)));
+
+  (allList || []).forEach(opt => {
+    const id = String(opt.value_id);
+    const $opt = $("<option>").val(id).text(opt.value);
+
+    if (!validIds.has(id) || (opt.stock !== undefined && opt.stock === 0)) {
+      $opt.prop("disabled", true).css("color", "red");
+      $opt.text(opt.value + " (Out of Stock)");
+    }
+    $select.append($opt);
+  });
+
+  if (prev && $select.find(`option[value="${prev}"]`).length) {
+    $select.val(prev);
+  } else if (preselectedId && $select.find(`option[value="${preselectedId}"]`).length) {
+    $select.val(String(preselectedId));
+  } else {
+    $select.val("");
+  }
+}
+
+// update UI
+function updateUI(data, preselect = false) {
+  const $variantSelectors = $("#variantSelectors");
+  if (!data.available) return;
+
+  const all   = data.available.all || {};
+  const valid = data.available.valid || {};
+
+  $.each(all, function (type, list) {
+    let $select = $variantSelectors.find(`select[data-type="${type}"]`);
+    if ($select.length === 0) {
+      const $col = $("<div>").addClass("col-md-4");
+      const $label = $("<label>").addClass("form-label").text(type);
+      $select = $("<select>")
+        .addClass("form-select variantSelect")
+        .attr("data-type", type);
+      $col.append($label).append($select);
+      $variantSelectors.append($col);
+
+      // onchange AJAX reload
+      $select.on("change", function () {
+        const values = collectSelected();
+        $.ajax({
+          url: base_url + "get_sku_by_options_for_model",
+          type: "POST",
+          data: { values: JSON.stringify(values), product_id: currentProductId },
+          dataType: "json",
+          success: function (res) {
+            updateUI(res, false);
+            liveUpdateBtn(); // update button immediately after change
+          },
+          error: function (xhr) {
+            console.error("AJAX error", xhr);
+          }
+        });
+      });
+    }
+
+    let preselectedId = null;
+    if (preselect && data.options && data.options[type]) {
+      preselectedId = data.options[type].value_id;
+    } else if (preselect && valid[type] && valid[type].length > 0) {
+      const inStock = valid[type].find(v => (v.stock !== undefined ? v.stock > 0 : true));
+      if (inStock) preselectedId = inStock.value_id;
+    }
+
+    rebuildSelect($select, type, all[type] || [], valid[type] || [], preselectedId);
+  });
+
+  if (data.sku) {
+    selectedSku = data.sku;
+    basePrice   = parseFloat(data.price);
+    $("#skuRow").show();
+    $("#selectedSku1").text(data.sku);
+    $(".retail-price").text("$" + data.price);
+  } else {
+    selectedSku = null;
+    basePrice   = null;
+    $("#skuRow").hide();
+  }
+
+  //  After UI build, update button immediately
+  liveUpdateBtn();
+}
+
+//  function to update the button data live
+function liveUpdateBtn() {
+  if (!selectedSku || !currentProductId) return;
+
+  const qty = parseInt($("#modalQty").val(), 10) || 1;
+  const totalPrice = basePrice ? (basePrice * qty).toFixed(2) : 0;
+
+  let chosenColor = "";
+  const chosenOptions = {};
+  $("#variantSelectors .variantSelect").each(function () {
+    const type = $(this).data("type");
+    const $opt = $(this).find("option:selected");
+    if (!$opt.length) return;
+
+    const val = $opt.text();
+    if (val && !val.includes("Out of Stock")) {
+      if (type.toLowerCase() === "color") {
+        chosenColor = val;
+      } else {
+        chosenOptions[type] = val;
+      }
+    }
+  });
+
+  const $btn = $(`.add_cart[data-pid="${currentProductId}"]`);
+  if ($btn.length) {
+    // always update with both .data() and .attr()
+    $btn.data("price", totalPrice).attr("data-price", totalPrice);
+    $btn.data("sku", selectedSku).attr("data-sku", selectedSku);
+    $btn.data("qty", qty).attr("data-qty", qty);
+    $btn.data("procolor", chosenColor).attr("data-procolor", chosenColor);
+    // $btn.data("options", JSON.stringify(chosenOptions)).attr("data-options", JSON.stringify(chosenOptions));
+
+    // dynamic data attributes (size, weight, etc.)
+    Object.keys(chosenOptions).forEach(type => {
+      const attrName = "data-" + type.toLowerCase();
+      $btn.attr(attrName, chosenOptions[type]);
+    });
+  }
+}
+
+// open modal on .add_cart click
+$(document).on("click", ".add_cart", function (e) {
+  e.preventDefault();
+  currentProductId = $(this).data("pid");
+  $("#modalProductName").text($(this).data("name"));
+  $("#variantSelectors").empty();
+
+  $.ajax({
+    url: base_url + "get_sku_by_options_for_model",
+    type: "POST",
+    data: { values: JSON.stringify([]), product_id: currentProductId },
+    dataType: "json",
+    success: function (res) {
+      updateUI(res, true);
+      $("#productOptionModal").addClass("open");
+    },
+    error: function (xhr) {
+      console.error("Failed to load options", xhr);
+    }
+  });
 });
+
+// live update on qty input
+$(document).on("input", "#modalQty", function () {
+  const qty = parseInt($(this).val(), 10) || 1;
+  if (basePrice) {
+    const totalPrice = (basePrice * qty).toFixed(2);
+    $(".retail-price").text("$" + totalPrice);
+  }
+  liveUpdateBtn();
+});
+
+// save button
+$("#saveOptionsBtn").on("click", function (e) {
+  e.preventDefault();
+
+  if (!selectedSku) {
+    alert("Please select valid options.");
+    return false;
+  }
+
+  liveUpdateBtn(); // final sync
+  console.log('kk');
+
+  // close product option modal
+  $("#productOptionModal").removeClass("open");
+
+  // open chooseLocationModal same style as .add_location click
+  $("#chooseLocationModal").addClass("open");
+  $("#chooseRequestListModal").removeClass("open");
+});
+
+
+// close modal
+
+$("#closeOptionModal, #optionModalOverlay,#saveOptionsBtn").on("click", function () {
+  $("#productOptionModal").removeClass("open");
+});
+
+
+
+
+
+
+
+
+
+  });
 
 //add products to user selected shopping locations
 $(document).on("click", ".add_single_cart", function () {

@@ -141,7 +141,7 @@
                                                                 <?php
                                                                 if ($products[$i]->vendor_count > 0 && isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_1_2_roles)))) { ?>
                                                                     <!-- if ($products[$i]->vendor_count > 0 && isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_1_2_roles))) && ($products[$i]->license_required != 'Yes' || !empty($userLicenses))) { ?> -->
-                                                                    <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_cart" data-pid="<?php echo $products[$i]->id; ?>" data-name="<?php echo $products[$i]->name; ?>" data-price="<?php echo $regular_price?>" data-procolor="<?php echo $products[$i]->color; ?>" data-vendor_id="<?php echo $products[$i]->v_id ?>" data-license_required="<?php echo $products[$i]->license_required; ?>" data-target="#chooseLocationModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
+                                                                    <button type="button"  class="btn btn--m btn--tertiary btn--icon modal--toggle add_cart" data-pid="<?php echo $products[$i]->id; ?>" data-name="<?php echo $products[$i]->name; ?>" data-price="<?php echo $regular_price?>" data-procolor="<?php echo $products[$i]->color; ?>" data-vendor_id="<?php echo $products[$i]->vendor_id ?>" data-license_required="<?php echo $products[$i]->license_required; ?>" data-target="#productOptionModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
                                                                 <?php } ?>
                                                                 <?php if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $users))) { ?>
                                                                     <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_request" data-id="<?php echo $products[$i]->id; ?>" data-vendor="<?php echo $products[$i]->vendor_id; ?>" data-target="#chooseRequestListModal"><svg class="icon icon--list-s"><use xlink:href="#icon-list-s"></use></svg></button>
@@ -298,6 +298,7 @@
                                     <!-- /Search Results Pagination -->
                                     <?php include(INCLUDE_PATH . '/_inc/shared/modals/choose-location.php'); ?>
                                     <?php include(INCLUDE_PATH . '/_inc/shared/modals/choose-request-list.php'); ?>
+                                    <?php include(INCLUDE_PATH . '/_inc/shared/modals/choose-varient.php'); ?>
                                     <script src="<?php echo base_url(); ?>assets/js/jquery.detect-card.js"></script>
                                     <script src="<?php echo base_url(); ?>assets/js/jquery.maskedinput.min.js"></script>
                                     <script src="<?php echo base_url(); ?>lib/bootstrap-datepicker/bootstrap-datepicker.min.js"></script>

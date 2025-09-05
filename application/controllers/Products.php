@@ -477,26 +477,73 @@ class Products extends MW_Controller {
     }
 
     public function get_sku_by_options()
-{
-    $values     = $this->input->post('values');
-    $product_id = $this->input->post('product_id');
+    {
+        $values     = $this->input->post('values');
+        $product_id = $this->input->post('product_id');
 
-    if (!is_array($values)) $values = [];
-    $values = array_values(array_unique(array_map('intval', $values)));
+        if (!is_array($values)) $values = [];
+        $values = array_values(array_unique(array_map('intval', $values)));
 
-    $this->load->model('Product_varients');
+        $this->load->model('Product_varients');
 
-    $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
-    $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
+        $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
+        $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
+        $vendor           = $this->Vendor_model->vendorPricingsBySku($sku->sku_code); 
+        echo json_encode([
+            'sku'          => $sku ? $sku->sku_code : null,
+            'price'        => $sku ? $sku->price : null,
+            'retail_price' => $sku ? $sku->retail_price : null,
+            'options'      => $sku ? $sku->options : null,
+            'vendor'       => !empty($vendor)?$vendor[0]: null,
+            'available'    => $availableOptions  // { all: {...}, valid: {...} }
+        ]);
+    }
 
-    echo json_encode([
-        'sku'          => $sku ? $sku->sku_code : null,
-        'price'        => $sku ? $sku->price : null,
-        'retail_price' => $sku ? $sku->retail_price : null,
-        'options'      => $sku ? $sku->options : null,
-        'available'    => $availableOptions  // { all: {...}, valid: {...} }
-    ]);
-}
+    public function get_sku_by_options_for_model()
+    {
+        // raw incoming values can be either array or JSON string '[]'
+        $rawValues  = $this->input->post('values');
+        $product_id = $this->input->post('product_id');
+
+        // normalize $values to an array of ints
+        $values = [];
+        if (is_array($rawValues)) {
+            $values = $rawValues;
+        } elseif (is_string($rawValues)) {
+            $decoded = json_decode($rawValues, true);
+            if (is_array($decoded)) $values = $decoded;
+        }
+        if (!is_array($values)) $values = [];
+        $values = array_values(array_unique(array_map('intval', $values)));
+
+        $this->load->model('Product_varients');
+
+        // If user selected values, try to find exact in-stock SKU for that combination
+        $sku = null;
+        if (!empty($values)) {
+            $sku = $this->Product_varients->get_sku_by_values_for_model($product_id, $values);
+        }
+
+        // If nothing selected, or no SKU matched the selection, pick the first in-stock SKU (if any)
+        if (empty($values) || !$sku) {
+            // attempt to get the first in-stock SKU (and its option mapping/prices)
+            $sku = $this->Product_varients->get_first_instock_sku_for_model($product_id);
+        }
+
+        // available options (all + valid) always computed (valid depends on selected values)
+        $availableOptions = $this->Product_varients->get_available_options_for_model($product_id, $values);
+
+        echo json_encode([
+            'sku'          => $sku ? $sku->sku_code : null,
+            'price'        => $sku ? $sku->price : null,
+            'retail_price' => $sku ? $sku->retail_price : null,
+            // options: mapping option_type => ['value' => 'S', 'value_id' => 123]
+            'options'      => $sku && !empty($sku->options) ? $sku->options : [],
+            'available'    => $availableOptions  // { all: {...}, valid: {...} }
+        ]);
+    }
+
+
 
 
     public function get_productimage() { //get products image

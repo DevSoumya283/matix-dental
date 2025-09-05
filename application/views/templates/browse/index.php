@@ -385,7 +385,7 @@
                                                             <input type="number" name="qty" class="input input--qty request_quantity aaa"  min="1" value="1">
                                                             <div class="btn__group">
                                                                 <?php if ($products[$i]->vendor_count > 0 && isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_1_2_roles))) ) { ?>
-                                                                    <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_cart" data-pid="<?php echo $products[$i]->id; ?>" data-name="<?php echo $products[$i]->name; ?>" data-price="<?php echo $regular_price?>" data-procolor="<?php echo $products[$i]->color; ?>" data-vendor_id="<?php echo $products[$i]->vendor_id ?>" data-license_required="<?php echo $products[$i]->license_required; ?>" data-target="#chooseLocationModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
+                                                                    <button type="button"  class="btn btn--m btn--tertiary btn--icon modal--toggle add_cart" data-pid="<?php echo $products[$i]->id; ?>" data-name="<?php echo $products[$i]->name; ?>" data-price="<?php echo $regular_price?>" data-procolor="<?php echo $products[$i]->color; ?>" data-vendor_id="<?php echo $products[$i]->vendor_id ?>" data-license_required="<?php echo $products[$i]->license_required; ?>" data-target="#productOptionModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
                                                                 <?php } ?>
                                                                 <?php if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $users))) { ?>
                                                                     <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_request" data-id="<?php echo $products[$i]->id; ?>" data-vendor="<?php echo $products[$i]->vendor_id; ?>" data-target="#chooseRequestListModal"><svg class="icon icon--list-s"><use xlink:href="#icon-list-s"></use></svg></button>
@@ -542,6 +542,7 @@
 <!-- Modals -->
 <?php $this->load->view('templates/_inc/shared/modals/choose-location.php')?>
 <?php $this->load->view('templates/_inc/shared/modals/choose-request-list.php')?>
+<?php $this->load->view('templates/_inc/shared/modals/choose-varient.php')?>
 
 
 <script type="text/javascript">
@@ -557,4 +558,198 @@
 
         }
     });
+
+    function toggleSidebarClass() {
+        const sidebar = document.querySelector('.sidebar');
+        if (window.innerWidth <= 980) {
+            sidebar.classList.remove('sidebar');
+        } else {
+            if (!sidebar.classList.contains('sidebar')) {
+            sidebar.classList.add('sidebar');
+            }
+        }
+    }
+
+    // Run on load
+    toggleSidebarClass();
+
+    // Run on resize
+    window.addEventListener('resize', toggleSidebarClass);
+
+    //2025
+
+// $(document).ready(function () {
+//   let currentProductId = null;
+//   let selectedSku = null;
+//   let basePrice = null;
+
+//   // collect selected option values
+//   function collectSelected() {
+//     const vals = [];
+//     $("#variantSelectors .variantSelect").each(function () {
+//       if ($(this).val()) {
+//         vals.push(parseInt($(this).val(), 10));
+//       }
+//     });
+//     return vals;
+//   }
+
+//   // rebuild select box
+//   function rebuildSelect($select, type, allList, validList, preselectedId = null) {
+//     const prev = $select.val() || "";
+//     $select.empty().append(`<option value="">-- Select ${type} --</option>`);
+
+//     const validIds = new Set((validList || []).map(o => String(o.value_id)));
+
+//     (allList || []).forEach(opt => {
+//       const id = String(opt.value_id);
+//       const $opt = $("<option>").val(id).text(opt.value);
+
+//       if (!validIds.has(id) || (opt.stock !== undefined && opt.stock === 0)) {
+//         $opt.prop("disabled", true).css("color", "red");
+//         $opt.text(opt.value + " (Out of Stock)");
+//       }
+//       $select.append($opt);
+//     });
+
+//     if (prev && $select.find(`option[value="${prev}"]`).length) {
+//       $select.val(prev);
+//     } else if (preselectedId && $select.find(`option[value="${preselectedId}"]`).length) {
+//       $select.val(String(preselectedId));
+//     } else {
+//       $select.val("");
+//     }
+//   }
+
+//   // update UI
+//   function updateUI(data, preselect = false) {
+//     const $variantSelectors = $("#variantSelectors");
+//     if (!data.available) return;
+
+//     const all   = data.available.all || {};
+//     const valid = data.available.valid || {};
+
+//     $.each(all, function (type, list) {
+//       let $select = $variantSelectors.find(`select[data-type="${type}"]`);
+//       if ($select.length === 0) {
+//         const $col = $("<div>").addClass("col-md-4");
+//         const $label = $("<label>").addClass("form-label").text(type);
+//         $select = $("<select>")
+//           .addClass("form-select variantSelect")
+//           .attr("data-type", type);
+//         $col.append($label).append($select);
+//         $variantSelectors.append($col);
+
+//         // onchange AJAX reload
+//         $select.on("change", function () {
+//           const values = collectSelected();
+//           $.ajax({
+//             url: "<?= base_url('get_sku_by_options_for_model'); ?>",
+//             type: "POST",
+//             data: { values: JSON.stringify(values), product_id: currentProductId },
+//             dataType: "json",
+//             success: function (res) {
+//               updateUI(res, false);
+//             },
+//             error: function (xhr) {
+//               console.error("AJAX error", xhr);
+//             }
+//           });
+//         });
+//       }
+
+//       let preselectedId = null;
+//       if (preselect && data.options && data.options[type]) {
+//         preselectedId = data.options[type].value_id;
+//       } else if (preselect && valid[type] && valid[type].length > 0) {
+//         const inStock = valid[type].find(v => (v.stock !== undefined ? v.stock > 0 : true));
+//         if (inStock) preselectedId = inStock.value_id;
+//       }
+
+//       rebuildSelect($select, type, all[type] || [], valid[type] || [], preselectedId);
+//     });
+
+//     if (data.sku) {
+//       selectedSku = data.sku;
+//       basePrice   = data.price;
+//       $("#skuRow").show();
+//       $("#selectedSku1").text(data.sku);
+//       $(".retail-price").text("$" + data.price);
+//     } else {
+//       selectedSku = null;
+//       basePrice   = null;
+//       $("#skuRow").hide();
+//     }
+//   }
+
+//   // open modal on .add_cart click
+//   $(".add_cart").on("click", function (e) {
+//     e.preventDefault();
+//     console.log('jjj');
+//     currentProductId = $(this).data("pid");
+//     $("#modalProductName").text($(this).data("name"));
+//     $("#variantSelectors").empty();
+
+//     $.ajax({
+//       url: "<?= base_url('get_sku_by_options_for_model'); ?>",
+//       type: "POST",
+//       data: { values: JSON.stringify([]), product_id: currentProductId },
+//       dataType: "json",
+//       success: function (res) {
+//         updateUI(res, true);
+//         $("#productOptionModal").addClass("open");
+//       },
+//       error: function (xhr) {
+//         console.error("Failed to load options", xhr);
+//       }
+//     });
+//   });
+
+//   // save button
+//   $("#saveOptionsBtn").on("click", function (e) {
+//     e.preventDefault();
+//     if (!selectedSku) {
+//       alert("Please select valid options.");
+//       return false;
+//     }
+
+//     const qty = parseInt($("#modalQty").val(), 10) || 1;
+//     const totalPrice = (basePrice * qty).toFixed(2);
+
+//     let chosenColor = "";
+//     const chosenOptions = {};
+//     $("#variantSelectors .variantSelect").each(function () {
+//       const type = $(this).data("type");
+//       const $opt = $(this).find("option:selected");
+//       if (!$opt.length) return;
+
+//       const val = $opt.text();
+//       if (val && !val.includes("Out of Stock")) {
+//         if (type.toLowerCase() === "color") {
+//           chosenColor = val;
+//         } else {
+//           chosenOptions[type] = val;
+//         }
+//       }
+//     });
+
+//     const $btn = $(`.add_cart[data-pid="${currentProductId}"]`);
+//     if ($btn.length) {
+//       $btn.data("price", totalPrice);
+//       $btn.data("sku", selectedSku);
+//       $btn.data("qty", qty);
+//       $btn.data("procolor", chosenColor);
+//       $btn.data("options", JSON.stringify(chosenOptions));
+//     }
+
+//     $("#productOptionModal").removeClass("open");
+//   });
+
+//   // close modal
+//   $("#closeProductModal, #productModalOverlay").on("click", function () {
+//     $("#productOptionModal").removeClass("open");
+//   });
+// });
+
+
 </script>
