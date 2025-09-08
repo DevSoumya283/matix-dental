@@ -72,21 +72,19 @@ class ProductsUpload extends MW_Controller {
         ];
 
         // Prepare file
-        $random_name = rand(1, 10000000000);
-        $filename = $random_name . '.xlsx';
+        $random_name = rand(1, 100000);
+        $filename = 'base-products-' . $random_name . '.csv';
         $uploadPath = FCPATH . 'assets/uploads/';
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0775, true);
         }
 
         $file_path = $uploadPath . $filename;
+        $file = fopen($file_path, 'w');
 
-        // Use OpenSpout writer (assumed)
-        $writer = WriterFactory::create(Type::XLSX);
-        $writer->openToFile($file_path);
-        $writer->addRow($headerRow);
+        fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        fputcsv($file, $headerRow);
 
-        // Fetch products
         $products = $this->Products_model->get_all($limit, $offset);
 
         if (!empty($products)) {
@@ -115,11 +113,13 @@ class ProductsUpload extends MW_Controller {
                 ];
 
 
-                $writer->addRow($products_data);
+                fputcsv($file, $products_data);
+
             }
         }
 
-        $writer->close();
+           fclose($file);
+
 
         // Trigger download
         header('Content-Description: File Transfer');

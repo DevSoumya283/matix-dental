@@ -43,7 +43,7 @@
                 <input type="file" id="baseExcel" class="form-control mb-3">
                 <button id="saveToDb" class="btn btn-success my-3">Save to Database</button>
                 <!-- <button id="exportAllBtn" class="btn btn-primary mt-3">Export All</button> -->
-                <a href="<?php echo base_url('export'); ?>" class="btn btn-primary my-3">Export All</a>
+                <a href="<?php echo base_url('exportproducts'); ?>" class="btn btn-primary my-3">Export All</a>
                 <div id="basePreview"></div>
             </div>
 
@@ -81,9 +81,7 @@
             <!-- Varient Tab -->
 
             <div class="tab-pane fade" id="varientproduct">
-                <div id="showvarientproduct"></div>
-            <div class="container mt-3">
-                <table id="variantProductsTable" class="table table-bordered">
+                <table id="variantProductsTable" class="table table-bordered w-100">
                     <thead>
                         <tr>
                             <th>Matix ID</th>
@@ -94,7 +92,6 @@
                         </tr>
                     </thead>
                 </table>
-            </div>
                  </div>
 
         </div>
@@ -118,29 +115,46 @@
             $('#basePreview').html('Loading...');
 
             let reader = new FileReader();
-            reader.onload = function(e) {
-                let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, {
-                    type: 'array'
-                });
-                let sheet = workbook.Sheets[workbook.SheetNames[0]];
-                let rawData = XLSX.utils.sheet_to_json(sheet, {
-                    header: 1,
-                    defval: ''
-                });
+           reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, { type: 'array' });
+            let sheet = workbook.Sheets[workbook.SheetNames[0]];
+            let rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-                // Filter non-blank columns
-                baseData = filterColumns(rawData);
+            // Filter non-blank columns
+            baseData = filterColumns(rawData);
 
-                // Build excelData
-                excelData = baseData.slice(1).map(row => {
-                    let obj = {};
-                    baseData[0].forEach((key, i) => obj[key] = row[i]);
-                    return obj;
-                });
+            // ✅ Validate base price column (row[12])
+            let errors = [];
+            for (let i = 1; i < baseData.length; i++) {
+                let row = baseData[i];
+                let basePrice = row[12]; 
+                if (basePrice === undefined || basePrice === null || basePrice.toString().trim() === '') {
+                    errors.push(i + 1); 
+                }
+            }
 
-                renderTable('#basePreview', baseData);
-            };
+        // If errors found, stop here
+        if (errors.length > 0) {
+            $('#basePreview').html('<div class="alert alert-danger">Validation failed</div>');
+            showAlert(
+                'error',
+                `Base price mandatory at row(s): ${errors.join(', ')}`
+            );
+            return; 
+        }
+
+        // Build excelData only if valid
+        excelData = baseData.slice(1).map(row => {
+            let obj = {};
+            baseData[0].forEach((key, i) => obj[key] = row[i]);
+            return obj;
+        });
+
+        // Render table
+        renderTable('#basePreview', baseData);
+    };
+
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 

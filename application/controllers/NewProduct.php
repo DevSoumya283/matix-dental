@@ -63,17 +63,24 @@ class NewProduct extends MW_Controller
             'category_id', 'base_price', 'active'
         );
 
-        $random_name = rand(1, 10000000000);
-        $filename = $random_name . '.xlsx';
+
+        $random_name = rand(1, 100000);
+        $filename = 'base-products'.$random_name . '.csv';
         $uploadPath = FCPATH . 'assets/uploads/';
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0775, true);
         }
 
         $file_path = $uploadPath . $filename;
-        $writer = WriterFactory::create(Type::XLSX);
-        $writer->openToFile($file_path);
-        $writer->addRow($headerRow);
+        
+        // Create and open the CSV file
+        $file = fopen($file_path, 'w');
+        
+        // Add UTF-8 BOM for proper encoding in Excel
+        fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        
+        // Write header row
+        fputcsv($file, $headerRow);
         $products = $this->Products_model->get_all($limit, $offset);
         $mpns = array_filter(array_column($products, 'id'));
         $pricing_map = $this->Products_model->get_prices_by_mpn_array($mpns);
@@ -82,7 +89,6 @@ class NewProduct extends MW_Controller
                 $retail_price = isset($pricing_map[$product->id]) ? $pricing_map[$product->id]['retail_price'] : '';
 
                 $products_data = [
-                            $product->id,
                             $product->matix_id,
                             $product->mpn,
                             $product->item_code,
@@ -98,11 +104,12 @@ class NewProduct extends MW_Controller
                             $product->base_price, // You'll need to get this from somewhere
                             $product->active
                         ];
-                $writer->addRow($products_data);
+                fputcsv($file, $products_data);
+
             }
         
 
-        $writer->close();
+            fclose($file);
 
         // Force download
         header('Content-Description: File Transfer');
@@ -122,7 +129,7 @@ class NewProduct extends MW_Controller
 
 
     public function save_data()
-        {
+    {
             $excel_data = $this->input->post('excel_data');
             $file_name = $this->input->post('file_name');
             $vendor_id = '8';
@@ -544,7 +551,7 @@ class NewProduct extends MW_Controller
     }
     public function get_all_products()
     {
-        $data = $this->db->limit(50)->order_by('id', 'ASC')->get('products')->result_array();
+        $data = $this->db->limit(20)->order_by('id', 'DESC')->get('products')->result_array();
         echo json_encode(['status' => 'success', 'data' => $data]);
     }
 
