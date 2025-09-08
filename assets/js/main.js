@@ -2641,12 +2641,19 @@ function updateUI(data, preselect = false) {
     $("#skuRow").hide();
     $("#selectedSku1").text("");
   }
-if (data.stock_quantity) {
-  $("#modalQty")
-    .attr("max", data.stock_quantity)
-    .val(1); // reset to 1
-  $("#stockMsg").hide();
-}
+  if (data.stock_quantity > 0) {
+    $("#modalQty")
+      .attr("max", data.stock_quantity)
+      .val(1); // reset to 1
+    $("#stockMsg").hide();
+  }
+  else{
+    $("#modalQty")
+      .attr("max", 0)
+      .val(0); // reset to 1
+    $("#stockMsg").text("⚠ No items available in stock.").show();
+
+  }
 
 
   liveUpdateBtn();
@@ -2762,18 +2769,23 @@ $(document).on("input", "#modalQty", function () {
 
     // remove non-digits
     val = val.replace(/[^0-9]/g, "");
-
+    var max= '';
     // fallback to 1 if empty
     if (val === "") val = "1";
 
     let num = parseInt(val, 10);
-    const max = parseInt($input.attr("max"), 10) || Infinity;
+    max = parseInt($input.attr("max"), 10) || null;
 
     if (num < 1) num = 1;
 
     // Show message only if user manually types over max
-    if (num > max) {
+    if (num > max || max === null) {
+      if(max === null){
+       $("#stockMsg").text("⚠ No items available in stock.").show();
+
+      }else{
       $("#stockMsg").text("⚠ Only " + max + " items available in stock.").show();
+      }
       num = max;
     } else {
       $("#stockMsg").hide();

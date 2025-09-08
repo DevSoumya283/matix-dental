@@ -1679,18 +1679,29 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
       $('#selectedSku1').text(data.sku);
       if (typeof data.price !== 'undefined' && data.price !== null) {
         $('.retail-price').text('$' + data.price);
+        $('.add_single_cart').attr('data-price', data.price);
       }      
+
       if (typeof data.retail_price !== 'undefined' && data.retail_price !== null) {
         $('.sale-price, .regular-price').text('$' + data.retail_price);
       }
-       if(data.vendor){               
+
+      if (typeof data.vendor !== 'undefined' && data.vendor !== null) {
+        $('.add_single_cart').attr('data-vendor_id', data.vendor.vendor_id);
+      }  
+
+      if (typeof data.options !== 'undefined' && data.options !== null) {
+        $('.add_single_cart').attr('data-procolor', data.options.Color.value);
+      }  
+      
+      if(data.vendor){               
         $('.vendor_ratings').text(data.vendor.name);
         $('.v_id').html(data.vendor.vendor_id);
         $('.v_price')
         .attr('data-price', data.vendor.price)
         .attr('data-retail-price', data.vendor.retail_price)
         .text('$' +data.vendor.price);
-        }
+      }
     } else {
       $('#skuRow').hide();
       $('#selectedSku1').text('');
