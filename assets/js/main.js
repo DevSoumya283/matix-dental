@@ -2510,100 +2510,7 @@ $(document).ready(function () {
     });
   });
 });
-//products add to cart
-$(document).ready(function () {
-  $(document).on("click", ".add_cart", function () {
-    var license_required = $(this).data("license_required");
-    var product_id = $(this).data("pid");
-    var pro_name = $(this).data("name");
-    var vendor_id = $(this).data("vendor_id");
-    var p_color = $(this).data("procolor");
-    var p_price = $(this).data("price");
-    var pqty = $(this).closest(".wrap").find(".aaa").val();
-    var p_qty_price = pqty * p_price;
-    p_qty_price = parseFloat(Math.round(p_qty_price * 100) / 100).toFixed(2);
-
-    $.ajax({
-      type: "POST",
-      url: base_url + "get-cartdetails",
-      success: function (data) {
-        var data = JSON.parse(data); //object
-        var cart_lists = "";
-        if (data.locations != "") {
-          if (data.user_locations.length >= 1) {
-            for (var i = 0; i < data.user_locations.length; i++) {
-              var myDate = new Date(data.user_locations[i].updated_at);
-              var updatede_date = moment(myDate).format("ll");
-              cart_lists +=
-                "<tr><td><span class='fontWeight--2'>" +
-                data.user_locations[i].nickname +
-                "</span></td>";
-              if (pqty > 0) {
-                cart_lists +=
-                  "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
-              } else {
-                cart_lists += "<td>-</td><td>-</td>";
-              }
-
-              console.log(data.user_locations[i].licences || {});
-              cart_lists +=
-                "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart ' data-p_id=" +
-                product_id +
-                " data-qty= " +
-                pqty +
-                " data-pname=" +
-                pro_name +
-                " data-aprice=" +
-                p_price +
-                " data-location_id=" +
-                data.user_locations[i].id +
-                "  data-vendors= " +
-                vendor_id +
-                "  data-pcolor=" +
-                p_color +
-                "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
-            }
-          } else {
-            cart_lists +=
-              "<tr><td><span class='fontWeight--2'>" +
-              data.user_locations.nickname +
-              "</span></td>";
-            if (pqty != null && pqty != 0) {
-              cart_lists +=
-                "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
-            } else {
-              cart_lists += "<td>-</td><td>-</td>";
-            }
-
-            cart_lists +=
-              "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' data-p_id=" +
-              product_id +
-              " data-qty= " +
-              pqty +
-              " data-pname=" +
-              pro_name +
-              " data-aprice=" +
-              p_price +
-              " data-location_id=" +
-              data.user_locations.id +
-              "  data-vendors= " +
-              vendor_id +
-              "  data-pcolor=" +
-              p_color +
-              "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
-          }
-        } else {
-          cart_lists +=
-            "<tr><center><td colspan='4'>No Locations Found</td></center></tr>";
-          $(".empty-data").hide();
-          $(".no-submit").hide();
-          $(".notempty").hide();
-          $(".empty").show();
-        }
-        $(".cart_details").html(cart_lists);
-      },
-    });
-  });
+// 2025 ADD START
 
 let currentProductId = null;
 let selectedSku = null;
@@ -2633,7 +2540,7 @@ function rebuildSelect($select, type, allList, validList, preselectedId = null) 
     let text = opt.value;
     const $opt = $("<option>").val(id);
 
-    // ❌ If not in validIds OR stock=0 → disable
+    // If not in validIds OR stock=0 → disable
     if (!validIds.has(id) || opt.stock === 0 || opt.stock === null) {
       text += " (Stock Not Available)";
       $opt.prop("disabled", true).css("color", "red");
@@ -2663,16 +2570,18 @@ function updateUI(data, preselect = false) {
   $.each(all, function (type, list) {
     let $select = $variantSelectors.find(`select[data-type="${type}"]`);
 
-    if ($select.length === 0) {
-      const $col = $("<div>").addClass("col-md-4");
-      const $label = $("<label>").addClass("form-label").text(type);
-      $select = $("<select>")
-        .addClass("form-select variantSelect")
-        .attr("data-type", type);
-      $col.append($label).append($select);
+     if ($select.length === 0) {
+      const $col = $("<div>").addClass("variantSelectContainer");
+      const $label = $("<label>").addClass("form-label fw-semibold m-1").text(type);
+      $select = $("<select style='max-width: 100px;'>")
+        .addClass("variantSelect m-1")  // removed 'form-select' to avoid bootstrap styles
+        .attr("data-type", type)
+        .append('<option value="">Select ' + type + '</option>'); // placeholder
+
+      $col.append($label).append("<br>").append($select);
       $variantSelectors.append($col);
 
-      // ✅ onchange refresh → blocks others automatically
+      // Modify option text to remove "(Stock Not Available)" for dropdown
       $select.on("change", function () {
         const values = collectSelected();
         $.ajax({
@@ -2686,6 +2595,19 @@ function updateUI(data, preselect = false) {
           }
         });
       });
+
+      // Assuming options are dynamically added later, override option text here:
+      // For illustration:
+      // After options loaded (you need to hook this in your option loading method)
+      function cleanOptions($select) {
+        $select.find('option').each(function () {
+          const val = $(this).text();
+          // Remove "(Stock Not Available)" if present, trim spaces
+          const cleanText = val.replace(/\(Stock Not Available\)/gi, '').trim();
+          $(this).text(cleanText);
+        });
+      }
+      // Usage example: cleanOptions($select);
     }
 
     let preselectedId = null;
@@ -2696,7 +2618,7 @@ function updateUI(data, preselect = false) {
     rebuildSelect($select, type, all[type] || [], valid[type] || [], preselectedId);
   });
 
-  // ✅ SKU + price only when all dropdowns have selection
+  //  SKU + price only when all dropdowns have selection
   if (data.sku && $(".variantSelect").filter(function(){return $(this).val();}).length === $(".variantSelect").length) {
     selectedSku = data.sku;
     basePrice   = parseFloat(data.price);
@@ -2719,6 +2641,13 @@ function updateUI(data, preselect = false) {
     $("#skuRow").hide();
     $("#selectedSku1").text("");
   }
+if (data.stock_quantity) {
+  $("#modalQty")
+    .attr("max", data.stock_quantity)
+    .val(1); // reset to 1
+  $("#stockMsg").hide();
+}
+
 
   liveUpdateBtn();
 }
@@ -2762,6 +2691,9 @@ function liveUpdateBtn() {
       const attrName = "data-" + type.toLowerCase();
       $btn.attr(attrName, chosenOptions[type]);
     });
+
+  // after updating data, refresh the table with SAME code as .add_cart
+  updateCartDetailsFromButton($btn);
   }
 }
 
@@ -2814,42 +2746,248 @@ $(document).on("input", "#modalQty", function () {
   liveUpdateBtn();
 });
 
-// save button
-$("#saveOptionsBtn").on("click", function (e) {
-  e.preventDefault();
+  // close modal
 
-  if (!selectedSku) {
-    alert("Please select valid options.");
-    return false;
-  }
-
-  liveUpdateBtn(); // final sync
-  console.log('kk');
-
-  // close product option modal
-  $("#productOptionModal").removeClass("open, is-visible");
-
-  // open chooseLocationModal same style as .add_location click
-  $("#chooseLocationModal").addClass("open, is-visible");
-  $("#chooseRequestListModal").hide();
-});
-
-
-// close modal
-
-$("#closeOptionModal, #optionModalOverlay, #saveOptionsBtn").on("click", function () {
-  $("#productOptionModal").removeClass("open");
-});
-
-
-
-
-
-
-
-
-
+  $("#closeOptionModal, #optionModalOverlay").on("click", function () {
+    $("#productOptionModal").removeClass("open");
   });
+
+
+  // for the input not enter - and alphabet 
+
+  // Handler
+  $(document).on("input", "#modalQty", function () {
+    const $input = $(this);
+    let val = $input.val();
+
+    // remove non-digits
+    val = val.replace(/[^0-9]/g, "");
+
+    // fallback to 1 if empty
+    if (val === "") val = "1";
+
+    let num = parseInt(val, 10);
+    const max = parseInt($input.attr("max"), 10) || Infinity;
+
+    if (num < 1) num = 1;
+
+    // Show message only if user manually types over max
+    if (num > max) {
+      $("#stockMsg").text("⚠ Only " + max + " items available in stock.").show();
+      num = max;
+    } else {
+      $("#stockMsg").hide();
+    }
+
+    $input.val(num);
+
+    // update price + button
+    if (basePrice) {
+      const totalPrice = (basePrice * num).toFixed(2);
+      $(".retail-price").text("$" + totalPrice);
+    }
+    liveUpdateBtn();
+  });
+
+
+// 2025 ADD END
+
+
+//products add to cart
+// $(document).ready(function () {
+//   $(document).on("click", ".add_cart", function () {
+//     var license_required = $(this).data("license_required");
+//     var product_id = $(this).data("pid");
+//     var pro_name = $(this).data("name");
+//     var vendor_id = $(this).data("vendor_id");
+//     var p_color = $(this).data("procolor");
+//     var p_price = $(this).data("price");
+//     var pqty = $(this).closest(".wrap").find(".aaa").val();
+//     var p_qty_price = pqty * p_price;
+//     p_qty_price = parseFloat(Math.round(p_qty_price * 100) / 100).toFixed(2);
+
+//     $.ajax({
+//       type: "POST",
+//       url: base_url + "get-cartdetails",
+//       success: function (data) {
+//         var data = JSON.parse(data); //object
+//         var cart_lists = "";
+//         if (data.locations != "") {
+//           if (data.user_locations.length >= 1) {
+//             for (var i = 0; i < data.user_locations.length; i++) {
+//               var myDate = new Date(data.user_locations[i].updated_at);
+//               var updatede_date = moment(myDate).format("ll");
+//               cart_lists +=
+//                 "<tr><td><span class='fontWeight--2'>" +
+//                 data.user_locations[i].nickname +
+//                 "</span></td>";
+//               if (pqty > 0) {
+//                 cart_lists +=
+//                   "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
+//               } else {
+//                 cart_lists += "<td>-</td><td>-</td>";
+//               }
+
+//               console.log(data.user_locations[i].licences || {});
+//               cart_lists +=
+//                 "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart ' data-p_id=" +
+//                 product_id +
+//                 " data-qty= " +
+//                 pqty +
+//                 " data-pname=" +
+//                 pro_name +
+//                 " data-aprice=" +
+//                 p_price +
+//                 " data-location_id=" +
+//                 data.user_locations[i].id +
+//                 "  data-vendors= " +
+//                 vendor_id +
+//                 "  data-pcolor=" +
+//                 p_color +
+//                 "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
+//             }
+//           } else {
+//             cart_lists +=
+//               "<tr><td><span class='fontWeight--2'>" +
+//               data.user_locations.nickname +
+//               "</span></td>";
+//             if (pqty != null && pqty != 0) {
+//               cart_lists +=
+//                 "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
+//             } else {
+//               cart_lists += "<td>-</td><td>-</td>";
+//             }
+
+//             cart_lists +=
+//               "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' data-p_id=" +
+//               product_id +
+//               " data-qty= " +
+//               pqty +
+//               " data-pname=" +
+//               pro_name +
+//               " data-aprice=" +
+//               p_price +
+//               " data-location_id=" +
+//               data.user_locations.id +
+//               "  data-vendors= " +
+//               vendor_id +
+//               "  data-pcolor=" +
+//               p_color +
+//               "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
+//           }
+//         } else {
+//           cart_lists +=
+//             "<tr><center><td colspan='4'>No Locations Found</td></center></tr>";
+//           $(".empty-data").hide();
+//           $(".no-submit").hide();
+//           $(".notempty").hide();
+//           $(".empty").show();
+//         }
+//         $(".cart_details").html(cart_lists);
+//       },
+//     });
+//   });
+
+// });
+function updateCartDetailsFromButton($btn) {
+  var license_required = $btn.data("license_required");
+  var product_id = $btn.data("pid");
+  var pro_name = $btn.data("name");
+  var vendor_id = $btn.data("vendor_id");
+  var p_color = $btn.data("procolor");
+  var p_price = $btn.data("price");
+  var pqty = $('#modalQty').val();
+  var p_qty_price = p_price;
+  p_qty_price = parseFloat(Math.round(p_qty_price * 100) / 100).toFixed(2);
+
+  $.ajax({
+    type: "POST",
+    url: base_url + "get-cartdetails",
+    success: function (data) {
+      var data = JSON.parse(data); //object
+      var cart_lists = "";
+      if (data.locations != "") {
+        if (data.user_locations.length >= 1) {
+          for (var i = 0; i < data.user_locations.length; i++) {
+            var myDate = new Date(data.user_locations[i].updated_at);
+            var updatede_date = moment(myDate).format("ll");
+            cart_lists +=
+              "<tr><td><span class='fontWeight--2'>" +
+              data.user_locations[i].nickname +
+              "</span></td>";
+            if (pqty > 0) {
+              cart_lists +=
+                "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
+            } else {
+              cart_lists += "<td>-</td><td>-</td>";
+            }
+
+            console.log(data.user_locations[i].licences || {});
+            cart_lists +=
+              "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart ' data-p_id=" +
+              product_id +
+              " data-qty= " +
+              pqty +
+              " data-pname=" +
+              pro_name +
+              " data-aprice=" +
+              p_price +
+              " data-location_id=" +
+              data.user_locations[i].id +
+              "  data-vendors= " +
+              vendor_id +
+              "  data-pcolor=" +
+              p_color +
+              "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
+          }
+        } else {
+          cart_lists +=
+            "<tr><td><span class='fontWeight--2'>" +
+            data.user_locations.nickname +
+            "</span></td>";
+          if (pqty != null && pqty != 0) {
+            cart_lists +=
+              "<td>" + pqty + "</td><td> $" + p_qty_price + "</td>";
+          } else {
+            cart_lists += "<td>-</td><td>-</td>";
+          }
+
+          cart_lists +=
+            "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' data-p_id=" +
+            product_id +
+            " data-qty= " +
+            pqty +
+            " data-pname=" +
+            pro_name +
+            " data-aprice=" +
+            p_price +
+            " data-location_id=" +
+            data.user_locations.id +
+            "  data-vendors= " +
+            vendor_id +
+            "  data-pcolor=" +
+            p_color +
+            "   'data-replace='&#10003; Added'>+ Add to cart</button> </td> </tr>";
+        }
+      } else {
+        cart_lists +=
+          "<tr><center><td colspan='4'>No Locations Found</td></center></tr>";
+        $(".empty-data").hide();
+        $(".no-submit").hide();
+        $(".notempty").hide();
+        $(".empty").show();
+      }
+      $(".cart_details").html(cart_lists);
+    },
+  });
+}
+
+// ✅ Original click handler (unchanged)
+$(document).on("click", ".add_cart", function () {
+  updateCartDetailsFromButton($(this));
+});
+
+
 
 //add products to user selected shopping locations
 $(document).on("click", ".add_single_cart", function () {

@@ -532,14 +532,15 @@ class Products extends MW_Controller {
 
         // available options (all + valid) always computed (valid depends on selected values)
         $availableOptions = $this->Product_varients->get_available_options_for_model($product_id, $values);
-
+   
         echo json_encode([
             'sku'          => $sku ? $sku->sku_code : null,
             'price'        => $sku ? $sku->price : null,
             'retail_price' => $sku ? $sku->retail_price : null,
             // options: mapping option_type => ['value' => 'S', 'value_id' => 123]
             'options'      => $sku && !empty($sku->options) ? $sku->options : [],
-            'available'    => $availableOptions  // { all: {...}, valid: {...} }
+            'available'    => $availableOptions,  // { all: {...}, valid: {...} }
+            'stock_quantity' => $sku ? $sku->stock_quantity : null
         ]);
     }
 

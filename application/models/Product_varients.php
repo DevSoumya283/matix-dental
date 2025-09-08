@@ -255,7 +255,7 @@ class Product_varients extends MY_Model
             return null;
         }
 
-        $this->db->select('s.sku_id, s.sku_code,
+        $this->db->select('s.sku_id, s.stock_quantity, s.sku_code,
             COALESCE(pp.price, ' . $this->db->escape($product->base_price) . ')        AS price,
             COALESCE(pp.retail_price, ' . $this->db->escape($product->base_price) . ') AS retail_price,
             COUNT(DISTINCT sov.value_id) AS matched_count,
@@ -349,7 +349,7 @@ class Product_varients extends MY_Model
                 $filter_values[] = (int)$sv;
             }
 
-            $this->db->select('s.sku_id');
+            $this->db->select('s.sku_id, s.stock_quantity');
             $this->db->from('skus s');
             $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
             $this->db->where('s.product_id', $matix_id);
@@ -413,7 +413,7 @@ class Product_varients extends MY_Model
         $matix_id = $product->matix_id;
 
         // find first in-stock SKU (order by sku_id asc — change if you want other ordering)
-        $this->db->select('s.sku_id, s.sku_code,
+        $this->db->select('s.sku_id, s.stock_quantity, s.sku_code,
             COALESCE(pp.price, '.$this->db->escape($product->base_price).')        AS price,
             COALESCE(pp.retail_price, '.$this->db->escape($product->base_price).') AS retail_price,
             s.stock_quantity
