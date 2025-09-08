@@ -2685,6 +2685,8 @@ function liveUpdateBtn() {
   });
 
   const $btn = $(`.add_cart[data-pid="${currentProductId}"]`);
+  updateCartDetailsFromButton($btn);
+
   if ($btn.length) {
     // always update with both .data() and .attr()
     $btn.data("price", totalPrice).attr("data-price", totalPrice);
@@ -2700,7 +2702,6 @@ function liveUpdateBtn() {
     });
 
   // after updating data, refresh the table with SAME code as .add_cart
-  updateCartDetailsFromButton($btn);
   }
 }
 
