@@ -121,11 +121,21 @@ class Product_pricing_model extends MY_Model {
     }
 
     public function getPricesMarketplace($productId)
-    {
+    {	
+	$this->db->select('matix_id');
+	$this->db->from('products');
+	$this->db->where('id', $productId);
+	$product = $this->db->get()->row();
+	$matix_id='';
+	if ($product) {
+	 $matix_id = $product->matix_id;
+         } else {
+	    $matix_id = null; // or handle the "not found" case
+	}
         // First find available SKUs with stock for this product
         $this->db->select('s.sku_code, s.stock_quantity');
         $this->db->from('skus s');
-        $this->db->where('s.product_id', 'p-'.$productId);
+        $this->db->where('s.product_id', $matix_id);
         $this->db->where('s.stock_quantity >', 0);
         $this->db->where('s.stock_quantity IS NOT NULL');
         $this->db->order_by('s.stock_quantity DESC, s.sku_id ASC'); // Prioritize highest stock

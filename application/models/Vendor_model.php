@@ -193,10 +193,20 @@ class Vendor_model extends MY_Model {
 
     public function loadVendorPricings($productId)
     {
+	$this->db->select('matix_id');
+	$this->db->from('products');
+	$this->db->where('id', $productId);
+	$product = $this->db->get()->row();
+
+	if ($product) {
+   	 $matix_id = $product->matix_id;
+	} else {
+	    $matix_id = null; // or handle the "not found" case
+	}
         // First get available SKU
         $sku_result = $this->db->select('sku_code')
                             ->from('skus')
-                            ->where('product_id', 'p-'.$productId)
+                            ->where('product_id', $matix_id)
                             ->where('stock_quantity >', 0)
                             ->where('stock_quantity IS NOT NULL')
                             ->order_by('stock_quantity DESC, sku_id ASC')
