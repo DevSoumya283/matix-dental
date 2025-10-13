@@ -1677,6 +1677,12 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
     if (data.sku) {
       $('#skuRow').show();
       $('#selectedSku1').text(data.sku);
+
+    $.each(data.options, function (key, option) {
+        const id = key.toLowerCase().replace(/\s+/g, '_');
+        $('#' + id).text(option.value);
+    });
+
       if (typeof data.price !== 'undefined' && data.price !== null) {
         $('.retail-price').text('$' + data.price);
         $('.add_single_cart').attr('data-price', data.price);

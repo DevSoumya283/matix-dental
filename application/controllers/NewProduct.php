@@ -361,7 +361,6 @@ class NewProduct extends MW_Controller
                 $this->db->insert('product_option_values', [
                     'option_id'  => $option_id,
                     'product_id' => $product->matix_id,
-                    'mpn'        => $product->mpn, 
                     'value'      => $value
                 ]);
                 $value_id = $this->db->insert_id();
@@ -399,7 +398,7 @@ class NewProduct extends MW_Controller
                     $this->db->insert('skus', [
                         'product_id'        => $product->matix_id,
                         'parent_product_id' => $product->matix_id,
-                        'mpn'             => $product->mpn,
+                        'vendor_product_id'             => $product->mpn,
                         'sku_code'        => $sku_code,
                         'price'           => null,
                         'retail_price'    => null,

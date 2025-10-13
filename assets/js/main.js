@@ -2595,19 +2595,6 @@ function updateUI(data, preselect = false) {
           }
         });
       });
-
-      // Assuming options are dynamically added later, override option text here:
-      // For illustration:
-      // After options loaded (you need to hook this in your option loading method)
-      function cleanOptions($select) {
-        $select.find('option').each(function () {
-          const val = $(this).text();
-          // Remove "(Stock Not Available)" if present, trim spaces
-          const cleanText = val.replace(/\(Stock Not Available\)/gi, '').trim();
-          $(this).text(cleanText);
-        });
-      }
-      // Usage example: cleanOptions($select);
     }
 
     let preselectedId = null;
@@ -2685,7 +2672,9 @@ function liveUpdateBtn() {
   });
 
   const $btn = $(`.add_cart[data-pid="${currentProductId}"]`);
-  updateCartDetailsFromButton($btn);
+  setTimeout(() => {
+    updateCartDetailsFromButton($btn);
+  }, 100);
 
   if ($btn.length) {
     // always update with both .data() and .attr()
@@ -2732,7 +2721,9 @@ $(document).on("click", ".add_cart", function (e) {
             },
             success: function(res2){
               updateUI(res2, false);
-      $("#productOptionModal").addClass("open");
+              const $btn = $(`.add_cart[data-pid="${currentProductId}"]`);
+              updateCartDetailsFromButton($btn);
+              $("#productOptionModal").addClass("open");
 
             }
           });
@@ -2909,6 +2900,7 @@ function updateCartDetailsFromButton($btn) {
   var vendor_id = $btn.data("vendor_id");
   var p_color = $btn.data("procolor");
   var p_price = $btn.data("price");
+  console.log(p_price);
   var pqty = $('#modalQty').val();
   var p_qty_price = p_price;
   p_qty_price = parseFloat(Math.round(p_qty_price * 100) / 100).toFixed(2);

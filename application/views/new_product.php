@@ -128,7 +128,7 @@
             let errors = [];
             for (let i = 1; i < baseData.length; i++) {
                 let row = baseData[i];
-                let basePrice = row[12]; 
+                let basePrice = row[13]; 
                 if (basePrice === undefined || basePrice === null || basePrice.toString().trim() === '') {
                     errors.push(i + 1); 
                 }
