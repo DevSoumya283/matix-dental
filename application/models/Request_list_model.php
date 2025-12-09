@@ -14,21 +14,39 @@ class Request_list_model extends MY_Model {
         $this->load->model('PDOhandler');
     }
 
-    public function addProduct($organization_id, $location_id, $product_id, $vendor_id, $qty) {
+    public function addProduct($organization_id, $location_id, $product_id, $vendor_id, $qty, $sku = null)
+    {
         $insert_data = array(
             'location_id' => $location_id,
             'user_id' => $organization_id,
             'product_id' => $product_id,
+            'sku_id' => $sku,
             'vendor_id' => $vendor_id,
             'quantity' => $qty,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         );
-        $data['requests'] = $this->get_by(array('product_id' => $product_id,'vendor_id' =>$vendor_id,'location_id'=>$location_id,'user_id'=>$organization_id));
-        if ($data['requests'] != null) {
-            $update_id = $data['requests']->id;
-            $old_qty = $data['requests']->quantity;
-            $new_qty = $old_qty + $qty;
+
+        // Build base condition
+        $condition = array(
+            'product_id' => $product_id,
+            'vendor_id' => $vendor_id,
+            'location_id' => $location_id,
+            'user_id' => $organization_id,
+        );
+
+        // Add SKU condition only if not null
+        if (!empty($sku)) {
+            $condition['sku_id'] = $sku;
+        } else {
+            $condition['sku_id'] = null; // if your DB stores null for missing sku
+        }
+
+        $existing = $this->get_by($condition);
+
+        if ($existing) {
+            $update_id = $existing->id;
+            $new_qty = $existing->quantity + $qty;
             $update_data = array(
                 'quantity' => $new_qty,
                 'updated_at' => date('Y-m-d H:i:s')
@@ -132,7 +150,7 @@ class Request_list_model extends MY_Model {
 
         foreach ($requestList->products as $product) {
             $message .= "<tr>"
-                . "<td style='width:85px;height: 85px;'><img width='90px' style='text-align:center;font-size:14px' src='" . image_url() . ((!empty($product->photo)) ? "uploads/products/images/".$product->photo : 'assets/img/product-image.png') . "' /></td>"
+                . "<td style='width:85px;height: 85px;'><img width='90px' style='text-align:center;font-size:14px' src='" . image_url() . ((!empty($product->photo)) ? "uploads/products/new-vol-data/".$product->photo : 'assets/img/product-image.png') . "' /></td>"
                 . "<td>"
                 . "<a class='product__name is--link' style='text-decoration: none;'' href='" . config_item('site_url') . "view-product?id=" . $product->id . "'>" . $product->name . "</a><br>by " . $product->manufacturer . "<br></td>"
                 . "<td style='text-align:center'>" . $product->quantity . "</td>"

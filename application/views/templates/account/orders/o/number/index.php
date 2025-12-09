@@ -193,13 +193,15 @@
                                                         <?php
                                                         if ($order_details[$i]->product_image != null) {
                                                             ?>
-                                                            <div class="product__thumb"  style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $order_details[$i]->product_image->photo; ?>');"> </div>
+                                                            <div class="product__thumb"  style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $order_details[$i]->product_image->photo; ?>');"> </div>
                                                         <?php } else { ?>
-                                                            <div class="product__thumb"  style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></div>
+                                                            <div class="product__thumb"  style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></div>
                                                         <?php } ?>
                                                     </div>
                                                     <div class="product__data col-md-8 col-xs-12">
-                                                        <span class="product__name is--link" data-target="view-product?id=<?php echo $order_details[$i]->product->id; ?>"><?php echo $order_details[$i]->product->name; ?></span><br>
+                                                        <?php 
+                                                         $option = get_option_from_sku($order_details[$i]->sku_id);?>
+                                                        <span class="product__name is--link" data-target="view-product?id=<?php echo $order_details[$i]->product->id; ?>"><?php echo $order_details[$i]->product->name.', '.$order_details[$i]->optionCode; ?></span><br>
                                                         <span class="product__mfr">
                                                             by <a class="link fontWeight--2" href="#"><?php echo $order_details[$i]->product->manufacturer; ?></a>
                                                         </span>

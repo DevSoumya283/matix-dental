@@ -134,10 +134,10 @@
                                                                 <div class="product product--s row multi--vendor req--license padding--xxs">
                                                                     <div class="product__image col-md-3 col-xs-12">
                                                                         <?php if (isset($populated_products[$i]->images)) { ?>
-                                                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $populated_products[$i]->images->photo; ?>');">
+                                                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $populated_products[$i]->images->photo; ?>');">
                                                                         </div>
                                                                         <?php } else { ?>
-                                                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                                                        <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                                                                         </div>
                                                                         <?php } ?>
                                                                     </div>

@@ -4376,7 +4376,8 @@ a.card {
     max-height: 9999em;
     opacity: 1;
     -webkit-transform: translate(-50%, -4px);
-    transform: translate(-50%, -4px);
+    /* transform: translate(-50%, -4px); */
+    transform: translate(-9%, 29px);
     z-index: 1;
 }
 
@@ -4559,7 +4560,9 @@ a.card {
     background-color: #FFFFFF;
     vertical-align: middle;
 }
-
+.new-class{
+    border-radius: 50%;
+}
 .panel.panel--s {
     width: 30%;
     max-width: 400px;

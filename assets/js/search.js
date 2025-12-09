@@ -37,11 +37,13 @@ var Search = {
     processResult: function(result){
         console.log(result)
         // var item = "<div>" + result.name +"</div>";
-
+        var photoUrl = result.photo
+        ? image_url + 'uploads/products/new-vol-data/' + result.photo
+        : base_url + 'assets/img/product-image.png';
 
         var item =  '<div class="row product product--list row multi--vendor has--promos req--license has--sale" data-target="/product">' +
                     '    <div class="search-image-holder">' +
-                    '       <a class="image-small" href="/view-product?id=' + result.id + '&amp;category=' + (parseInt(result.category) ? result.category : '') + '" style="background-image:url(\'https://beta.matixdental.com/uploads/products/images/' + result.photo + '\');"></a>' +
+                    '       <a class="image-small" href="/view-product?id=' + result.id + '&amp;category=' + (parseInt(result.category) ? result.category : '') + '" style="background-image:url(' + photoUrl + ');"></a>' +
                     '    </div>' +
                     '    <div class="product__data col-md-9 col-xs-12">' +
                     '        <span class=" is--link" data-target="/view-product?id=4&amp;category=1201">'+

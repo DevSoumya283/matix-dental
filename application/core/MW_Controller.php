@@ -13,6 +13,9 @@ class MW_Controller extends MY_Controller
         parent::__construct();
         $this->load->model('Whitelabel_model');
         $this->load->model('Page_model');
+        $this->load->library('PaymentGateway');
+        $this->stripe = $this->paymentgateway;
+
         $this->processWhitelabel($this->Whitelabel_model->testDomain($_SERVER['HTTP_HOST']));
         $this->_run_middlewares();
     }

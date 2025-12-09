@@ -9,7 +9,8 @@
     <!-- Icons -->
     <?=$this->load->view('templates/_inc/icons.php') ?>
     <!-- build:css css/main.min.css -->
-    <link rel = "stylesheet" type = "text/css" href = "<?php echo base_url(); ?>assets/css/main.css">
+    <!-- live <link rel = "stylesheet" type = "text/css" href = "<?php echo base_url(); ?>assets/css/main.css"> -->
+<link rel="stylesheet" type="text/css" href="<?= base_url('assets/css/main.css?v=' . filemtime(FCPATH . 'assets/css/main.css')) ?>">
 
 
     <!-- custom overrides -->
@@ -18,6 +19,17 @@
     .navbar{ background-color: #<?php echo $this->config->item('bg-color'); ?> !important; }
     .btn--primary{ background-color: #<?php echo $this->config->item('btn-color-2'); ?> !important; }
     .btn.is--pos{ background-color: #<?php echo $this->config->item('btn-color-1'); ?> !important; }
+
+    @media screen and (max-width : 700px) {
+         .owl-carousel{
+                    z-index: unset !important;
+                }
+          
+            .link--dropdown:hover .popover {
+                transform: translate(4%, 31px) !important;
+            }
+        }
+            
 </style>
 <!-- endbuild -->
 

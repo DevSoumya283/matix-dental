@@ -187,14 +187,16 @@
                                                 <!-- Product -->
                                                 <div class="product product--s multi--vendor req--license padding--xxs">
                                                     <div class="product__data">
-                                                        <span class="product__name"><?php echo $purchase->name; ?></span>
+                                                   
+                                                    <span class="product__name"><?php echo $purchase->name . ', ' . (isset($purchase->optionCode) ? $purchase->optionCode : ''); ?></span>
                                                         <span class="textColor--accent fontWeight--2 disp--block"><?php echo $purchase->title; ?></span>
                                                     </div>
                                                 </div>
                                                 <!-- /Product -->
                                             </td>
                                             <td>
-                                                <?php echo $purchase->vendor_product_id; ?>
+                                                
+                                            <?php echo(isset($purchase->sku_id) ? $purchase->sku_id : $purchase->vendor_product_id )?>
                                             </td>
                                             <td>
                                                 <?php echo "$" . number_format(floatval($purchase->product_order_price), 2, ".", ""); ?>

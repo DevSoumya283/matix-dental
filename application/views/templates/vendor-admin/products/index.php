@@ -155,7 +155,8 @@
                                             <?php echo ($productsPricing->status == 1) ? "Active" : "Inactive"; ?>
                                         </td>
                                         <td class="fontWeight--2">
-                                            <?php echo $productsPricing->vendor_product_id; ?>
+                                            <!-- <?php echo $productsPricing->vendor_product_id; ?> -->
+                                            <?php echo $productsPricing->sku_code; ?>
                                         </td>
                                         <td>
                                             <?php echo "$" . number_format(floatval($productsPricing->price > $productsPricing->retail_price ? $productsPricing->price : $productsPricing->retail_price), 2, ".", ""); ?>

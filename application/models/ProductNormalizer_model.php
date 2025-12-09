@@ -71,7 +71,7 @@ public function getProductsWithOptions($chunkSize = 50)
                 if (!array_key_exists($col, $row)) continue;
 
                 $val = trim((string)$row[$col]);
-                if ($val === '') continue;
+               if ($val === '' || $val ==='0') continue;
 
                 if ($col === 'weight') {
                     // Process weight attribute

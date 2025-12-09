@@ -43,11 +43,11 @@
                                     <div class="product__image col col--1-of-8 col--am">
                                         <?php if ($productName->product_image != null) { ?>
                                             <a href="<?php echo base_url(); ?>view-product?id=<?php echo $productName->id; ?>">
-                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $productName->product_image->photo; ?>');">
+                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $productName->product_image->photo; ?>');">
                                                 </div>
                                             </a>
                                         <?php } else { ?>
-                                            <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                            <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                                             </div>
                                         <?php } ?>
                                     </div>
@@ -473,7 +473,7 @@
                     <hr>
 
                     <!-- Vendor SKU -->
-                    <div class="row">
+                    <!-- <div class="row">
                         <div class="col col--3-of-12 col--am">
                             <h3>SKU</h3>
                             <p>This should be your own unique identifier.</p>
@@ -499,7 +499,7 @@
                                 </form>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <!-- /Vendor SKU -->
 <hr>
  
@@ -507,16 +507,27 @@
                     <div class="row">
                         <div class="col col--3-of-12 col--am">
                             <h3>STOCKS</h3>
-                            <p>This should be your own unique identifier.</p>
+                            <p>Manage Stocks based on SKU.</p>
                         </div>
                         <div class="col col--9-of-12 col--am">
                             <div class="well bg--lightest-gray">
                                 <form id="formPrice" action="<?php echo base_url(); ?>productPriceStocks-update" method="post">
                                     <?php if ($productPricing != null) { ?>
                                         <div class="input__group is--inline">
+                                             <div class="select">
+                                                <select id="skuSelect" name="sku" class="input not--empty" required>
+                                                    <option value="">-- Select SKU --</option>
+
+                                                    <?php foreach ($productSkus as $sku) { ?>
+                                                        <option value="<?= $sku->sku_code ?>">
+                                                            <?= $sku->sku_code ?> (Stock: <?= $sku->stock_quantity ?>)
+                                                        </option>
+                                                    <?php } ?>
+                                                </select>
+                                            </div>
                                             <input type="hidden" name="productPricing_id" value="<?php echo $productPricing->id; ?>" required>
-                                            <input id="productSKU" name="sku" class="input not--empty" type="text" value="<?php echo $productPricing->sku; ?>" >
-                                            <label class="label" for="productSKU">Product Custom SKU</label>
+                                            <!-- <input id="productSKU2" name="sku" class="input not--empty" type="hidden" value="<?php echo $productPricing->sku; ?>" > -->
+                                            <!-- <label class="label" for="productSKU">Product Custom SKU</label> -->
                                         </div>
                                         <hr>
                                         <?php $currentStock = isset($stocks) ? (int)$stocks : 0; ?>
@@ -530,23 +541,11 @@
                                         <div class="input__group is--inline">
                                             <!-- Hidden input for product pricing ID -->
                                             <input type="hidden" name="productPricing_id" value="<?php echo $productPricing->id; ?>" required>
- 
                                             <!-- Stock input -->
-                                            <input id="productSKU" name="stocks" class="input not--empty" type="text" value="0" required oninput="validateStockInput(this)">
+                                            <input id="skuStocks" name="stocks" class="input not--empty" type="number" value="0" required oninput="validateStockInput(this)">
                                             <label class="label" for="productSKU">Product Stocks</label>
                                         </div>
  
-                                        <script>
-                                            const currentStock = <?php echo $currentStock; ?>;
-                                            function validateStockInput(input) {
-                                               
-                                                input.value = input.value.replace(/[^0-9]/g, '');
- 
-                                                let inputVal = parseInt(input.value) || 0;
-                                                let totalStock = currentStock + inputVal;
-                                                document.getElementById('totalStock').textContent = totalStock;
-                                            }
-                                        </script>
  
                                     <?php } else { ?>
                                         <div class="input__group is--inline">
@@ -880,6 +879,41 @@
     </section>
 </div>
 <!-- /Content Section -->
+<script>
+    let skuData = <?= json_encode($productSkus) ?>;
+
+    const currentStockBox = document.getElementById('currentStock');
+    const totalStockBox = document.getElementById('totalStock');
+    const stockInput = document.querySelector('input[name="stocks"]');
+
+    // When SKU is selected → Update Stock fields
+    document.getElementById('skuSelect').addEventListener('change', function () {
+        let selectedSku = this.value;
+
+        let found = skuData.find(s => s.sku_code === selectedSku);
+
+        if (found) {
+            // Update current & total stock
+            currentStockBox.textContent = found.stock_quantity;
+            totalStockBox.textContent = found.stock_quantity;
+
+            // Reset stock input
+            stockInput.value = 0;
+        }
+    });
+
+    // When typing stock → update total stock
+    function validateStockInput(input) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+
+        let inputVal = parseInt(input.value) || 0;
+        let currentStock = parseInt(currentStockBox.textContent) || 0;
+
+        let totalStock = currentStock + inputVal;
+
+        totalStockBox.textContent = totalStock;
+    }
+</script>
 
 <?php //include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?>
 <?php $this->load->view('templates/_inc/footer-vendor.php'); ?>

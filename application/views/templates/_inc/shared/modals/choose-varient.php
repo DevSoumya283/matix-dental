@@ -30,7 +30,7 @@
         <!-- SKU and Price -->
         <div id="skuRow" style="display:none;" class="mt-3">
           <p>Selected SKU: <strong id="selectedSku1"></strong></p>
-          <p>Price: <span class="retail-price"></span></p>
+          <!-- <p>Price: <span class="retail-price"></span></p> -->
         </div>
 
         <!-- Quantity -->
@@ -110,7 +110,7 @@
 
                     <div class="row cf margin--s no--margin-r no--margin-b no--margin-l no-submit">
 
-                        <button type="button" class="btn btn--m btn--primary float--right default--action addTocart">Keep Shopping</button>
+                        <button type="button" class="btn btn--m btn--primary float--right default--action">Keep Shopping</button>
 
                     </div>
 

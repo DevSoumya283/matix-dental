@@ -80,7 +80,7 @@
 
                     <div class="row cf margin--s no--margin-r no--margin-b no--margin-l no-submit">
 
-                        <button type="button" class="btn btn--m btn--primary float--right default--action addTocart">Keep Shopping</button>
+                        <button type="button" class="btn btn--m btn--primary float--right default--action ">Keep Shopping</button>
 
                     </div>
 

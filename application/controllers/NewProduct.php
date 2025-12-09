@@ -27,7 +27,15 @@ class NewProduct extends MW_Controller
 
     public function index()
     {
+     
+        $admin_roles = unserialize(ROLES_ADMINS);
+        if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $admin_roles))) {
+
         $this->load->view('new_product');
+        } else {
+            $this->session->set_flashdata('error', 'Please login with authorized account.');
+            header('Location: login');
+        }
     }
 
     // For 1st tab 
@@ -38,7 +46,7 @@ class NewProduct extends MW_Controller
     {
         set_time_limit(0);
         ini_set("memory_limit", "12288M");
-
+        //die('hh');
          $range = $this->input->get('range');
             if ($range && strpos($range, '-') !== false) {
             list($start, $end) = explode('-', $range);
@@ -361,6 +369,7 @@ class NewProduct extends MW_Controller
                 $this->db->insert('product_option_values', [
                     'option_id'  => $option_id,
                     'product_id' => $product->matix_id,
+   
                     'value'      => $value
                 ]);
                 $value_id = $this->db->insert_id();
@@ -640,8 +649,8 @@ class NewProduct extends MW_Controller
                 $skuUpdate['retail_price'] = $rowData['retail_price'];
                 $pricingUpdate['retail_price'] = $rowData['retail_price'];
             }
-            if (isset($rowData['Image'])) {
-                $skuUpdate['image'] = $rowData['Image'];
+            if (isset($rowData['image'])) {
+                $skuUpdate['image'] = $rowData['image'];
             }
 
             // 🔹 SKUs table

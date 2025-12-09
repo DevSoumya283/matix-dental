@@ -11,11 +11,12 @@ class Request_list_activity_model extends MY_Model {
         parent::__construct();
     }
 
-    public function addProduct($organization_id, $user_id, $product_id, $location_id) {
+    public function addProduct($organization_id, $user_id, $product_id, $location_id,$sku= null) {
         $requests = array(
             'organization_id' => $organization_id,
             'user_id' => $user_id,
             'product_id' => $product_id,
+            'sku_id' => $sku,
             'location_id' => $location_id,
             'action' => 'moved item from',
             'created_at' => date('Y-m-d H:i:s'),

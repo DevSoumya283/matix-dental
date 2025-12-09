@@ -257,7 +257,15 @@ class Stripe
      */
     public function getAccount($account_id)
     {
-        return \Stripe\Account::retrieve($account_id);
+        try {
+            return \Stripe\Account::retrieve($account_id);
+        } catch (\Stripe\Error\Authentication $e) {
+            log_message('error', 'Stripe: Invalid customer ID - ' . $e->getMessage());
+            return null;
+        } catch (\Exception $e) {
+            log_message('error', 'Stripe: General error - ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

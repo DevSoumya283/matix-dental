@@ -393,6 +393,9 @@
                                                     <th width="55%">
                                                         Item
                                                     </th>
+                                                     <th width="55%">
+                                                        Specifications
+                                                    </th>
                                                     <th class="align--center" width="20%">
                                                         Unit Price
                                                     </th>
@@ -409,6 +412,7 @@
                                                 $tax = 0;
                                                 $total_tax = 0;
                                                 for ($j = 0; $j < $matix_product_count; $j++) {
+                                                        $option = get_option_from_sku($matix[$keys[$i]][$j]->cart['sku']);
                                                     ?>
                                                     <tr class="table__row">
                                                         <td>
@@ -421,15 +425,22 @@
                                                             <?php } ?>
                                                                     <div class="product__data">
                                                                         <a  href="/view-product?id=<?php echo $matix[$keys[$i]][$j]->products->id; ?>">
-                                                                        <span class="product__name is--link"><?php echo $matix[$keys[$i]][$j]->products->name; ?></span>
+                                                                            
+
+                                                                        <span class="product__name is--link"><?php echo $matix[$keys[$i]][$j]->products->name ;?></span>
                                                                     </a>&nbsp;
                                                                         <?php if ($matix[$keys[$i]][$j]->cart['price'] != 0) { ?>
-                                                                            <a class="link fontSize--xs fontWeight--2 delete--row cart-to-rlist" data-rowid="<?php echo $matix[$keys[$i]][$j]->cart['rowid']; ?>" data-vendor="<?php echo $matix[$keys[$i]][$j]->cart['ven_id'] ?>">Move to Request List</a>
+                                                                            <a class="link fontSize--xs fontWeight--2 delete--row cart-to-rlist" data-sku="<?php echo $cart[$key[$i]][$j]->cart['sku']; ?>" data-rowid="<?php echo $matix[$keys[$i]][$j]->cart['rowid']; ?>" data-vendor="<?php echo $matix[$keys[$i]][$j]->cart['ven_id'] ?>">Move to Request List</a>
                                                                         <?php } ?>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                                 <!-- /Product -->
+                                                        </td>
+                                                        <td>
+                                                            
+                                                         <?php  echo $cart[$key[$i]][$j]->cart['options']; ?>
+
                                                         </td>
                                                         <td class="align--center">
                                                             $<?php echo number_format(floatval($matix[$keys[$i]][$j]->cart['price']), 2, ".", ""); ?>
@@ -647,6 +658,9 @@
                                                 <th width="55%">
                                                     Item
                                                 </th>
+                                                <th width="55%">
+                                                    Specifications
+                                                    </th>
                                                 <th class="align--center" width="20%">
                                                     Unit Price
                                                 </th>
@@ -664,6 +678,7 @@
                                             $total_tax = 0;
                                             $shipping_price = 0;
                                             for ($j = 0; $j < $product_count; $j++) {
+                                                $option = get_option_from_sku($cart[$key[$i]][$j]->cart['sku']);
                                                 ?>
                                                 <tr class="table__row">
                                                     <td>
@@ -677,12 +692,16 @@
                                                                 <a href="/view-product?id=<?php echo $cart[$key[$i]][$j]->cart['pro_id']; ?>">
                                                                     <span class="product__name is--link"><?php echo $cart[$key[$i]][$j]->products->name; ?></span>
                                                                     <?php if ($cart[$key[$i]][$j]->cart['price'] != 0) { ?>
-                                                                        <a class="link fontSize--xs fontWeight--2 delete--row cart-to-rlist" data-rowid="<?php echo $cart[$key[$i]][$j]->cart['rowid']; ?>" data-vendor="<?php echo $cart[$key[$i]][$j]->cart['ven_id'] ?>">Move to Request List</a>
+                                                                        <a class="link fontSize--xs fontWeight--2 delete--row cart-to-rlist" data-sku="<?php echo $cart[$key[$i]][$j]->cart['sku']; ?>" data-rowid="<?php echo $cart[$key[$i]][$j]->cart['rowid']; ?>" data-vendor="<?php echo $cart[$key[$i]][$j]->cart['ven_id'] ?>">Move to Request List</a>
                                                                     <?php } ?>
                                                                 </a>
                                                                 </div>
                                                             </div>
                                                             <!-- /Product -->
+                                                    </td>
+                                                    <td>
+                                                       
+                                                      <?php  echo $cart[$key[$i]][$j]->cart['options']; ?>
                                                     </td>
                                                     <td class="align--center">
                                                         $<?php echo number_format(floatval($cart[$key[$i]][$j]->cart['price']), 2, ".", ""); ?>
@@ -954,8 +973,7 @@ $order_count = $independent_count + $matix_count;
 
     <!-- Scripts & Libraries -->
     <!--payment-->
-    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-    <script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
+    <!-- <script type="text/javascript" src="https://js.stripe.com/v2/"></script> -->    <script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
     <!--payment-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/jquery.detect-card.js"></script>
@@ -967,7 +985,7 @@ $order_count = $independent_count + $matix_count;
     <script type="text/javascript">
         var base_url = "<?php echo base_url(); ?>";
     var image_url = "<?php echo image_url(); ?>";
-        Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
+        // Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
     </script>
     <!-- build:js js/main.min.js -->
     <script src="<?php echo base_url(); ?>assets/js/main.js"></script>

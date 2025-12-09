@@ -329,9 +329,9 @@
                                                             <?php
                                                             if ($request_product[$i]->productImages != null) {
                                                                 ?>
-                                                                <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $request_product[$i]->product->id; ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $request_product[$i]->productImages->photo; ?>');"></div>
+                                                                <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $request_product[$i]->product->id; ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $request_product[$i]->productImages->photo; ?>');"></div>
                                                             <?php } else { ?>
-                                                                <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $request_product[$i]->product->id; ?>" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></div>
+                                                                <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $request_product[$i]->product->id; ?>" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></div>
                                                             <?php } ?>
                                                         </div>
                                                         <input type="hidden" name="request_ids" id="user_id" class="request_ids" value="">
@@ -541,9 +541,9 @@
                                                                 <?php
                                                                 if ($product->photo != null) {
                                                                     ?>
-                                                                    <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $product->products->id; ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $product->photo; ?>');"></div>
+                                                                    <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $product->products->id; ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $product->photo; ?>');"></div>
                                                                 <?php } else { ?>
-                                                                    <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $product->products->id; ?>" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></div>
+                                                                    <div class="product__thumb" data-target="<?php echo base_url(); ?>view-product?id=<?php echo $product->products->id; ?>" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></div>
                                                                 <?php } ?>
                                                             </div>
                                                             <div class="product__data col-md-8 col-xs-12">

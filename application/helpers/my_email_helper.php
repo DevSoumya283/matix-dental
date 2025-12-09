@@ -32,7 +32,7 @@ function send_matix_email($message, $subject, $receiverEmail)
 
     try {
         // $mandrill = new Mandrill('n-pjCYCc9M-rfscMb8w7HA');old
-        $mandrill = new Mandrill('md-Uov2ZjtMhLSKtQeHVUlrvA');
+        $mandrill = new Mandrill('md-pqIKaI8b5MmLRVF0HYHcYA');
         $message = array(
             'html' => $message,
             'subject' => $subject,

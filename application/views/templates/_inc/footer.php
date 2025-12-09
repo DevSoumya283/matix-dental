@@ -114,8 +114,7 @@
 <!-- Scripts & Libraries -->
 <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>-->
 <!--payment-->
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
+<!-- <script type="text/javascript" src="https://js.stripe.com/v2/"></script> --><script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
 <!--payment-->
 <script src="<?php echo base_url(); ?>assets/js/jquery.detect-card.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/jquery.maskedinput.min.js"></script>
@@ -140,7 +139,7 @@
     var per_page="";
     var grid=0;
     var search="<?php echo (isset($search_term))?$search_term:""?>";
-    Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
+    // Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
 
     var Config = {
         plaid: {

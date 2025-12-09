@@ -97,7 +97,7 @@
                                                 ?>
                                                 <li class="item">
                                                     <a href="javascript:;" class="modal--toggle" data-target="#viewImageModal">
-                                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $sub_image[$i]->photo; ?>');"></div>
+                                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $sub_image[$i]->photo; ?>');"></div>
                                                     </a>
                                                 </li>
                                                 <?php
@@ -112,13 +112,13 @@
                                 <div class="col-md-9 col-xs-12">
                                     <?php if ($main_image != null) { ?>
                                         <a href="javascript:;" class="modal--toggle" data-target="#viewImageModal" >
-                                            <div class="product__thumb popup_image" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $main_image->photo; ?>')">
+                                            <div class="product__thumb popup_image" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $main_image->photo; ?>')">
                                             </div>
                                         </a>
                                         <?php
                                     } else {
                                         ?>
-                                        <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png')">
+                                        <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png')">
                                             <input type="hidden" name="aaaa"  value="<?php echo $product->id; ?>" id="field-function_purpose">
                                         </div>
                                     <?php } ?>
@@ -229,14 +229,14 @@
   <?php if (empty($inactive)){ ?>
   <!-- shows only on mobile -->
                      <div class="sidebar d-block d-sm-none">
-                    <div class="sidebar__group">
+                    <div class="sidebar__group mb-3">
                         <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
-                            <input type="number" name="quantity" class="input input--qty not--empty width--50 sqty" min="1" value="1">
+                            <input type="number" name="quantity" id="quantity1"class="input input--qty not--empty width--50 sqty" min="1" max="" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
-                    <div class="sidebar__group">
+                    <div class="sidebar__group mb-3">
                         <h4 class="mobile-center">Purchase from:</h4>
                         <div id="vendor_list_container" class="list__combo">
                             <ul class="list list--box has--btn">
@@ -342,7 +342,7 @@
                                 ?>
                                 <button class="btn btn--primary btn--l btn--block modal--toggle add_single_cart"
                                         data-pid="<?php echo $curproductid; ?>" data-name="<?php echo $product->name; ?>"
-                                        data-price="" data-license_required="<?php echo $product->license_required; ?>" data-procolor="" data-vendor_id=""
+                                        data-price="" data-license_required="<?php echo $product->license_required; ?>" data-sku=""data-procolor="" data-vendor_id=""
                                         data-target="#chooseLocationModal">Request/Purchase</button>
                                     <?php } elseif (isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_3_users)))) {
                                         ?>
@@ -359,7 +359,7 @@
                     $Shopping_list_users = unserialize(ROLES_SHOPPINGLISTS);
                     if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $Shopping_list_users))) {
                         ?>
-                        <div class="sidebar__group align--center no--margin-t pull--up-l" style="position:relative; z-index:1;">
+                        <div class="sidebar__group mb-3 align--center no--margin-t pull--up-l" style="position:relative; z-index:1;">
                             <div id="accountDropdown" class="link link--dropdown">
                                 Save to Shopping List
                                 <div class="popover fontSize--m" style="min-width:176px;">
@@ -396,7 +396,7 @@
                     <?php } ?>
                     <!-- /Save to List -->
                     <!-- Choose Variations -->
-                    <!-- <div class="sidebar__group">
+                    <!-- <div class="sidebar__group mb-3">
                         <h4>Choose from other variations:</h4>
                         <button class="btn btn--tertiary btn--m btn--block">3 Options Available</button>
                     </div> -->
@@ -1198,18 +1198,18 @@
                 <!-- Sidebar -->
                 <?php if (empty($inactive)){ ?>
                 <!-- hidden on mobile -->
-                <div class="sidebar col-md-4 col-xs-12  d-none d-sm-block">
-                    <div class="sidebar__group">
+                <div class="col-md-4 col-xs-12  d-sm-block">
+                    <div class="sidebar__group mt-4 mb-3">
                         <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
-                            <input type="number" name="quantity" class="input input--qty not--empty width--50 sqty" min="1" value="1">
+                            <input type="number" name="quantity" id="quantity2" class="input input--qty not--empty width--50 sqty" min="1" max="" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
                     <?php // Initial dropdowns – pass $options from get_product_options($product_id) ?>
 <?php if (!empty($options)): ?>
   <?php foreach ($options as $type => $values): ?>
-    <div class="sidebar__group">
+    <div class="sidebar__group mb-3">
       <h4>Choose <?php echo $type; ?>:</h4>
       <select class="form-control variantSelect" data-type="<?php echo $type; ?>">
         <option value="">-- Select <?php echo $type; ?> --</option>
@@ -1223,7 +1223,7 @@
   <?php endforeach; ?>
 <?php endif; ?>
 
-<div class="sidebar__group">
+<div class="sidebar__group mb-5">
                         <h4>Purchase from1:</h4>
                         <div id="vendor_list_container" class="list__combo">
                             <ul class="list list--box has--btn">
@@ -1332,7 +1332,7 @@
                                 ?>
                                 <button class="btn btn--primary btn--l btn--block modal--toggle add_single_cart"
                                         data-pid="<?php echo $curproductid; ?>" data-name="<?php echo $product->name; ?>"
-                                        data-price="" data-license_required="<?php echo $product->license_required; ?>" data-procolor="" data-vendor_id=""
+                                        data-price="" data-license_required="<?php echo $product->license_required; ?>" data-sku ="" data-procolor="" data-vendor_id=""
                                         data-target="#chooseLocationModal">Request/Purchase</button>
                                     <?php } elseif (isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_3_users)))) {
                                         ?>
@@ -1350,7 +1350,7 @@
                     $Shopping_list_users = unserialize(ROLES_SHOPPINGLISTS);
                     if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $Shopping_list_users))) {
                         ?>
-                        <div class="sidebar__group align--center no--margin-t pull--up-l" style="position:relative; z-index:1;">
+                        <div class="sidebar__group mb-3 align--center no--margin-t pull--up-l" style="position:relative; z-index:1;">
                             <div id="accountDropdown" class="link link--dropdown">
                                 Save to Shopping List
                                 <div class="popover fontSize--m" style="min-width:176px;">
@@ -1387,7 +1387,7 @@
                     <?php } ?>
                     <!-- /Save to List -->
                     <!-- Choose Variations -->
-                    <!-- <div class="sidebar__group">
+                    <!-- <div class="sidebar__group mb-3">
                         <h4>Choose from other variations:</h4>
                         <button class="btn btn--tertiary btn--m btn--block">3 Options Available</button>
                     </div> -->
@@ -1409,14 +1409,14 @@
             <div class="flexslider">
                 <ul class="slides">
                     <?php if ($main_image != null) { ?>
-                        <li data-thumb="<?php echo image_url(); ?>uploads/products/images/<?php echo $main_image->photo; ?>">
-                            <img src="<?php echo image_url(); ?>uploads/products/images/<?php echo $main_image->photo; ?>" />
+                        <li data-thumb="<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $main_image->photo; ?>">
+                            <img src="<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $main_image->photo; ?>" />
                         </li>
                     <?php } ?>
                     <?php if ($sub_image != null) { ?>
                         <?php for ($i = 0; $i < count($sub_image); $i++) { ?>
-                            <li data-thumb="<?php echo image_url(); ?>uploads/products/images/<?php echo $sub_image[$i]->photo; ?>">
-                                <img src="<?php echo image_url(); ?>uploads/products/images/<?php echo $sub_image[$i]->photo; ?>" />
+                            <li data-thumb="<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $sub_image[$i]->photo; ?>">
+                                <img src="<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $sub_image[$i]->photo; ?>" />
                             </li>
                         <?php } ?>
                     <?php } ?>
@@ -1438,7 +1438,7 @@
             <div id="productsowl" class=" owl-carousel owl-theme">
                   <?php foreach ($related_products as $relatedProduct){
                         if ($relatedProduct->images != null) {
-                            $imgurl= image_url().'uploads/products/images/'.$relatedProduct->images->photo;
+                            $imgurl= image_url().'uploads/products/new-vol-data/'.$relatedProduct->images->photo;
                         } else {
                             $imgurl= image_url().'assets/img/product-image.png';
                         }
@@ -1450,6 +1450,7 @@
                     }
                     $bcPrices = $bcModel->getBuyingClubPrices($_SESSION['user_buying_clubs'], [$relatedProduct->id]);
                     // Debugger::debug($bcPrices, '$bcPrices');
+                    
                     $clubPrice = false;
                     $bcBestPrice = $bcModel->getBestPrice($relatedProduct->id, $relatedProduct->vendor_id, $bcPrices, $_SESSION['user_buying_clubs'], $retail_price);
                     // Debugger::debug($retail_price . '-' . $bcBestPrice, 'bcbestprice');
@@ -1677,29 +1678,40 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
     if (data.sku) {
       $('#skuRow').show();
       $('#selectedSku1').text(data.sku);
-
-    $.each(data.options, function (key, option) {
+	 $.each(data.options, function (key, option) {
         const id = key.toLowerCase().replace(/\s+/g, '_');
         $('#' + id).text(option.value);
-    });
+    });      
+    if(typeof data.bestPrice !== 'undefined' && data.bestPrice !== null) {
 
-      if (typeof data.price !== 'undefined' && data.price !== null) {
         $('.retail-price').text('$' + data.price);
-        $('.add_single_cart').attr('data-price', data.price);
-      }      
+        $('.club--price').text('$' + data.bestPrice);
+        $('.add_single_cart').attr('data-price', data.bestPrice);
+        $('.has--promoclub--price').text(data.bestPrice);
+      }else{
+        $('.retail-price').text('$' + data.price);
+        $('.club--price').text('$' + data.retail_price);
+        $('.add_single_cart').attr('data-price', data.retail_price);
+        $('.has--promoclub--price').text(data.bestPrice);
 
-      if (typeof data.retail_price !== 'undefined' && data.retail_price !== null) {
-        $('.sale-price, .regular-price').text('$' + data.retail_price);
       }
-
+      
       if (typeof data.vendor !== 'undefined' && data.vendor !== null) {
         $('.add_single_cart').attr('data-vendor_id', data.vendor.vendor_id);
       }  
 
-      if (typeof data.options !== 'undefined' && data.options !== null) {
+      if (typeof data.options.Color !== 'undefined' && data.options.Color !== null) {
         $('.add_single_cart').attr('data-procolor', data.options.Color.value);
+      } 
+      if (typeof data.sku !== 'undefined' && data.sku !== null) {
+        $('.add_single_cart').attr('data-sku', data.sku);
       }  
-      
+      if (typeof data.quantity !== 'undefined' && data.quantity !== null) {
+            $('.sqty').attr('max', data.quantity);
+      } else{
+            $('.sqty').attr('value', 0);
+
+      }
       if(data.vendor){               
         $('.vendor_ratings').text(data.vendor.name);
         $('.v_id').html(data.vendor.vendor_id);
@@ -1737,6 +1749,12 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
               product_id: "<?php echo $product_id; ?>"
             },
             success: function(res2){
+                 var photoUrl = res2.sku_image
+              ? image_url + 'uploads/products/new-vol-data/' + res2.sku_image
+              : base_url + 'assets/img/product-image.png';
+            console.log(photoUrl);
+            $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
+
               updateUI(res2, false);
             }
           });
@@ -1758,6 +1776,12 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
         product_id: "<?php echo $product_id; ?>"
       },
       success: function(res){
+         var photoUrl = res.sku_image
+              ? image_url + 'uploads/products/new-vol-data/' + res.sku_image
+              : base_url + 'assets/img/product-image.png';
+            console.log(photoUrl);
+            $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
+
         updateUI(res);
       }
     });

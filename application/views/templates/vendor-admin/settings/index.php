@@ -31,9 +31,9 @@
                                     <div class="entity__group">
                                         <div class="vendor__logo" style="width:160px;">
                                             <?php if ($company_logo != null && $company_logo != "") { ?>
-                                                <img src="<?php echo image_url(); ?>uploads/vendor/logo/<?php echo $company_logo->photo; ?>" alt="<?php echo $company_logo->photo; ?>">
+                                                <img src="<?php echo base_url(); ?>assets/img/logos/<?php echo $company_logo->photo; ?>" alt="<?php echo $company_logo->photo; ?>">
                                             <?php } else { ?>
-                                                <img src="<?php echo image_url(); ?>assets/img/product-image.png" alt="">
+                                                <img src="<?php echo base_url(); ?>assets/img/product-image.png" alt="">
                                             <?php } ?>
                                         </div>
                                         <?php echo $vendor_settings->name; ?>

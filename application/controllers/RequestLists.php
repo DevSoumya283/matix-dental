@@ -22,6 +22,7 @@ class RequestLists extends MW_Controller {
         $this->load->model('User_licenses_model');
         $this->load->model('User_autosave_model');
         $this->load->model('Promo_codes_model');
+        $this->load->model('Product_varients');
         $this->load->model('Product_tax_model');
         $this->load->model('Request_list_model');
         $this->load->model('Request_list_activity_model');
@@ -111,10 +112,11 @@ class RequestLists extends MW_Controller {
             $location_id = $this->input->post('location_id');
             $l_id = explode(",", $location_id);
             $qty = $this->input->post('qty');
+            $sku = $this->input->post('sku');
             if ($requests_data != null) {
                 foreach ($requests_data as $key) {
                     for ($i = 0; $i < count($l_id); $i++) {
-                        if ($key->product_id == $product_id && $key->vendor_id == $vendor_id && $key->location_id == $l_id[$i]) {
+                        if ($key->product_id == $product_id && $key->sku_id == $sku  && $key->vendor_id == $vendor_id && $key->location_id == $l_id[$i]) {
                             $update_id = $key->id;
                             $old_qty = $key->quantity;
                             $product_id = $key->product_id;
@@ -127,6 +129,7 @@ class RequestLists extends MW_Controller {
                                 'organization_id' => $organization_id,
                                 'user_id' => $user_id,
                                 'product_id' => $product_id,
+                                'sku_id' => $sku,
                                 'location_id' => $l_id[$i],
                                 'action' => 'updated',
                                 'created_at' => date('Y-m-d H:i:s'),
@@ -150,6 +153,7 @@ class RequestLists extends MW_Controller {
                             'location_id' => $l_id[$i],
                             'user_id' => $organization_id,
                             'product_id' => $product_id,
+                            'sku_id' => $sku,
                             'vendor_id' => $vendor_id,
                             'quantity' => $qty,
                             'created_at' => date('Y-m-d H:i:s'),
@@ -161,6 +165,7 @@ class RequestLists extends MW_Controller {
                             'organization_id' => $organization_id,
                             'user_id' => $user_id,
                             'product_id' => $product_id,
+                            'sku_id' => $sku,
                             'location_id' => $l_id[$i],
                             'action' => 'added',
                             'created_at' => date('Y-m-d H:i:s'),
@@ -187,6 +192,9 @@ class RequestLists extends MW_Controller {
             $rowid = $this->input->post('row_id');
             $vendor_id = $this->input->post('vendor_id');
             $location_id = $this->input->post('cartlocation_id');
+            $sku = $this->input->post('sku');
+            $options = $this->input->post('options');
+
             $cart = $this->cart->contents();
             foreach ($cart as $item) {
                 if ($item['rowid'] == $rowid) {
@@ -195,8 +203,8 @@ class RequestLists extends MW_Controller {
                     $qty = $item['qty'];
                 }
             }
-            $this->Request_list_model->addProduct($organization_id, $location_id, $product_id, $vendor_id, $qty);
-            $this->Request_list_activity_model->addProduct($organization_id, $user_id, $product_id, $location_id);
+            $this->Request_list_model->addProduct($organization_id, $location_id, $product_id, $vendor_id, $qty,$sku);
+            $this->Request_list_activity_model->addProduct($organization_id, $user_id, $product_id, $location_id,$sku);
             $cleardata = array(
                 'rowid' => $rowid,
                 'qty' => 0
@@ -263,6 +271,7 @@ class RequestLists extends MW_Controller {
             $user_id = $_SESSION["user_id"];
             $organization = $this->Organization_groups_model->get_by(array('user_id' => $user_id));
             $organization_id = $organization->organization_id;
+            $optionCode= null;
             if (isset($_SESSION['location_id'])) {
                 $location_id = $_SESSION['location_id'];
             } else {
@@ -301,19 +310,38 @@ class RequestLists extends MW_Controller {
                     $data['locationName'] = $this->Organization_location_model->get_by(array('id' => $location_id));
                     $data['request_product'] = $this->Request_list_model->get_many_by(array('location_id' => $location_id));
                     // $data['request_product'] = $this->Request_list_model->loadProducts($location_id);
-
                     for ($i = 0; $i < count($data['request_product']); $i++) {
                         $product = $this->Products_model->get_by(array('id' => $data['request_product'][$i]->product_id));
                         $productIds[] = $product->id;
-                        $product_pricing = $this->Product_pricing_model->get_by(array('product_id' => $data['request_product'][$i]->product_id, 'vendor_id' => $data['request_product'][$i]->vendor_id));
+                        if($data['request_product'][$i]->sku_id != null){
+                            $product_pricing = $this->Product_pricing_model->getPricebySku($data['request_product'][$i]->product_id,$data['request_product'][$i]->sku_id)->row();
+                        }else{
+                            $product_pricing = $this->Product_pricing_model->get_by(array('product_id' => $data['request_product'][$i]->product_id, 'vendor_id' => $data['request_product'][$i]->vendor_id));
+                        }
                         $vendor = $this->Vendor_model->get_by(array('id' => $data['request_product'][$i]->vendor_id));
                         $images = $this->Images_model->get_by(array('model_name' => 'products', 'model_id' => $data['request_product'][$i]->product_id));
                         $inventory = $this->Location_inventories_model->get_by(['product_id' => $product->id, 'location_id' => $location_id]);
+                        if($data['request_product'][$i]->sku_id){
+                        // if (preg_match('/\d+-(.+)$/', $data['request_product'][$i]->sku_id, $matches)) {
+                        //     $optionCode = $matches[1];
+                        //     $optionCode = str_replace('-', ',', $optionCode);
+                        // } else {
+                        //     $optionCode = '';
+                        // }
+
+                        $skuDetails = $this->Product_varients->skuDetails($data['request_product'][$i]->sku_id);
+                             $optionsList = convert_options_to_list($skuDetails['options']);  
+                             $optionCode = implode('-', $optionsList);  
+                     }
                         $data['request_product'][$i]->product = $product;
                         $data['request_product'][$i]->images = $images;
                         $data['request_product'][$i]->product_pricing = $product_pricing;
                         $data['request_product'][$i]->inventory = $inventory;
                         $data['request_product'][$i]->vendor = $vendor;
+                        $data['request_product'][$i]->optionCode = $optionCode;
+
+                        
+
                     }
                     $data['activity'] = $this->Request_list_activity_model->limit(35)->order_by('id', 'desc')->get_many_by(array('organization_id' => $organization_id, 'location_id' => $location_id));
                     for ($i = 0; $i < count($data['activity']); $i++) {
@@ -396,12 +424,18 @@ class RequestLists extends MW_Controller {
             for ($i = 0; $i < count($id); $i++) {
                 $new = random_string('alnum', 16);
                 $requests = $this->Request_list_model->get_by(array('id' => $id[$i]));
-                $pricings = $this->Product_pricing_model->get_by(array('product_id' => $requests->product_id, 'vendor_id' => $requests->vendor_id));
+                $pricings = $this->Product_pricing_model->getPricebySku($requests->product_id,$requests->sku_id)->row();
                 $products = $this->Products_model->get_by(array('id' => $requests->product_id));
                 $pro_name = $products->name;
                 $product_name = preg_replace('/[^A-Z a-z0-9\-]/', '', $pro_name);
                 $product_id = $requests->product_id;
                 $vendor_id = $requests->vendor_id;
+                $sku = $requests->sku_id;
+                if($sku!=null){
+                $skuDetails = $this->Product_varients->skuDetails($sku);
+                             $optionsList = convert_options_to_list($skuDetails['options']);  
+                             $optionCode = implode('-', $optionsList);  
+                }
                 $rate = ($pricings->retail_price > 0) ? $pricings->retail_price :  $pricings->price;
 
                 if(!empty($_SESSION['user_buying_clubs'])){
@@ -476,7 +510,7 @@ class RequestLists extends MW_Controller {
                                 $row = json_decode($cart);
                                 if ($row != null) {
                                     foreach ($row as $item) {
-                                        if ($item->pro_id == $product_id && $item->ven_id == $vendor_id && $item->location_id == $location_id) {
+                                        if ($item->pro_id == $product_id && $item->ven_id == $vendor_id && $item->sku == $sku && $item->location_id == $location_id ) {
                                             $rowid = $item->rowid;
                                             $quantity = $item->qty;
                                             $new_qty = $pqty + $quantity;
@@ -500,6 +534,8 @@ class RequestLists extends MW_Controller {
                                     'qty' => $pqty,
                                     'name' => $product_name,
                                     'pro_id' => $product_id,
+                                    'sku' => $sku,
+                                    'options'=> $optionCode,
                                     'price' => $rate,
                                     'location_id' => $location_id,
                                     'status' => 0,
@@ -551,6 +587,8 @@ class RequestLists extends MW_Controller {
                             'qty' => $pqty,
                             'name' => $product_name,
                             'pro_id' => $product_id,
+                            'sku' => $sku,
+                            'options'=> $optionCode,
                             'price' => $rate,
                             'location_id' => $location_id,
                             'status' => 0,
@@ -886,18 +924,25 @@ class RequestLists extends MW_Controller {
         $rate = 0;
         for ($i = 0; $i < count($id); $i++) {
             $request = $this->Request_list_model->get_by(array('id' => $id[$i]));
-            $pricings = $this->Product_pricing_model->get_by(array('product_id' => $request->product_id, 'vendor_id' => $request->vendor_id));
+            //live $pricings = $this->Product_pricing_model->get_by(array('product_id' => $request->product_id, 'vendor_id' => $request->vendor_id));
+            
+            $pricings = $this->Product_pricing_model->getPricebySku($request->product_id,$request->sku_id)->row();
+            
             if ($pricings->retail_price > 0) {
                 $pro_price = $pricings->retail_price;
+
             } else {
+
                 $pro_price = $pricings->price;
             }
+        
 
             if(!empty($_SESSION['user_buying_clubs'])){
                 // get buying club prices
                 $bcPrices = $this->BuyingClub_model->getBuyingClubPrices($_SESSION['user_buying_clubs'], [$request->product_id]);
                 $buyingClubs = $_SESSION['user_buying_clubs'];
                 $pro_price = $this->BuyingClub_model->getBestPrice($request->product_id, $request->vendor_id, $bcPrices, $buyingClubs, $pro_price);
+            
             }
 
             $qty = $request->quantity;

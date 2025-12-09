@@ -42,8 +42,7 @@
 <!-- Scripts & Libraries -->
 <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>-->
 <!--payment-->
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
+<!-- <script type="text/javascript" src="https://js.stripe.com/v2/"></script> --><script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
 <!--payment-->
 <script src="<?php echo base_url(); ?>assets/js/jquery.min.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/jquery.detect-card.js"></script>
@@ -56,7 +55,7 @@
 <script type="text/javascript">
     var base_url = "<?php echo base_url(); ?>";
     var image_url = "<?php echo image_url(); ?>";
-    Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
+    // Stripe.setPublishableKey('<?php echo $this->config->item('stripe')['pk_'.$this->config->item('stripe')['mode']];?>');
 </script>
 <!-- build:js js/main.min.js -->
 <script src="<?php echo base_url(); ?>assets/js/main.js"></script>

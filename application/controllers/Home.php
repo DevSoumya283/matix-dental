@@ -116,7 +116,7 @@ class Home extends MW_Controller {
         $this->load->view('/templates/_inc/footer');
     }
 
-    public function static_home() {
+    public function static_home() { 
         $data['letters'] = $this->getManufacturerLetters();
         $this->load->view('/templates/_inc/header', $data);
         if($this->config->item('whitelabel')){

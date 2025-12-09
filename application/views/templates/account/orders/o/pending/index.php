@@ -183,9 +183,9 @@
                                                         <?php
                                                         if ($order_details[$i]->product_image != null) {
                                                             ?>
-                                                            <div class="product__thumb"  style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $order_details[$i]->product_image->photo; ?>');"> </div>
+                                                            <div class="product__thumb"  style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $order_details[$i]->product_image->photo; ?>');"> </div>
                                                         <?php } else { ?>
-                                                            <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></div>
+                                                            <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></div>
                                                         <?php } ?>
                                                     </div>
                                                     <div class="product__data col col--6-of-8 col--am">

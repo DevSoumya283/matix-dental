@@ -23,7 +23,7 @@ function dist_url($path)
 }
 
 // location of post-processed images (i.e. optimized filesize)
-function image_url($path=[])
+function image_url($path='')
 {
 	return base_url('assets/dist/images/'.$path);
 }

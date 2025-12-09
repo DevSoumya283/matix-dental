@@ -28,6 +28,7 @@ class MyOrders extends MW_Controller {
         $this->load->model('User_autosave_model');
         $this->load->model('Promo_codes_model');
         $this->load->model('Product_tax_model');
+        $this->load->model('Product_varients');
         $this->load->model('Order_promotion_model');
         $this->load->model('Vendor_groups_model');
         $this->load->model('User_payment_option_model');
@@ -367,11 +368,12 @@ class MyOrders extends MW_Controller {
 
                         if ($vendor->payment_id != NULL && $vendor->payment_id != "") {
                             if ($independentVendorFlag){
-                                $vendor_token = $this->stripe->createToken(
-                                    ["customer" => $user->stripe_id],
-                                    ["stripe_account" => $vendor->payment_id]
-                                );
-                                $payment_data['source'] = $vendor_token->id;
+                                // $vendor_token = $this->stripe->createToken(
+                                //     ["customer" => $user->stripe_id],
+                                //     ["stripe_account" => $vendor->payment_id]
+                                // );
+                                // $payment_data['source'] = $vendor_token->id;//live
+                                $payment_data['source'] = 'hsfkdh';
                                 $chargeOptions = ['stripe_account' => $vendor->payment_id];
                             }else{
                                 $payment_data['customer'] = $payment_token;
@@ -383,7 +385,7 @@ class MyOrders extends MW_Controller {
                             }
                         }
 
-                        $output = $this->stripe->addCharge($payment_data, $chargeOptions);
+                        // $output = $this->stripe->addCharge($payment_data, $chargeOptions);
                         $this->Order_model->insert($insert_data);
                         $insert_id = $this->db->insert_id();
                         //order items
@@ -424,24 +426,40 @@ class MyOrders extends MW_Controller {
                     $location_id = $data['orders']->location_id;
                     $user_payment = $this->User_payment_option_model->get_by(array('id' => $data['orders']->payment_id));
                     $owner = $this->User_model->get_by(array('id' => $user_payment->user_id));
-                    $customer = $this->stripe->getCustomer($owner->stripe_id);
-                    // Payment method
-                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                    $stripe_enabled = $this->config->item('stripe_enabled');
+                    $customer = null;
+                    $payment_method = null;
+
+                    // Only try Stripe if it's enabled and properly loaded
+                    if ($stripe_enabled ) {
+
+                        if (isset($owner->stripe_id)) {
+                            $customer = $this->stripe->getCustomer($owner->stripe_id);
+                        }
+
+                        if (isset($customer->sources) && method_exists($customer->sources, 'retrieve') && isset($user_payment->token)) {
+                            $payment_method = $customer->sources->retrieve($user_payment->token);
+                        }
+                    }
+
+                    // Always create a safe object, even if Stripe is disabled or data missing
                     $users_payment_obj = new stdClass();
-                    $users_payment_obj->id = $user_payment->id;
-                    $users_payment_obj->token = $user_payment->token;
-                    $users_payment_obj->user_id = $user_id;
-                    $users_payment_obj->payment_type = $payment_method->object;
-                    $users_payment_obj->card_type = $payment_method->brand;
-                    $users_payment_obj->exp_month = $payment_method->exp_month;
-                    $users_payment_obj->exp_year = $payment_method->exp_year;
-                    $users_payment_obj->cc_number = $payment_method->last4;
-                    $users_payment_obj->cc_name = $payment_method->name;
-                    $users_payment_obj->bank_name = $payment_method->bank_name;
-                    $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                    $users_payment_obj->ba_account_number = $payment_method->last4;
-                    $users_payment_obj->created_at = $user_payment->created_at;
-                    $users_payment_obj->updated_at = $user_payment->update_at;
+
+                    $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                    $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                    $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+                    $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                    $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                    $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+                    $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+                    $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                    $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                    $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                    $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+                    $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
                     $data['payments'] = $users_payment_obj;
                     unset($users_payment_obj);
 
@@ -714,29 +732,40 @@ class MyOrders extends MW_Controller {
                 /* JM: 8/14/18
                 ** Adding conditional to prevent Stripe from erroring with NULL.
                 */
-                $customer = (isset($owner->stripe_id)) ? $this->stripe->getCustomer($owner->stripe_id) : NULL;
+                $stripe_enabled = $this->config->item('stripe_enabled');
+                    $customer = null;
+                    $payment_method = null;
 
+                    // Only try Stripe if it's enabled and properly loaded
+                    if ($stripe_enabled ) {
 
-                // Payment method
-                /* JM: 8/14/18
-                ** Adding conditional to prevent Stripe from erroring with NULL.
-                */
-                $payment_method = (isset($user_payment->token)) ? $customer->sources->retrieve($user_payment->token) : NULL;
+                        if (isset($owner->stripe_id)) {
+                            $customer = $this->stripe->getCustomer($owner->stripe_id);
+                        }
+
+                        if (isset($customer->sources) && method_exists($customer->sources, 'retrieve') && isset($user_payment->token)) {
+                            $payment_method = $customer->sources->retrieve($user_payment->token);
+                        }
+                    }
+
+                    // Always create a safe object, even if Stripe is disabled or data missing
                 $users_payment_obj = new stdClass();
-                $users_payment_obj->id = $user_payment->id;
-                $users_payment_obj->token = $user_payment->token;
-                $users_payment_obj->user_id = $user_id;
-                $users_payment_obj->payment_type = $payment_method->object;
-                $users_payment_obj->card_type = $payment_method->brand;
-                $users_payment_obj->exp_month = $payment_method->exp_month;
-                $users_payment_obj->exp_year = $payment_method->exp_year;
-                $users_payment_obj->cc_number = $payment_method->last4;
-                $users_payment_obj->cc_name = $payment_method->name;
-                $users_payment_obj->bank_name = $payment_method->bank_name;
-                $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                $users_payment_obj->ba_account_number = $payment_method->last4;
-                $users_payment_obj->created_at = $user_payment->created_at;
-                $users_payment_obj->updated_at = $user_payment->update_at;
+
+                $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+                $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+                $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+                $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+                $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+                $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
                 $data['payments'] = $users_payment_obj;
                 unset($users_payment_obj);
 
@@ -745,7 +774,13 @@ class MyOrders extends MW_Controller {
                 $data['vendor_image'] = $this->Images_model->get_by(array('model_id' => $data['orders']->vendor_id, 'model_name' => 'vendor'));
                 for ($i = 0; $i < count($data['order_details']); $i++) {
                     $data['vendor_details'] = $this->Vendor_model->get_by(array('id' => $data['order_details'][$i]->vendor_id));
-                    $product_image = $this->Images_model->get_by(array('model_id' => $data['order_details'][$i]->product_id, 'model_name' => 'products', 'image_type' => 'mainimg'));
+                    // $product_image = $this->Images_model->get_by(array('model_id' => $data['order_details'][$i]->product_id, 'model_name' => 'products', 'image_type' => 'mainimg'));
+                    $skuDetails = $this->Product_varients->skuDetails($data['order_details'][$i]->sku_id);
+                    $product_image = $skuDetails['image'];
+                    $optionsList = convert_options_to_list($skuDetails['options']);  
+                    $optionCode = implode('-', $optionsList);  
+                    $data['order_details'][$i]->optionCode= $optionCode;
+
                     $product_pricing = $this->Product_pricing_model->get_by(array('product_id' => $data['order_details'][$i]->product_id, 'vendor_id' => $data['order_details'][$i]->vendor_id));
                     $data['products'] = $this->Products_model->get_by(array('id' => $data['order_details'][$i]->product_id));
                     $vendors = $this->Vendor_model->get_by(array('id' => $data['order_details'][$i]->vendor_id));
@@ -753,6 +788,7 @@ class MyOrders extends MW_Controller {
                     $data['order_details'][$i]->Product_details = $product_pricing;
                     $data['order_details'][$i]->product = $data['products'];
                     $data['order_details'][$i]->vendor = $vendors;
+
                 }
                 $data['promos'] = $this->Order_promotion_model->get_many_by(array('order_id' => $order_id));
                 for ($i = 0; $i < count($data['promos']); $i++) {

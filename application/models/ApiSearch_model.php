@@ -26,11 +26,15 @@ class ApiSearch_model extends MY_Model
         if($option == 'undefined'){
             $option = null;
         }
-        $sql = "SELECT SQL_CALC_FOUND_ROWS
-                    p.id, p.name, p.description, p.manufacturer, p.license_required,
-                    i.photo,
-                    pp.retail_price, pp.price, pp.vendor_name, pp.retail_price AS product_price, pp.vendor_count, pp.vendor_id
-                ";
+       $sql = "SELECT SQL_CALC_FOUND_ROWS
+            p.id, p.name, p.matix_id,p.description, p.manufacturer, p.license_required,
+            i.photo,
+            COALESCE(pp.retail_price, p.base_price) AS retail_price, 
+            COALESCE(pp.price, p.base_price) AS price, 
+            pp.vendor_name, 
+            COALESCE(pp.retail_price, p.base_price) AS product_price, 
+            pp.vendor_count, pp.vendor_id
+        ";
         if(!empty($searchString)) {
             $sql .= ", IF(
                                p.name LIKE '$searchString%',  20, IF(p.name LIKE '%$searchString%', 10, 0)

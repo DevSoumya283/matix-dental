@@ -134,9 +134,9 @@
                                                         <?php } else { ?><div class="product product--list row " data-target="<?php echo base_url('product'); ?>"> <?php } ?>
                                                             <div class="product__image col-md-4 col-xs-12">
                                                                 <?php if ($product->photo != null) { ?>
-                                                                <div class="product__thumb is--link" data-target="<?php echo base_url(); ?>view-product?id=<?php print_r($product->product_id); ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php print_r($product->photo); ?>');"> </div>
+                                                                <div class="product__thumb is--link" data-target="<?php echo base_url(); ?>view-product?id=<?php print_r($product->product_id); ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php print_r($product->photo); ?>');"> </div>
                                                                 <?php } else { ?>
-                                                                <div class="product__thumb is--link" data-target="<?php echo base_url(); ?>view-product?id=<?php print_r($product->product_id); ?>" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                                                <div class="product__thumb is--link" data-target="<?php echo base_url(); ?>view-product?id=<?php print_r($product->product_id); ?>" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                                                                 </div>
                                                                 <?php } ?>
                                                             </div>

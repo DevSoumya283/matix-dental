@@ -176,11 +176,11 @@
                                                 <ul class="list list--inline list--stats list--divided">
                                                     <?php if ($orders->image_name != null) { ?>
                                                         <li class="item" style="width:88px;">
-                                                            <div class="order__logo" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $orders->image_name->photo; ?>');"></div>
+                                                            <div class="order__logo" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $orders->image_name->photo; ?>');"></div>
                                                         </li>
                                                     <?php } else { ?>
                                                         <li class="item" style="width:88px;">
-                                                            <div class="order__logo" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></div>
+                                                            <div class="order__logo" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></div>
                                                         </li>
                                                     <?php } ?>
                                                     <li class="item item--stat stat-s">

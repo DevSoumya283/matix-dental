@@ -153,9 +153,9 @@
                                                             <?php
                                                             if ($request_product[$i]->images != null) {
                                                                 ?>
-                                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $request_product[$i]->images->photo; ?>');">
+                                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $request_product[$i]->images->photo; ?>');">
                                                                 <?php } else { ?>
-                                                                    <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                                                    <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                                        <!-- <div class="avatar avatar--s" style="background-image:url('<?php //echo base_url();    ?>assets/img/ph-avatar.jpg');"></div> -->
                                                                     <?php } ?>
                                                                 </div>
@@ -173,8 +173,7 @@
                                                                     <?php
                                                                     if ($request_product[$i]->product->license_required == 'Yes') {
                                                                         echo "<span class='product__name'>";
-                                                                        echo $request_product[$i]->product->name;
-                                                                        ?></span>
+                                                                    echo $request_product[$i]->product->name . ', ' . $request_product[$i]->optionCode;                                                                        ?></span>
                                                                         <?php
                                                                     } else {
                                                                         echo "<span>";
@@ -182,7 +181,7 @@
                                                                         ?></span>
                                                                     <?php } ?>
                                                                 </a>
-
+                                                                <span class="product__mfr">[<?php echo $request_product[$i]->optionCode;?>]</span>
                                                                 <span class="product__mfr">
                                                                     <?php if ($request_product[$i]->product != null) { ?>
                                                                         by <a class="link fontWeight--2" href="#">
@@ -207,6 +206,7 @@
                                                                     if($request_product[$i]->product_pricing->retail_price < $request_product[$i]->product_pricing->price && $request_product[$i]->product_pricing->retail_price > 0) {
                                                                         //output price with special
                                                                         ?>
+                                                                         <!-- <li style="font-size: 22px;font-weight: bold;text-decoration:line-through;">$<?php  echo $request_product[$i]->product_pricing->price;  ?></li>live*/ -->
                                                                         <li style="font-size: 22px;font-weight: bold;text-decoration:line-through;">$<?php  echo $request_product[$i]->product_pricing->price;  ?></li>
                                                                         <li style="font-size: 22px;font-weight: bold;color:#13C4A3;" <?php if(!empty($clubPrice)) echo 'class="club--price"'; ?>>$<?php echo number_format($request_product[$i]->product_pricing->retail_price, 2); ?></li>
 
@@ -214,7 +214,8 @@
                                                                     } else {
                                                                         //output normal price
                                                                         ?>
-                                                                        <li style="font-size: 22px;font-weight: bold;" <?php if(!empty($clubPrice)){ echo 'class="club--price"'; }?>>$<?php echo $request_product[$i]->product_pricing->price; ?></li>
+                                                                        <!-- <li style="font-size: 22px;font-weight: bold;" <?php if(!empty($clubPrice)){ echo 'class="club--price"'; }?>>$<?php echo $request_product[$i]->product_pricing->price; ?></li> -->
+                                                                        <li style="font-size: 22px;font-weight: bold;" <?php if(!empty($clubPrice)){ echo 'class="club--price"'; }?>>$<?php echo $request_product[$i]->product->base_price; ?></li>
 
                                                                         <?php
                                                                     }
@@ -238,14 +239,14 @@
                                                     <input type="hidden" class="request_id"  value="<?php echo $request_product[$i]->id; ?>" >
                                                      <div class="d-block d-sm-none mt-2">
                                                            <?php if (isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_1_2_roles))) && ($request_product[$i]->product->license_required != 'Yes' || $hasLicense)) { ?>
-                                                        <button class="btn btn--s btn--primary btn--icon pull--down-xxs modal--toggle request_list single" data-lname="<?php echo $locationName->nickname; ?>" data-request_id="<?php echo $request_product[$i]->id; ?>" data-p_id="<?php echo $request_product[$i]->product_id; ?>" data-target="#addSelectionsToCartModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
+                                                        <button class="btn btn--s btn--primary btn--icon pull--down-xxs modal--toggle request_list single" data-sku="<?php echo $request_product[$i]->sku_id; ?>"data-lname="<?php echo $locationName->nickname; ?>" data-request_id="<?php echo $request_product[$i]->id; ?>" data-p_id="<?php echo $request_product[$i]->product_id; ?>" data-target="#addSelectionsToCartModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
                                                     <?php } ?>
                                                     <button class="modal--toggle btn btn--s btn--secondary btn--icon pull--down-xxs remove-rquest" data-rid="<?php echo $request_product[$i]->id; ?>" data-target="#removeRequestItemsModal"><svg class="icon icon--x"><use xlink:href="#icon-x"></use></svg></button>
                                                      </div>
                                                 </td>
                                                 <td class="align--center dn">
                                                     <?php if (isset($_SESSION['role_id']) && ((in_array($_SESSION['role_id'], $tier_1_2_roles))) && ($request_product[$i]->product->license_required != 'Yes' || $hasLicense)) { ?>
-                                                        <button class="btn btn--s btn--primary btn--icon pull--down-xxs modal--toggle request_list single" data-lname="<?php echo $locationName->nickname; ?>" data-request_id="<?php echo $request_product[$i]->id; ?>" data-p_id="<?php echo $request_product[$i]->product_id; ?>" data-target="#addSelectionsToCartModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
+                                                        <button class="btn btn--s btn--primary btn--icon pull--down-xxs modal--toggle request_list single"data-sku="<?php echo $request_product[$i]->sku_id; ?>" data-lname="<?php echo $locationName->nickname; ?>" data-request_id="<?php echo $request_product[$i]->id; ?>" data-p_id="<?php echo $request_product[$i]->product_id; ?>" data-target="#addSelectionsToCartModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
                                                     <?php } ?>
                                                     <button class="modal--toggle btn btn--s btn--secondary btn--icon pull--down-xxs remove-rquest" data-rid="<?php echo $request_product[$i]->id; ?>" data-target="#removeRequestItemsModal"><svg class="icon icon--x"><use xlink:href="#icon-x"></use></svg></button>
                                                 </td>

@@ -1558,8 +1558,8 @@ class Cart extends MW_Controller {
 
     private function get_payment_methods($user){
 
-
-        $customer = $this->stripe->getCustomer($user->stripe_id); //live mode
+        // $customer = $this->stripe->getCustomer($user->stripe_id); //live mode
+        $customer = NUll; //live mode
        // $customer = 'asdasd32165465asdsadasd';
         $users_payments = $this->User_payment_option_model->get_many_by(['user_id' => $user->id]);
         $payment_methods = [];

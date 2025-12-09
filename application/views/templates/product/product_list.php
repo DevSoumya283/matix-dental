@@ -17,11 +17,11 @@
                     <?php
                     if ($products[$i]->photo != null) {
                         ?>
-                        <a class="product__thumb" href="<?php echo base_url(); ?>view-product?id=<?php echo $products[$i]->id; ?>&category=<?php echo $this->input->get('category'); ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $products[$i]->photo; ?>');"></a>
+                        <a class="product__thumb" href="<?php echo base_url(); ?>view-product?id=<?php echo $products[$i]->id; ?>&category=<?php echo $this->input->get('category'); ?>" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $products[$i]->photo; ?>');"></a>
                         <?php
                     } else {
                         ?>
-                        <a class="product__thumb" href="<?php echo base_url(); ?>view-product?id=<?php echo $products[$i]->id; ?>&category=<?php echo $this->input->get('category'); ?>" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></a>
+                        <a class="product__thumb" href="<?php echo base_url(); ?>view-product?id=<?php echo $products[$i]->id; ?>&category=<?php echo $this->input->get('category'); ?>" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></a>
                     <?php } ?>
                 </div>
                                     <div class="product__data col-md-9 col-xs-12">
@@ -144,7 +144,7 @@
                                                                     <button type="button"  class="btn btn--m btn--tertiary btn--icon modal--toggle add_cart" data-pid="<?php echo $products[$i]->id; ?>" data-name="<?php echo $products[$i]->name; ?>" data-price="<?php echo $regular_price?>" data-procolor="<?php echo $products[$i]->color; ?>" data-vendor_id="<?php echo $products[$i]->vendor_id ?>" data-license_required="<?php echo $products[$i]->license_required; ?>" data-target="#productOptionModal"><svg class="icon icon--cart-s"><use xlink:href="#icon-cart-s"></use></svg></button>
                                                                 <?php } ?>
                                                                 <?php if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $users))) { ?>
-                                                                    <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_request" data-id="<?php echo $products[$i]->id; ?>" data-vendor="<?php echo $products[$i]->vendor_id; ?>" data-target="#chooseRequestListModal"><svg class="icon icon--list-s"><use xlink:href="#icon-list-s"></use></svg></button>
+                                                                    <button class="btn btn--m btn--tertiary btn--icon modal--toggle add_request" data-id="<?php echo $products[$i]->id; ?>" data-vendor="<?php echo $products[$i]->vendor_id; ?>" data-price="<?php echo $regular_price?>" data-target="#chooseRequestListModal"><svg class="icon icon--list-s"><use xlink:href="#icon-list-s"></use></svg></button>
                                                                 <?php } ?>
                                                             </div>
                                                         </div>

@@ -120,12 +120,12 @@
                                                             <?php
                                                             if ($restricted_orders[$i]->product_images != null) {
                                                                 ?>
-                                                                <a class="product__thumb" href="#" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $restricted_orders[$i]->product_images->photo; ?>');"></a>
+                                                                <a class="product__thumb" href="#" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $restricted_orders[$i]->product_images->photo; ?>');"></a>
 
                                                             <?php
                                                             } else {
                                                                 ?>
-                                                                <a class="product__thumb" href="#" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');"></a>
+                                                                <a class="product__thumb" href="#" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');"></a>
 
         <?php } ?>
                                                         </div>

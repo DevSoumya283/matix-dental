@@ -33,10 +33,11 @@ class UserDashboard extends MW_Controller {
         $this->load->model('Product_tax_model');
         $this->load->model('Request_list_activity_model');
         $this->load->model('Order_promotion_model');
+        $this->load->model('Product_varients');
         $this->load->model('Vendor_groups_model');
         $this->load->model('NotificationEmails');
         $this->load->library('encryption');
-        $this->load->library('stripe');
+        // $this->load->library('stripe');
         $this->load->library('cart');
         $this->load->library('email');
         $this->load->helper('my_email_helper');
@@ -205,6 +206,17 @@ class UserDashboard extends MW_Controller {
             $product_id = $this->input->post('product_id');
             $qty = $this->input->post('cartqty');
             $price = $this->input->post('price');
+            $sku = trim($this->input->post('sku')); 
+
+            // if (preg_match('/\d+-(.+)$/', $sku, $matches)) {
+            //     $optionCode = $matches[1];
+            //     $optionCode = str_replace('-', ',', $optionCode);
+            // } else {
+            //     $optionCode = '';
+            // }
+            $skuDetails = $this->Product_varients->skuDetails($sku);
+            $optionsList = convert_options_to_list($skuDetails['options']);  
+            $optionCode = implode('-', $optionsList);  
             $l_id = explode(",", $location_id);
             $product_licence = $this->Products_model->get_by(array('id' => $product_id));
             $pro_name = $product_licence->name;
@@ -272,10 +284,12 @@ class UserDashboard extends MW_Controller {
                             if ($cart_details != null || $cart_details != "") {
                                 $cart = $cart_details->cart;
                                 $row = json_decode($cart);
+                                // echo"<pre>";
+                                // print_r($row);die();
                                 if ($row != null || $row != "") {
                                     foreach ($row as $item) {
                                         if ($item->location_id == $l_id[$i]) {
-                                            if ($item->pro_id == $product_id && $item->ven_id == $vendor_id) {
+                                            if ($item->pro_id == $product_id && $item->ven_id == $vendor_id && $item->sku == $sku ) {
                                                 $rowid = $item->rowid;
                                                 $quantity = $item->qty;
                                                 $new_qty = $qty + $quantity;
@@ -298,12 +312,16 @@ class UserDashboard extends MW_Controller {
                             } else {
                                 $cartData = TRUE;
                             }
-                            if ($cartData) {
+                            if ($cartData && $qty != '') {//change
+                               
                                 $insert_data = array(
                                     'id' => $new,
+                                    'user_id' => $user_id,
                                     'qty' => $qty,
                                     'name' => $product_name,
                                     'price' => $price,
+                                    'sku' => $sku,
+                                    'options'=> $optionCode,
                                     'pro_id' => $product_id,
                                     'location_id' => $l_id[$i],
                                     'status' => '0',
@@ -353,12 +371,17 @@ class UserDashboard extends MW_Controller {
                     } else {
                         $cartData = TRUE;
                     }
-                    if ($cartData) {
+                           
+
+                    if ($cartData && $qty != '') {
                         $insert_data = array(
                             'id' => $new,
+                            'user_id' => $user_id,
                             'qty' => $qty,
                             'name' => $product_name,
                             'price' => $price,
+                            'sku' => $sku,
+                            'options'=> $optionCode,
                             'pro_id' => $product_id,
                             'location_id' => $l_id[$i],
                             'status' => 0,
@@ -379,6 +402,7 @@ class UserDashboard extends MW_Controller {
         }
     }
 
+    
     public function get_userpayments() { //get all users payement lists
         $roles = unserialize(ROLES_USERS);
         if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $roles))) {
@@ -668,75 +692,108 @@ class UserDashboard extends MW_Controller {
         }
     }
 
-    public function payments() { //user view their payments details
+    public function payments() { // user view their payments details
         $roles = unserialize(ROLES_USERS);
-        if (isset($_SESSION['user_id']) && (isset($_SESSION['role_id'])) && (in_array($_SESSION['role_id'], $roles))) {
+        if (isset($_SESSION['user_id']) && isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], $roles)) {
             $user_id = $_SESSION['user_id'];
-            $user = $this->User_model->get_by(array('id' => $user_id));
-            if ($user->stripe_id) {
-              /* JM: 8/15/18
-              ** Adding conditional to prevent Stripe from erroring with NULL.
-              */
-                $customer = (isset($user->stripe_id)) ? $this->stripe->getCustomer($user->stripe_id) : NULL;
+            $user = $this->User_model->get_by(['id' => $user_id]);
+
+            $data = [];
+            $data['users_payments'] = []; // always initialize
+
+            $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+
+            // --- SELF payments (legacy block guarded) ---------------------------------------
+            if (!empty($user->stripe_id)) {
+
+                $customer = null;
+                if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+                    $customer = $this->stripe->getCustomer($user->stripe_id);
+                }
 
                 $users_payments = $this->User_payment_option_model->get_many_by(['user_id' => $user_id]);
 
-                foreach ($users_payments as $users_payment) {
+                if (!empty($users_payments) && is_array($users_payments)) {
+                    foreach ($users_payments as $users_payment) {
 
-                    //get payment methods
-                    /* JM: 8/15/18
-                    ** Adding conditional to prevent Stripe from erroring with NULL.
-                    */
-                    $payment_method = (isset($customer)) ? $customer->sources->retrieve($users_payment->token) : NULL;
-                    $users_payment_obj = new stdClass();
-                    $users_payment_obj->id = $users_payment->id;
-                    $users_payment_obj->user_id = $user_id;
-                    $users_payment_obj->payment_type = $payment_method->object;
-                    $users_payment_obj->card_type = $payment_method->brand;
-                    $users_payment_obj->exp_month = $payment_method->exp_month;
-                    $users_payment_obj->exp_year = $payment_method->exp_year;
-                    $users_payment_obj->cc_number = $payment_method->last4;
-                    $users_payment_obj->cc_name = $payment_method->name;
-                    $users_payment_obj->bank_name = $payment_method->bank_name;
-                    $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                    $users_payment_obj->ba_account_number = $payment_method->last4;
-                    $users_payment_obj->created_at = $users_payment->created_at;
-                    $users_payment_obj->updated_at = $users_payment->update_at;
+                        $payment_method = null;
+                        if (
+                            $stripe_enabled &&
+                            isset($customer->sources) &&
+                            method_exists($customer->sources, 'retrieve') &&
+                            isset($users_payment->token)
+                        ) {
+                            $payment_method = $customer->sources->retrieve($users_payment->token);
+                        }
 
-                    $data['users_payments'][] = $users_payment_obj;
-                    unset($users_payment_obj);
+                        $obj = new stdClass();
+                        $obj->id                 = isset($users_payment->id) ? $users_payment->id : null;
+                        $obj->user_id            = isset($user_id) ? $user_id : null;
+                        $obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                        $obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                        $obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+                        $obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+                        $obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                        $obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                        $obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                        $obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                        $obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+                        $obj->created_at         = isset($users_payment->created_at) ? $users_payment->created_at : null;
+                        // fixed typo: updated_at (not update_at)
+                        $obj->updated_at         = isset($users_payment->updated_at) ? $users_payment->updated_at : null;
+
+                        $data['users_payments'][] = $obj;
+                        unset($obj);
+                    }
                 }
             }
-           
-            $organization_id = $this->Organization_groups_model->get_by(array('user_id' => $user_id))->organization_id;
-            if(in_array($user->role_id, unserialize(ROLES_TIER2))){
-                $account_parent_id = $this->Organization_model->get_by(array('id' => $organization_id))->admin_user_id;
-                $parent = $this->User_model->get_by(array('id' => $account_parent_id));
-                if ($parent->stripe_id) {
+            // -------------------------------------------------------------------------------
+
+            // Organization & related accounts
+            $organization_id = $this->Organization_groups_model->get_by(['user_id' => $user_id])->organization_id;
+
+            // Parent (Tier-2 visible to Tier-1)
+            if (in_array($user->role_id, unserialize(ROLES_TIER2))) {
+                $account_parent_id = $this->Organization_model->get_by(['id' => $organization_id])->admin_user_id;
+                $parent = $this->User_model->get_by(['id' => $account_parent_id]);
+                if (!empty($parent->stripe_id)) {
+                    // ensure get_payment_methods also guards stripe_enabled internally
                     $data['users_parent_payments'] = $this->get_payment_methods($parent);
                 }
             }
-            if(in_array($user->role_id, unserialize(ROLES_TIER1))){
+
+            // Children (Tier-1 sees Tier-2 accounts)
+            if (in_array($user->role_id, unserialize(ROLES_TIER1))) {
                 $organization_accounts = $this->Organization_groups_model->organizationGroup_users($organization_id, '');
                 $filtered_t2_accounts = array_filter($organization_accounts, function($account){
-                   return in_array($account->role_id, unserialize(ROLES_TIER2)) && $account->stripe_id;
+                    return in_array($account->role_id, unserialize(ROLES_TIER2)) && !empty($account->stripe_id);
                 });
                 $data['users_child_payments'] = [];
-                if(empty(!$filtered_t2_accounts)){
-                    $data['users_child_payments'] = array_merge(...array_map(function ($account){
-                        return $this->get_payment_methods($account);
-                    },$filtered_t2_accounts));
+                if (!empty($filtered_t2_accounts)) { // fixed logic (was: empty(!$filtered_t2_accounts))
+                    foreach ($filtered_t2_accounts as $account) {
+                        $child = $this->get_payment_methods($account); // make sure it returns [] when disabled
+                        if (!empty($child)) {
+                            $data['users_child_payments'] = array_merge($data['users_child_payments'], $child);
+                        }
+                    }
                 }
             }
-            if ($user->stripe_id) {
-                $data['users_payments'] = $this->get_payment_methods($user);
-            }
-            $data['user'] = $user;
-            $data['locations'] = $this->User_location_model->get_many_by(array('user_id' => $user_id));
-            for ($i = 0; $i < count($data['locations']); $i++) {
 
-                $data['user_locations'][] = $this->Organization_location_model->get_by(array('id' => $data['locations'][$i]->organization_location_id));
+            // Optionally, overwrite users_payments with get_payment_methods() result;
+            // if you prefer the above loop output, comment this block out.
+            if (!empty($user->stripe_id)) {
+                $data['users_payments'] = $this->get_payment_methods($user); // this function must be safe when stripe_disabled
             }
+
+            $data['user'] = $user;
+            $data['locations'] = $this->User_location_model->get_many_by(['user_id' => $user_id]);
+            $data['user_locations'] = [];
+            if (!empty($data['locations'])) {
+                foreach ($data['locations'] as $loc) {
+                    $data['user_locations'][] = $this->Organization_location_model->get_by(['id' => $loc->organization_location_id]);
+                }
+            }
+
             $this->load->view('/templates/_inc/header', $data);
             $this->load->view('/templates/account/payments/index', $data);
             $this->load->view('/templates/_inc/footer');
@@ -746,55 +803,100 @@ class UserDashboard extends MW_Controller {
         }
     }
 
-    public function add_card_details() { //user add credit card or debit card details
-        $roles = unserialize(ROLES_USERS);
-        if (isset($_SESSION['user_id'])) {
-            $user_id = $_SESSION['user_id'];
-            $user = $this->User_model->get_by(array('id' => $user_id));
-            $email = $user->email;
-            $stripeId = $user->stripe_id;
-            $token = $this->input->post('token');
 
-            // Check for existing Stripe customer
-            if (!$stripeId){
-                // Add stripe customer
-                $customer = ['email' => $email,
-                    'description' => $user->first_name . ' ' . $user->last_name,];
-                $customer = $this->stripe->addCustomer($customer);
-                $stripeId = $customer->id;
-                // Update DB
-                $update_data = ['stripe_id' => $stripeId];
-                $this->User_model->update($user_id, $update_data);
-            }else{
+    public function add_card_details()
+    {
+        // Default response payload
+        $data = ['status' => false];
+
+        // Must be logged in
+        if (!isset($_SESSION['user_id'])) {
+            $this->session->set_flashdata("error", "Please login to continue");
+            header("location: user-loginpage");
+            return;
+        }
+
+        // Respect config flag: skip everything if Stripe is disabled
+        if ($this->config->item('stripe_enabled')) {
+            $this->session->set_flashdata("error", "Payments are currently disabled.");
+            $data['error'] = 'stripe_disabled';
+            echo json_encode($data);
+            return;
+        }
+
+        $user_id = $_SESSION['user_id'];
+        $user = $this->User_model->get_by(['id' => $user_id]);
+
+        // Basic user guards
+        if (!$user || !isset($user->email)) {
+            $this->session->set_flashdata("error", "User not found.");
+            $data['error'] = 'user_not_found';
+            echo json_encode($data);
+            return;
+        }
+
+        // Token from frontend
+        $token = $this->input->post('token', true);
+        if (!$token) {
+            $this->session->set_flashdata("error", "Missing payment token.");
+            $data['error'] = 'missing_token';
+            echo json_encode($data);
+            return;
+        }
+
+        // Ensure a Stripe customer exists (create if missing)
+        $stripeId = isset($user->stripe_id) ? $user->stripe_id : null;
+        try {
+            if (!$stripeId) {
+                $customerPayload = [
+                    'email'       => $user->email,
+                    'description' => (isset($user->first_name) ? $user->first_name : '') . ' ' . (isset($user->last_name) ? $user->last_name : ''),
+                ];
+                $customer = $this->stripe->addCustomer($customerPayload);
+                if ($customer && isset($customer->id)) {
+                    $stripeId = $customer->id;
+                    // Persist to DB
+                    $this->User_model->update($user_id, ['stripe_id' => $stripeId]);
+                } else {
+                    throw new Exception('Unable to create Stripe customer.');
+                }
+            } else {
                 $customer = $this->stripe->getCustomer($stripeId);
             }
 
-            try {
-                // Add card to stripe
-                $card = $customer->sources->create(["source" => $token]);
-
-                // Add card to DB
-                $insert_data = [
-                    'user_id' => $user_id,
-                    'payment_type' => 'card',
-                    'token' => $card->id,
-                    'cc_name' => $card->name,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ];
-                $this->User_payment_option_model->insert($insert_data);
-                $data['insert_id'] = $this->db->insert_id();
-                $data['payments'] = $this->User_payment_option_model->get_many_by(['user_id' => $user_id]);
-                $this->session->set_flashdata("success", "Payment method added successfully");
-            } catch (Exception $e) {
-                $this->session->set_flashdata("error", $e->getMessage());
+            // Add card to Stripe
+            if (!$customer || !isset($customer->sources)) {
+                throw new Exception('Invalid Stripe customer object.');
             }
-                echo json_encode($data);
-        } else {
-            $this->session->set_flashdata("error", "Please login to continue");
-            header("location: user-loginpage");
+
+            $card = $customer->sources->create(["source" => $token]);
+
+            // Add card to DB (guard optional fields)
+            $insert_data = [
+                'user_id'     => $user_id,
+                'payment_type'=> 'card',
+                'token'       => isset($card->id) ? $card->id : $token,
+                'cc_name'     => isset($card->name) ? $card->name : null,
+                'created_at'  => date('Y-m-d H:i:s'),
+                'updated_at'  => date('Y-m-d H:i:s'),
+            ];
+            $this->User_payment_option_model->insert($insert_data);
+
+            // Build response
+            $data['insert_id'] = $this->db->insert_id();
+            $data['payments']  = $this->User_payment_option_model->get_many_by(['user_id' => $user_id]);
+            $data['status']    = true;
+
+            $this->session->set_flashdata("success", "Payment method added successfully");
+        } catch (Exception $e) {
+            // Do not crash on Stripe errors
+            $this->session->set_flashdata("error", $e->getMessage());
+            $data['error'] = $e->getMessage();
         }
+
+        echo json_encode($data);
     }
+
 
     public function add_bank_details() { //user add bank account  details
         $roles = unserialize(ROLES_USERS);

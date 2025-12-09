@@ -137,5 +137,62 @@ class TestController extends MW_Controller {
 
         echo "SKU update completed for product_pricings.";
     }
+     public function export_new()
+    {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+        
+        // Simple test data
+        $export_data = [
+            ['id', 'name', 'price'],
+            ['1', 'Test Product 1', '100'],
+            ['2', 'Test Product 2', '200'],
+            ['3', 'Test Product 3', '300']
+        ];
+        
+        // Set headers for CSV download
+        header('Content-Type: application/csv');
+        header('Content-Disposition: attachment; filename="test_products.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Output CSV data
+        $output = fopen('php://output', 'w');
+        foreach ($export_data as $row) {
+            fputcsv($output, $row);
+        }
+        fclose($output);
+        exit;
+    }
+
+    // public function export_new()
+    // {
+        
+    //     $export_data = $this->export_products();
+        
+    //     if (is_array($export_data) && array_key_exists('success', $export_data) && $export_data['success'] === false) {
+    //         // Handle error - no products found
+    //         echo $export_data['message'];
+    //         return;
+    //     }
+        
+    //     // Generate CSV output
+    //     $output = fopen('php://output', 'w');
+        
+    //     // Set headers for CSV download
+    //      header('Content-Type: application/csv');
+    //      header('Content-Disposition: attachment; filename="products_' .time(). '.csv"');
+    //      header('Pragma: no-cache');
+    //         header('Expires: 0');
+
+    //     // Output CSV data
+    //     foreach ($export_data as $row) {
+    //         fputcsv($output, $row);
+    //     }
+        
+    //     fclose($output);
+    //     exit;
+    // }
+
 
 }

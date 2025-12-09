@@ -10,7 +10,7 @@
 
         <div class="modal__body cf">
             <div class="modal__content">
-                <p>By submitting this order you acknowledge blah blah blah. Lorem ipsum dolor sit amet consecteru blah blah.</p>
+                <p>By submitting this order you acknowledge order is Done.</p>
             </div>
         </div>
         <div class="footer__group border--dashed">

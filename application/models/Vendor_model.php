@@ -37,7 +37,7 @@ class Vendor_model extends MY_Model {
         return $result;
     }
 
-    public function loadProducts($vendorId = null, $promos = null, $categorySelect = null, $productStatus = null, $orderBy, $limit, $offset, $pricingScaleId = null, $siteId = 0)
+    public function loadProducts_old($vendorId = null, $promos = null, $categorySelect = null, $productStatus = null, $orderBy, $limit, $offset, $pricingScaleId = null, $siteId = 0)
     {
         switch ($orderBy) {
             case 1:
@@ -114,7 +114,112 @@ class Vendor_model extends MY_Model {
 
         return $products;
     }
+    public function loadProducts($vendorId = null, $promos = null, $categorySelect = null, $productStatus = null, $orderBy, $limit, $offset, $pricingScaleId = null, $siteId = 0)
+    {
+        switch ($orderBy) {
+            case 1:
+                $orderBy = ' pp.price asc';
+                break;
+            case 2:
+                $orderBy = ' pp.price desc';
+                break;
+            default:
+                $orderBy = ' p.name asc';
+        }
 
+        $sql = "SELECT DISTINCT p.id, p.name, p.matix_id, p.item_code,
+                    pp.id as pricing_id, pp.vendor_id, pp.vendor_product_id, 
+                    COALESCE(pp.price, p.base_price) AS price,
+                    COALESCE(pp.retail_price, p.base_price) AS retail_price,
+                    pp.exclude_from_marketplace, pp.active as status, 
+                    bcpp.sale_price AS scale_price,
+                    pse.product_pricing_id AS hidden_id,
+                    sku_max.sku_code, sku_max.stock_quantity
+                FROM products as p
+                JOIN (
+                    SELECT product_id, MIN(id) AS pricing_id
+                    FROM product_pricings
+                    WHERE (:vendorId IS NULL OR vendor_id = :vendorId)
+                    GROUP BY product_id
+                ) AS pp2 ON pp2.product_id = p.id
+                JOIN product_pricings AS pp ON pp.id = pp2.pricing_id
+                LEFT JOIN (
+                    SELECT s1.product_id, s1.sku_code, s1.stock_quantity
+                    FROM skus s1
+                    JOIN (
+                        SELECT product_id, MAX(stock_quantity) AS max_qty
+                        FROM skus
+                        GROUP BY product_id
+                    ) s2 ON s1.product_id = s2.product_id AND s1.stock_quantity = s2.max_qty
+                    -- Add this to get only one record when stock_quantity is the same
+                    WHERE s1.sku_id = (
+                        SELECT MIN(s3.sku_id) 
+                        FROM skus s3 
+                        WHERE s3.product_id = s1.product_id 
+                        AND s3.stock_quantity = s2.max_qty
+                    )
+                ) AS sku_max ON sku_max.product_id = p.matix_id
+                LEFT JOIN ( 
+                    SELECT product_pricing_id, 1
+                    FROM product_site_exclusion
+                    WHERE vendor_id = :vendorId
+                    AND store_id = :siteId 
+                ) AS pse ON pse.product_pricing_id = pp.id
+                LEFT JOIN ( 
+                    SELECT product_id, sale_price
+                    FROM pricing_scale_product_pricing
+                    WHERE vendor_id = :vendorId
+                    AND pricing_scale_id = :pricingScaleId 
+                ) AS bcpp ON bcpp.product_id = p.id
+                ";
+
+        // Handle promo codes without creating duplicates
+        if ($promos != null && $promos != "") {
+            if ($promos == 2) {
+                $sql .= " INNER JOIN promo_codes as pc ON p.id = pc.product_id and pp.vendor_id = pc.vendor_id";
+            } else {
+                $sql .= " LEFT JOIN promo_codes as pc ON p.id = pc.product_id and pp.vendor_id = pc.vendor_id";
+            }
+        } else {
+            $sql .= " LEFT JOIN promo_codes as pc ON p.id = pc.product_id and pp.vendor_id = pc.vendor_id";
+        }
+
+        $params = [
+            ':vendorId' => $vendorId,
+            ':pricingScaleId' => $pricingScaleId,
+            ':siteId' => (!empty($siteId)) ? $siteId : 0
+        ];
+
+        $whereConditions = [];
+        
+        if ($vendorId != null && $vendorId != "") {
+            $whereConditions[] = "pp.vendor_id = :vendorId";
+        }
+        
+        if ($categorySelect != null && $categorySelect != "") {
+            $params[':categorySelect'] = '%"' . $categorySelect . '"%';
+            $whereConditions[] = "p.category_id like :categorySelect";
+        }
+        
+        if ($productStatus != null && $productStatus != "") {
+            $params[':productStatus'] = $productStatus;
+            $whereConditions[] = "pp.active = :productStatus";
+        }
+
+        if (!empty($whereConditions)) {
+            $sql .= " WHERE " . implode(" AND ", $whereConditions);
+        }
+
+        $sql .= " ORDER BY $orderBy";
+
+        if ($limit != 'all') {
+            $sql .= " LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
+        }
+
+        $products = $this->PDOhandler->query($sql, $params, 'fetchAll');
+
+        return $products;
+    }
     public function searchProducts($vendorId, $search, $orderBy, $limit, $offset, $pricingScaleId = null)
     {
         if ($orderBy != null) {

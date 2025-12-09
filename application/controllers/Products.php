@@ -144,10 +144,27 @@ class Products extends MW_Controller {
                                               $this->input->get('q'),
                                               $start = 0,
                                               $perPage = 10,
-                                              $option = null);
+                                              $option = null);                                         
+                                            
 
-        $data['products'] = $result['results'];
-
+        $data['products'] = $result['results'];      
+        if(!empty($data['products'])){
+        $skus = $this->Product_varients->get_highest_quantity_skus($data['products']);
+        foreach ($data['products'] as &$product) {
+            foreach ($skus as $sku) {
+                if ($sku->product_id == $product->matix_id) {
+                    $product->sku = $sku->sku_code;
+                    $product->quantity = $sku->stock_quantity;
+                    
+                    // Get pricing only when SKU is found
+                    $pricings = $this->Product_pricing_model->getPricebySku($product->id,$product->sku)->row();      
+                    $product->price = $pricings->price;
+                    $product->retail_price = $pricings->retail_price;
+                    break;
+                }
+            }
+        }
+    }
         $page = 0;
         $per_page = 10;
         $start = $per_page * $page;
@@ -489,11 +506,37 @@ class Products extends MW_Controller {
         $sku              = $this->Product_varients->get_sku_by_values($product_id, $values);
         $availableOptions = $this->Product_varients->get_available_options($product_id, $values);
         $vendor           = $this->Vendor_model->vendorPricingsBySku($sku->sku_code); 
+        
+        $regular_price   = $sku->price;
+        $userBuyingclubs = $_SESSION['user_buying_clubs'];
+        if(!empty($userBuyingclubs)){
+                foreach($userBuyingclubs as $storeId => $buyingClub){
+                Debugger::debug($buyingClub, '$buyingClub', false, 'buyingClubs');
+                if(is_array($buyingClub['percentage_discounts'])) {
+
+                    foreach ($buyingClub['percentage_discounts'] as $vendorId => $discountPercentage) {
+                        if (is_numeric($regular_price) && is_numeric($discountPercentage)) {
+                            $tmpPrice = $regular_price / 100 * (100 - $discountPercentage);
+
+                            if (empty($bestPrice) || $tmpPrice < $bestPrice) {
+                                $bestPrice = $tmpPrice;
+                            }
+                        } else {
+                            log_message('error', "Invalid discount or price: regular_price = $regular_price, discount = $discountPercentage");
+                        }
+                    }
+
+                }
+            }
+        } 
+        
         echo json_encode([
             'sku'          => $sku ? $sku->sku_code : null,
+            'quantity'     => $sku ? $sku->stock_quantity : null,
             'price'        => $sku ? $sku->price : null,
             'retail_price' => $sku ? $sku->retail_price : null,
-            'options'      => $sku ? $sku->options : null,
+            'bestPrice'    => isset($bestPrice) ? number_format($bestPrice, 2, '.', '') : null,            'options'      => $sku ? $sku->options : null,
+            'sku_image'    => $sku ? $sku->image  : null,
             'vendor'       => !empty($vendor)?$vendor[0]: null,
             'available'    => $availableOptions  // { all: {...}, valid: {...} }
         ]);
@@ -532,12 +575,35 @@ class Products extends MW_Controller {
 
         // available options (all + valid) always computed (valid depends on selected values)
         $availableOptions = $this->Product_varients->get_available_options_for_model($product_id, $values);
-   
+         $regular_price   = $sku->price;
+        $userBuyingclubs = $_SESSION['user_buying_clubs'];
+        if(!empty($userBuyingclubs)){
+                foreach($userBuyingclubs as $storeId => $buyingClub){
+                Debugger::debug($buyingClub, '$buyingClub', false, 'buyingClubs');
+                if(is_array($buyingClub['percentage_discounts'])) {
+
+                    foreach ($buyingClub['percentage_discounts'] as $vendorId => $discountPercentage) {
+                        if (is_numeric($regular_price) && is_numeric($discountPercentage)) {
+                            $tmpPrice = $regular_price / 100 * (100 - $discountPercentage);
+
+                            if (empty($bestPrice) || $tmpPrice < $bestPrice) {
+                                $bestPrice = $tmpPrice;
+                            }
+                        } else {
+                            log_message('error', "Invalid discount or price: regular_price = $regular_price, discount = $discountPercentage");
+                        }
+                    }
+
+                }
+            }
+        } 
+        
         echo json_encode([
             'sku'          => $sku ? $sku->sku_code : null,
             'price'        => $sku ? $sku->price : null,
             'retail_price' => $sku ? $sku->retail_price : null,
-            // options: mapping option_type => ['value' => 'S', 'value_id' => 123]
+            'sku_image'    => $sku ? $sku->image : null,
+            'bestPrice'    => isset($bestPrice) ? number_format($bestPrice, 2, '.', '') : null,            'options'      => $sku ? $sku->options : null,
             'options'      => $sku && !empty($sku->options) ? $sku->options : [],
             'available'    => $availableOptions,  // { all: {...}, valid: {...} }
             'stock_quantity' => $sku ? $sku->stock_quantity : null

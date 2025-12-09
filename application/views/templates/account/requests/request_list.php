@@ -74,9 +74,9 @@
                                         <?php
                                         if ($request_product[$i]->images != null) {
                                             ?>
-                                            <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/images/<?php echo $request_product[$i]->images->photo; ?>');">
+                                            <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>uploads/products/new-vol-data/<?php echo $request_product[$i]->images->photo; ?>');">
                                             <?php } else { ?>
-                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                                <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                    <!-- <div class="avatar avatar--s" style="background-image:url('<?php //echo base_url();    ?>assets/img/ph-avatar.jpg');"></div> -->
                                                 <?php } ?>
                                             </div>

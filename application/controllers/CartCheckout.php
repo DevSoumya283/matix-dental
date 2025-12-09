@@ -26,10 +26,12 @@ class CartCheckout extends MW_Controller {
         $this->load->model('Product_tax_model');
         $this->load->model('Order_promotion_model');
         $this->load->model('Vendor_groups_model');
+        $this->load->model('Product_varients');
         $this->load->library('cart');
         $this->load->library('email');
         $this->load->library('stripe');
         $this->load->helper('my_email_helper');
+        $this->load->library('user_agent');
     }
 
     public function proceed_to_checkout() {
@@ -69,16 +71,40 @@ class CartCheckout extends MW_Controller {
                 $old_total = $data['order_total'][$i]->total;
                 $order_total = $old_total + $order_total;
             }
+           
             $orderFlag = FALSE;
             $bLicenceFlag = TRUE;
             $matixVendorFlag = FALSE;
             $independentVendorFlag = FALSE;
             $data['cart'] = $this->cart->contents();
+          
             foreach ($data['cart'] as $row) {
+                
+                if(isset($row['sku']) && !empty($row['sku'])){
+                      $sku = trim($row['sku']);
+                     
+                        $optionCode = '';
+
+                        if (preg_match('/\d+-(.+)$/', $sku, $matches)) {
+                            $optionPart = $matches[1]; // e.g., Blue-M
+                            $optionCode = str_replace('-', ', ', $optionPart); // "Blue, M"
+                        }
+                     $skuDetails = $this->Product_varients->skuDetails($sku);
+                    
+
+                        // Check availability
+                        if (empty($skuDetails) || (int) $skuDetails['stock_quantity'] <= 0) {
+                            $productName = isset($row['name']) ? $row['name'] : 'Product';
+                            $this->session->set_flashdata('error', "{$productName} ({$optionCode}) not available!");
+                            return redirect($this->agent->referrer() ?: 'cart');
+                        }
+                    }
                 if ($row['location_id'] == $location_id && $row['status'] == 0) {
                     $vendor_ids[] = $row['ven_id'];
                 }
+
             }
+           
             $unique_vendors = array_values(array_unique($vendor_ids));
             $order_count = count($unique_vendors);
             $vendor_id = $unique_vendors;
@@ -196,8 +222,10 @@ class CartCheckout extends MW_Controller {
                                     'source' => $payment_token,
                                     'description' => $description
                                 );
-                                $this->stripe->addCharge($payment_data);
+                                // $this->stripe->addCharge($payment_data);
                                 $this->session->set_flashdata('success', 'Payment Success!');
+                              
+                           
                                 $insert_data = array(
                                     'order_status' => 'New',
                                     'location_id' => $location_id,
@@ -234,11 +262,13 @@ class CartCheckout extends MW_Controller {
                                         'shipment_id' => $products->shipid,
                                         'shipping_price' => round($products->shipping_price, 2),
                                         'product_id' => $item['pro_id'],
+                                        'sku_id' => isset($item['sku'])?$item['sku']:null,
                                         'vendor_id' => $vendor_id[$i],
                                         'price' => $item['price'],
                                         'tax' => $item_tax,
                                         'quantity' => $item['qty'],
                                         'picked' => $item['qty'],
+                                        'sku_id' => isset($item['sku'])?$item['sku']:null,
                                         'total' => $item['subtotal'],
                                         'restricted_order' => '1',
                                         'created_at' => date('Y-m-d H:i:s'),
@@ -280,6 +310,7 @@ class CartCheckout extends MW_Controller {
                                                 'shipment_id' => $products->shipid,
                                                 'shipping_price' => $products->shipping_price,
                                                 'product_id' => $free_productid,
+                                                'sku_id' => isset($item['sku'])?$item['sku']:null,
                                                 'vendor_id' => $vendor_id[$i],
                                                 'price' => '0.00',
                                                 'tax' => '0.00',
@@ -322,7 +353,7 @@ class CartCheckout extends MW_Controller {
 
                 if ($orderFlag) {
                     for ($i = 0; $i < $cart_total_orders; $i++) {
-                        //if (!(in_array($i, $aLicenExpiry))) { live
+                        if (!(in_array($i, $aLicenExpiry))) {
                             $vendor = $this->Vendor_model->get($order_vendor_id[$i]);
 
                             Debugger::debug($vendor, '$vendor');
@@ -384,18 +415,15 @@ class CartCheckout extends MW_Controller {
                                 }
                                 $order_total = ($subtotal + $order_tax + $products->shipping_price) - $products->promo_discount;
                                 if ($order_total > 0) {
-
-                                    
                                     // $vendor_token = $this->stripe->createToken(
                                     //     ["customer" => $payment_owner->stripe_id],
                                     //     ["stripe_account" => $vendor->payment_id]
-                                    // ); live
+                                    // );
 
                                     $payment_cost = round($order_total * 100);
                                     $payment_data = [
                                         'amount' => $payment_cost,
-                                        //'source' => $vendor_token->id,
-                                        'source' => 'fssdsf44656',
+                                        'source' => 'fgdfgfgffg',
                                         'description' => $description
                                     ];
 
@@ -405,7 +433,7 @@ class CartCheckout extends MW_Controller {
                                         $chargeOptions = ['stripe_account' => $vendor->payment_id];
                                     }
 
-                                   // $this->stripe->addCharge($payment_data, $chargeOptions); live
+                                    // $this->stripe->addCharge($payment_data, $chargeOptions);
                                     $this->session->set_flashdata('success', 'Payment Success!');
                                     $insert_data = array(
                                         'site_id' => ((!empty(config_item('whitelabel'))) ? config_item('whitelabel')->id : null),
@@ -443,6 +471,7 @@ class CartCheckout extends MW_Controller {
                                             'shipment_id' => $products->shipid,
                                             'shipping_price' => round($products->shipping_price, 2),
                                             'product_id' => $item['pro_id'],
+                                            'sku_id' => isset($item['sku'])?$item['sku']:null,
                                             'vendor_id' => $independentVendorId,
                                             'price' => $item['price'],
                                             'tax' => $item_tax,
@@ -487,6 +516,7 @@ class CartCheckout extends MW_Controller {
                                                     'shipment_id' => $products->shipid,
                                                     'shipping_price' => $products->shipping_price,
                                                     'product_id' => $free_productid,
+                                                    'sku_id' => isset($item['sku'])?$item['sku']:null,
                                                     'vendor_id' => $independentVendorId,
                                                     'price' => '0.00',
                                                     'tax' => '0.00',
@@ -562,7 +592,7 @@ class CartCheckout extends MW_Controller {
                                             $payment_data['destination'] = $matixvendor->payment_id;
                                             $payment_data['application_fee'] = round($payment_cost * 0.07);
                                         }
-                                        $this->stripe->addCharge($payment_data);
+                                        // $this->stripe->addCharge($payment_data);
                                         $this->session->set_flashdata('success', 'Payment Success!');
                                         $insert_data = array(
                                             'order_status' => 'New',
@@ -600,6 +630,7 @@ class CartCheckout extends MW_Controller {
                                                 'shipment_id' => $products->shipid,
                                                 'shipping_price' => round($products->shipping_price, 2),
                                                 'product_id' => $item['pro_id'],
+                                                'sku_id' => isset($item['sku'])?$item['sku']:null,
                                                 'vendor_id' => $matixVendorId,
                                                 'price' => $item['price'],
                                                 'tax' => $item_tax,
@@ -644,6 +675,7 @@ class CartCheckout extends MW_Controller {
                                                         'shipment_id' => $products->shipid,
                                                         'shipping_price' => $products->shipping_price,
                                                         'product_id' => $free_productid,
+                                                        'sku_id' => isset($item['sku'])?$item['sku']:null,
                                                         'vendor_id' => $matixVendorId,
                                                         'price' => '0.00',
                                                         'tax' => '0.00',
@@ -666,10 +698,10 @@ class CartCheckout extends MW_Controller {
                                 $matixVendorFlag = FALSE;
                             }
                             $data['success_order'][] = $this->Order_model->get_by(array('id' => $insert_id));
-                        // } else { //user don't have licence or expired
-                        //     $bLicenceFlag = FALSE;
-                        //     $unLicence_vendors[] = $vendor_id[$i];
-                        // }
+                        } else { //user don't have licence or expired
+                            $bLicenceFlag = FALSE;
+                            $unLicence_vendors[] = $vendor_id[$i];
+                        }
                     }
                 }
                 if (!($bLicenceFlag)) { // Display a message,if the user done have licence or expired
@@ -758,6 +790,11 @@ class CartCheckout extends MW_Controller {
                             $data['order_details'][$k]->vendor = $vendors;
 
                             $order_vendor_ids[] = $data['order_details'][$k]->vendor_id;
+
+                             $skuDetails = $this->Product_varients->skuDetails($data['order_details'][$k]->sku_id);
+                             $optionsList = convert_options_to_list($skuDetails['options']);  
+                             $optionCode = implode('-', $optionsList);  
+                             $data['order_details'][$k]->optionCode= $optionCode;
                         }
                         $order_vendor_ids = array_unique($order_vendor_ids);
 
@@ -880,6 +917,11 @@ class CartCheckout extends MW_Controller {
                             $data['order_details'][$k]->Product_details = $product_pricing;
                             $data['order_details'][$k]->product = $product;
                             $data['order_details'][$k]->vendor = $vendors;
+
+                             $skuDetails = $this->Product_varients->skuDetails($data['order_details'][$k]->sku_id);
+                             $optionsList = convert_options_to_list($skuDetails['options']);  
+                             $optionCode = implode('-', $optionsList);  
+                             $data['order_details'][$k]->optionCode= $optionCode;
                         }
 
                         $data['promos'] = $this->Order_promotion_model->get_many_by(array('order_id' => $data['restricted_orders'][$j]->id));

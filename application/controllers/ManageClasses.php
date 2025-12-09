@@ -384,7 +384,7 @@ class ManageClasses extends MW_Controller {
                         if ($vendor->payment_id != null && $vendor->payment_id != "") {
                             $payment_data['destination'] = $vendor->payment_id;
                         }
-                        $output = $this->stripe->addCharge($payment_data);
+                        // $output = $this->stripe->addCharge($payment_data);
 
                         $insert_data = array(
                             'order_status' => 'New',
@@ -467,7 +467,7 @@ class ManageClasses extends MW_Controller {
                                 $payment_data['destination'] = $vendor->payment_id;
                                 $payment_data['application_fee'] = round($payment_cost * 0.07);
                             }
-                            $output = $this->stripe->addCharge($payment_data);
+                            // $output = $this->stripe->addCharge($payment_data);
                             $insert_data = array(
                                 'order_status' => 'New',
                                 'location_id' => $location_id,

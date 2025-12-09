@@ -14,7 +14,66 @@ class Product_varients extends MY_Model
         $this->load->model('Memc');
         $this->load->model('PDOhandler');
     }
+    public function skubyProductId($productId = '')
+    {
+        $this->db->select('*');
+        $this->db->from('skus');
+        $this->db->where_in('product_id', $productId);
+        $query = $this->db->get();
 
+        return $query->result();  
+    }
+
+
+    public function skuDetails($sku_code = '')
+    {
+        // Step 1: Get the SKU row
+        $this->db->select('*');
+        $this->db->where('sku_code', $sku_code);
+        $sku = $this->db->get('skus')->row_array();
+
+        if (!$sku) return []; // SKU not found
+
+        // Step 2: Get options for this SKU
+        $this->db->select('po.option_type, po.option_code, pov.value_id, pov.value, s.stock_quantity');
+        $this->db->from('skus s');
+        $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+        $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
+        $this->db->join('product_options po', 'pov.option_id = po.option_id');
+        $this->db->where('s.sku_id', $sku['sku_id']);
+        $this->db->order_by('po.option_type, pov.value');
+        $option_rows = $this->db->get()->result();
+
+        // Step 3: Format options
+        $options = [];
+        foreach ($option_rows as $r) {
+            $options[$r->option_type][] = [
+                'value_id' => $r->value_id,
+                'value'    => $r->value,
+                'stock'    => (int)$r->stock_quantity
+            ];
+        }
+
+        // Step 4: Merge options into SKU array
+        $sku['options'] = $options;
+
+        return $sku;
+    }
+    public function get_highest_quantity_skus($products=[]) {
+        $matix_ids = array_column($products, 'matix_id');
+        $subquery = "SELECT product_id, MAX(stock_quantity) as max_quantity 
+                    FROM skus 
+                    WHERE product_id IN ('" . implode("','", $matix_ids) . "') 
+                    GROUP BY product_id";
+        
+        $this->db->select('s.sku_code, s.stock_quantity, s.product_id');
+        $this->db->from('skus s');
+        $this->db->join("($subquery) max_skus", 's.product_id = max_skus.product_id AND s.stock_quantity = max_skus.max_quantity', 'inner');
+        $this->db->where_in('s.product_id', $matix_ids);
+        
+        $query = $this->db->get();
+        return $query->result();
+    }
     // TODAY
 
     /** Initial options for first render (from in-stock SKUs only) */
@@ -67,7 +126,7 @@ class Product_varients extends MY_Model
 
         $matix_id = $product->matix_id;
 
-        $this->db->select('s.sku_id, s.sku_code,
+        $this->db->select('s.sku_id, s.sku_code,s.stock_quantity,s.image,
                 COALESCE(pp.price, ' . $this->db->escape($product->base_price) . ')        AS price,
                 COALESCE(pp.retail_price, ' . $this->db->escape($product->base_price) . ') AS retail_price,
                 COUNT(DISTINCT sov.value_id) AS matched_count,
@@ -255,7 +314,7 @@ class Product_varients extends MY_Model
             return null;
         }
 
-        $this->db->select('s.sku_id, s.stock_quantity, s.sku_code,
+        $this->db->select('s.sku_id, s.stock_quantity, s.sku_code,s.image,
             COALESCE(pp.price, ' . $this->db->escape($product->base_price) . ')        AS price,
             COALESCE(pp.retail_price, ' . $this->db->escape($product->base_price) . ') AS retail_price,
             COUNT(DISTINCT sov.value_id) AS matched_count,
@@ -448,5 +507,8 @@ class Product_varients extends MY_Model
 
         return $sku;
     }
+
+
+
 
 }

@@ -120,6 +120,20 @@ class Product_pricing_model extends MY_Model {
         return $prices;
     }
 
+    public function getPricebySku($productId,$sku_id){
+         $prices = $this->db->select('pp.*, 
+                        COALESCE(pp.price, p.base_price) AS price,
+                        COALESCE(pp.retail_price, p.base_price) AS retail_price')
+                    ->from('product_pricings pp')
+                    ->join('products p', 'pp.product_id = p.id')
+                    ->where('pp.product_id', $productId)
+                    ->where('pp.sku', $sku_id) // Match the specific SKU
+                    ->where('pp.active', 1)
+                    ->get();
+                    
+                    return $prices;
+    }
+
     public function getPricesMarketplace($productId)
     {	
 	$this->db->select('matix_id');

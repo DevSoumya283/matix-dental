@@ -685,7 +685,7 @@
                                 <!-- Single Uploaded Image -->
                                 <?php if ($product_images != null) { ?>
                                     <?php foreach ($product_images as $images) { ?>
-                                        <?php if (file_exists("uploads/products/images/" . $images->photo)) { ?>
+                                        <?php if (file_exists("uploads/products/new-vol-data/" . $images->photo)) { ?>
                                             <li class="item">
                                                 <div class="wrapper">
                                                     <div class="wrapper__inner">
@@ -693,14 +693,14 @@
                                                             <input type="radio" name="productImage" <?php echo ($images->image_type == 'mainimg') ? "checked" : ""; ?> value="<?php echo $images->id; ?>">
                                                             <div class="control__indicator"></div>
                                                             <div class="control__text">
-                                                                <img width="32" src="<?php echo base_url(); ?>uploads/products/images/<?php echo $images->photo; ?>">
+                                                                <img width="32" src="<?php echo base_url(); ?>uploads/products/new-vol-data/<?php echo $images->photo; ?>">
                                                             </div>
                                                         </label>
                                                     </div>
                                                     <div class="wrapper__inner align--right">
                                                         <div class="text__group">
                                                             <span class="line--main">
-                                                                <?php echo number_format(filesize("uploads/products/images/" . $images->photo) / 1024, 2) ?> kB
+                                                                <?php echo number_format(filesize("uploads/products/new-vol-data/" . $images->photo) / 1024, 2) ?> kB
                                                             </span>
 
                                                             <span class="line--sub"><a class="link is--neg" href="<?php echo base_url(); ?>product-image-delete?product_id=<?php echo $images->model_id; ?>&image_id=<?php echo $images->id; ?>">Delete</a></span>

@@ -24,6 +24,7 @@ class Reorders extends MW_Controller {
         $this->load->model('Product_tax_model');
         $this->load->model('Vendor_groups_model');
         $this->load->model('User_payment_option_model');
+        $this->load->model('BuyingClub_model');
         $this->load->library('email');
         $this->load->library('stripe');
         $this->load->helper('my_email_helper');
@@ -47,63 +48,122 @@ class Reorders extends MW_Controller {
             $user_payment = $this->User_payment_option_model->get_by(array('id' => $data['orders']->payment_id, 'user_id' => $user_id));
 
             $user = $this->User_model->get_by(array('id' => $data['orders']->user_id));
-            $customer = $this->stripe->getCustomer($user->stripe_id);
-            // Payment method
-            $payment_method = $customer->sources->retrieve($user_payment->token);
+            $stripe_enabled = $this->config->item('stripe_enabled');
+            $customer = null;
+            $payment_method = null;
+
+            // Only run Stripe calls if Stripe is enabled and library exists
+            if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+
+                if (isset($user->stripe_id)) {
+                    $customer = $this->stripe->getCustomer($user->stripe_id);
+                }
+
+                if (isset($customer->sources) && method_exists($customer->sources, 'retrieve') && isset($user_payment->token)) {
+                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                }
+            }
+
+            // Build a safe object regardless of Stripe availability
             $users_payment_obj = new stdClass();
-            $users_payment_obj->id = $user_payment->id;
-            $users_payment_obj->token = $user_payment->token;
-            $users_payment_obj->user_id = $user_id;
-            $users_payment_obj->payment_type = $payment_method->object;
-            $users_payment_obj->card_type = $payment_method->brand;
-            $users_payment_obj->exp_month = $payment_method->exp_month;
-            $users_payment_obj->exp_year = $payment_method->exp_year;
-            $users_payment_obj->cc_number = $payment_method->last4;
-            $users_payment_obj->cc_name = $payment_method->name;
-            $users_payment_obj->bank_name = $payment_method->bank_name;
-            $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-            $users_payment_obj->ba_account_number = $payment_method->last4;
-            $users_payment_obj->created_at = $user_payment->created_at;
-            $users_payment_obj->updated_at = $user_payment->update_at;
+
+            $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+            $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+            $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+            $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+            $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+            $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+            $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+            $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+            $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+            $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+            $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+            $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+            $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+            $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
             $data['payment'] = $users_payment_obj;
             unset($users_payment_obj);
 
-
             $user_payments = $this->User_payment_option_model->get_many_by(array('user_id' => $user_id));
             $user = $this->User_model->get_by(array('id' => $user_id));
-            $customer = $this->stripe->getCustomer($user->stripe_id);
-            foreach ($user_payments as $user_payment) {
-                // Payment method
-                $payment_method = $customer->sources->retrieve($user_payment->token);
-                $users_payment_obj = new stdClass();
-                $users_payment_obj->id = $user_payment->id;
-                $users_payment_obj->token = $user_payment->token;
-                $users_payment_obj->user_id = $user_id;
-                $users_payment_obj->payment_type = $payment_method->object;
-                $users_payment_obj->card_type = $payment_method->brand;
-                $users_payment_obj->exp_month = $payment_method->exp_month;
-                $users_payment_obj->exp_year = $payment_method->exp_year;
-                $users_payment_obj->cc_number = $payment_method->last4;
-                $users_payment_obj->cc_name = $payment_method->name;
-                $users_payment_obj->bank_name = $payment_method->bank_name;
-                $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                $users_payment_obj->ba_account_number = $payment_method->last4;
-                $users_payment_obj->created_at = $user_payment->created_at;
-                $users_payment_obj->updated_at = $user_payment->update_at;
-                $data['payments'][] = $users_payment_obj;
-                unset($users_payment_obj);
+            
+            $stripe_enabled = $this->config->item('stripe_enabled');
+            $customer = null;
+
+            // Only attempt to get Stripe customer if enabled and library exists
+            if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+                if (isset($user->stripe_id)) {
+                    $customer = $this->stripe->getCustomer($user->stripe_id);
+                }
             }
 
+            $data['payments'] = [];
+
+            if (!empty($user_payments) && is_array($user_payments)) {
+                foreach ($user_payments as $user_payment) {
+
+                    $payment_method = null;
+
+                    // Retrieve Stripe payment method safely
+                    if (
+                        $stripe_enabled &&
+                        isset($customer->sources) &&
+                        method_exists($customer->sources, 'retrieve') &&
+                        isset($user_payment->token)
+                    ) {
+                        $payment_method = $customer->sources->retrieve($user_payment->token);
+                    }
+
+                    // Build safe object (no fatal errors if Stripe disabled)
+                    $users_payment_obj = new stdClass();
+
+                    $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                    $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                    $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+                    $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                    $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                    $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+                    $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+                    $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                    $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                    $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                    $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+                    $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
+                    $data['payments'][] = $users_payment_obj;
+                    unset($users_payment_obj);
+                }
+            }
+
+
             $data['order_items'] = $this->Order_items_model->get_many_by(array('order_id' => $order_id, 'price!=' => '0.00'));
+            // echo"<pre>";
+            // print_r($data['order_items']);
             for ($i = 0; $i < count($data['order_items']); $i++) {
                 $p_details = $this->Products_model->get_by(array('id' => $data['order_items'][$i]->product_id));
                 $image = $this->Images_model->get_by(array('model_id' => $data['order_items'][$i]->product_id, 'model_name' => 'products', 'image_type' => 'mainimg'));
                 $vendor = $this->Vendor_model->get_by(array('id' => $data['order_items'][$i]->vendor_id));
-                $product_pricing = $this->Product_pricing_model->get_by(array('product_id' => $data['order_items'][$i]->product_id, 'vendor_id' => $data['order_items'][$i]->vendor_id));
+                // $product_pricing = $this->Product_pricing_model->get_by(array('product_id' => $data['order_items'][$i]->product_id, 'vendor_id' => $data['order_items'][$i]->vendor_id));
+                $product_pricing = $this->Product_pricing_model->getPricebySku($data['order_items'][$i]->product_id,$data['order_items'][$i]->sku_id)->row();
+                 
+                 if(!empty($_SESSION['user_buying_clubs'])){
+                    // get buying club prices
+                                   
+                    $bcPrices = $this->BuyingClub_model->getBuyingClubPrices($_SESSION['user_buying_clubs'], [$data['order_items'][$i]->product_id]);
+                    $buyingClubs = $_SESSION['user_buying_clubs'];
+                    $clubPrice = $this->BuyingClub_model->getBestPrice($data['order_items'][$i]->product_id,$data['order_items'][$i]->vendor_id, $bcPrices, $_SESSION['user_buying_clubs'], $product_pricing->retail_price);
+                
+                }
+                
+                
                 $data['order_items'][$i]->products = $p_details;
                 $data['order_items'][$i]->images = $image;
                 $data['order_items'][$i]->vendors = $vendor;
                 $data['order_items'][$i]->pricing = $product_pricing;
+                $data['order_items'][$i]->pricing->clubPrice = $clubPrice;
                 if ($data['tax_rate'] != null) {
                     $data['tax'] += ($data['tax_rate']->EstimatedCombinedRate) * $data['order_items'][$i]->quantity * $data['order_items'][$i]->price;
                 }
@@ -133,24 +193,40 @@ class Reorders extends MW_Controller {
             $user_payment = $this->User_payment_option_model->get($payment_id);
 
             $user = $this->User_model->get_by(array('id' => $user_id));
-            $customer = $this->stripe->getCustomer($user->stripe_id);
-            // Payment method
-            $payment_method = $customer->sources->retrieve($user_payment->token);
+            $stripe_enabled = $this->config->item('stripe_enabled');
+            $customer = null;
+            $payment_method = null;
+
+            // Try Stripe only if enabled and available
+            if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+
+                if (isset($user->stripe_id)) {
+                    $customer = $this->stripe->getCustomer($user->stripe_id);
+                }
+
+                if (isset($customer->sources) && method_exists($customer->sources, 'retrieve') && isset($user_payment->token)) {
+                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                }
+            }
+
+            // Always build a safe object
             $users_payment_obj = new stdClass();
-            $users_payment_obj->id = $user_payment->id;
-            $users_payment_obj->token = $user_payment->token;
-            $users_payment_obj->user_id = $user_id;
-            $users_payment_obj->payment_type = $payment_method->object;
-            $users_payment_obj->card_type = $payment_method->brand;
-            $users_payment_obj->exp_month = $payment_method->exp_month;
-            $users_payment_obj->exp_year = $payment_method->exp_year;
-            $users_payment_obj->cc_number = $payment_method->last4;
-            $users_payment_obj->cc_name = $payment_method->name;
-            $users_payment_obj->bank_name = $payment_method->bank_name;
-            $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-            $users_payment_obj->ba_account_number = $payment_method->last4;
-            $users_payment_obj->created_at = $user_payment->created_at;
-            $users_payment_obj->updated_at = $user_payment->update_at;
+
+            $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+            $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+            $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+            $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+            $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+            $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+            $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+            $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+            $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+            $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+            $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+            $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+            $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+            $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
             $data['payment'] = $users_payment_obj;
             unset($users_payment_obj);
 
@@ -219,26 +295,46 @@ class Reorders extends MW_Controller {
             $user_payment = $this->User_payment_option_model->get_by(array('id' => $payment, 'user_id' => $user_id));
 
             $user = $this->User_model->get_by(array('id' => $user_id));
-            $customer = $this->stripe->getCustomer($user->stripe_id);
-            // Payment method
-            $payment_method = $customer->sources->retrieve($user_payment->token);
-            $users_payment_obj = new stdClass();
-            $users_payment_obj->id = $user_payment->id;
-            $users_payment_obj->token = $user_payment->token;
-            $users_payment_obj->user_id = $user_id;
-            $users_payment_obj->payment_type = $payment_method->object;
-            $users_payment_obj->card_type = $payment_method->brand;
-            $users_payment_obj->exp_month = $payment_method->exp_month;
-            $users_payment_obj->exp_year = $payment_method->exp_year;
-            $users_payment_obj->cc_number = $payment_method->last4;
-            $users_payment_obj->cc_name = $payment_method->name;
-            $users_payment_obj->bank_name = $payment_method->bank_name;
-            $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-            $users_payment_obj->ba_account_number = $payment_method->last4;
-            $users_payment_obj->created_at = $user_payment->created_at;
-            $users_payment_obj->updated_at = $user_payment->update_at;
-            $data['payment'] = $users_payment_obj;
-            unset($users_payment_obj);
+            $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+            $customer = null;
+            $payment_method = null;
+
+            // Only call Stripe if enabled and library exists
+            if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+
+                if (isset($user->stripe_id)) {
+                    $customer = $this->stripe->getCustomer($user->stripe_id);
+                }
+
+                if (
+                    isset($customer->sources) &&
+                    method_exists($customer->sources, 'retrieve') &&
+                    isset($user_payment->token)
+                ) {
+                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                }
+            }
+        // Always build a safe payment object (nulls if Stripe disabled or missing fields)
+        $users_payment_obj = new stdClass();
+
+        $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+        $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+        $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+        $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+        $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+        $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+        $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+        $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+        $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+        $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+        $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+        $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+        $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+        $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
+        $data['payment'] = $users_payment_obj;
+        unset($users_payment_obj);
+
 
             $data['shippings'] = $this->Shipping_options_model->get_by(array('id' => $shipping_id));
             switch ($data['shippings']->delivery_time) {
@@ -286,7 +382,7 @@ class Reorders extends MW_Controller {
 
 
                         if ($user_license != null) {
-                            $end_date = $user_license[0]->expire_date;
+                            $end_date = $user_license->expire_date;
                             $today_date = date('Y-m-d');
                             if ($today_date <= $end_date) {
                                 $data['error'] = "";
@@ -451,7 +547,7 @@ class Reorders extends MW_Controller {
                     if ($vendor->payment_id != null && $vendor->payment_id != "") {
                         $payment_data['destination'] = $vendor->payment_id;
                     }
-                    $output = $this->stripe->addCharge($payment_data);
+                    // $output = $this->stripe->addCharge($payment_data);
 
                     $this->Order_model->insert($insert_data);
                     $insert_id = $this->db->insert_id();
@@ -495,7 +591,7 @@ class Reorders extends MW_Controller {
                             $payment_data['destination'] = $vendor->payment_id;
                             $payment_data['application_fee'] = round($payment_cost * 0.07);
                         }
-                        $output = $this->stripe->addCharge($payment_data);
+                        // $output = $this->stripe->addCharge($payment_data);
                         $this->Order_model->insert($insert_data);
                         $insert_id = $this->db->insert_id();
                         for ($j = 0; $j < $product_count; $j++) {
@@ -586,26 +682,46 @@ class Reorders extends MW_Controller {
                     //PAYMENT
                     $user_payment = $this->User_payment_option_model->get_by(array('user_id' => $user_id, 'id' => $data['orders']->payment_id));
                     $user = $this->User_model->get_by(array('id' => $user_id));
-                    $customer = $this->stripe->getCustomer($user->stripe_id);
-                    // Payment method
-                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                    $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+                    $customer = null;
+                    $payment_method = null;
+
+                    // Only call Stripe if enabled and library exists
+                    if ($stripe_enabled && isset($this->stripe) && method_exists($this->stripe, 'getCustomer')) {
+
+                        if (isset($user->stripe_id)) {
+                            $customer = $this->stripe->getCustomer($user->stripe_id);
+                        }
+
+                        if (
+                            isset($customer->sources) &&
+                            method_exists($customer->sources, 'retrieve') &&
+                            isset($user_payment->token)
+                        ) {
+                            $payment_method = $customer->sources->retrieve($user_payment->token);
+                        }
+                    }
+
+                    // Always build a safe payment object (nulls if Stripe disabled or missing fields)
                     $users_payment_obj = new stdClass();
-                    $users_payment_obj->id = $user_payment->id;
-                    $users_payment_obj->token = $user_payment->token;
-                    $users_payment_obj->user_id = $user_id;
-                    $users_payment_obj->payment_type = $payment_method->object;
-                    $users_payment_obj->card_type = $payment_method->brand;
-                    $users_payment_obj->exp_month = $payment_method->exp_month;
-                    $users_payment_obj->exp_year = $payment_method->exp_year;
-                    $users_payment_obj->cc_number = $payment_method->last4;
-                    $users_payment_obj->cc_name = $payment_method->name;
-                    $users_payment_obj->bank_name = $payment_method->bank_name;
-                    $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                    $users_payment_obj->ba_account_number = $payment_method->last4;
-                    $users_payment_obj->created_at = $user_payment->created_at;
-                    $users_payment_obj->updated_at = $user_payment->update_at;
+
+                    $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                    $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                    $users_payment_obj->user_id            = isset($user_id) ? $user_id : null;
+                    $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                    $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                    $users_payment_obj->exp_month          = isset($payment_method->exp_month) ? $payment_method->exp_month : null;
+                    $users_payment_obj->exp_year           = isset($payment_method->exp_year) ? $payment_method->exp_year : null;
+                    $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                    $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                    $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                    $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+                    $users_payment_obj->created_at         = isset($user_payment->created_at) ? $user_payment->created_at : null;
+                    $users_payment_obj->updated_at         = isset($user_payment->updated_at) ? $user_payment->updated_at : null;
+
                     $data['payment'] = $users_payment_obj;
-                    unset($users_payment_obj);
+                    unset($users_payment_obj);                   
 
 
                     $data['shipping_address'] = $this->Organization_location_model->get_by(array('id' => $location_id));

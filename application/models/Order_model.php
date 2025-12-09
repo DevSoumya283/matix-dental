@@ -73,4 +73,90 @@ class Order_model extends MY_Model {
 
         return $orders;
     }
+
+    public function getOrderItems($order_id, $vendor_id)
+    {
+        $this->db->select('
+            a.id,
+            b.id AS orderItem_id,
+            b.sku_id,
+            b.promo_code_id,
+            c.title,
+            e.name,
+            e.mpn,
+            d.price,
+            d.retail_price,
+            d.vendor_product_id,
+            b.price AS product_order_price,
+            b.picked,
+            b.quantity
+        ');
+        $this->db->from('orders a');
+
+        // INNER JOIN order_items
+        $this->db->join('order_items b', 'b.order_id = a.id AND a.restricted_order = "0"', 'inner');
+
+        // LEFT JOIN promo_codes
+        $this->db->join('promo_codes c', 'c.id = b.promo_code_id', 'left');
+
+        // INNER JOIN product_pricings
+        $this->db->join('product_pricings d', 'd.product_id = b.product_id', 'inner');
+
+        // INNER JOIN products
+        $this->db->join('products e', 'e.id = b.product_id', 'inner');
+
+        // WHERE conditions
+        $this->db->where('a.id', (int) $order_id);
+        $this->db->where('a.vendor_id', (int) $vendor_id);
+
+        // GROUP BY (unique order item)
+        $this->db->group_by('b.id');
+
+        // Execute query
+        $query = $this->db->get();
+
+        // Optional debugging
+        // echo $this->db->last_query(); die;
+
+        return $query->result();
+    }
+
+        public function deductQty($sku_code, $pickedCount)
+    {
+        $sku_code = trim($sku_code);
+        $pickedCount = (int)$pickedCount;
+
+        if (empty($sku_code) || $pickedCount <= 0) {
+            return false; // Invalid input
+        }
+
+        // Fetch current stock quantity
+        $this->db->select('stock_quantity');
+        $this->db->where('sku_code', $sku_code);
+        $sku = $this->db->get('skus')->row();
+
+        if (!$sku) {
+            return false; 
+        }
+
+        $newQty = $sku->stock_quantity - $pickedCount;
+        if ($newQty < 0) {
+            $newQty = 0; 
+        }
+
+        // Update quantity
+        $this->db->where('sku_code', $sku_code);
+        return $this->db->update('skus', ['stock_quantity' => $newQty]);
+    }
+
+        public function skuDetails($sku=''){
+       
+        $this->db->select('*');
+        $this->db->from('skus');       
+        $this->db->where('sku_code', $sku);
+        $query = $this->db->get();
+        return $query->row();
+
+    }
+
 }

@@ -37,9 +37,8 @@ class VendorDashboard extends MW_Controller {
         $this->load->model('Vendor_policies_model');
         $this->load->model('Vendor_customer_notes_model');
         $this->load->model('Whitelabel_model');
+        $this->load->model('Product_varients');
         $this->load->library('stripe');
-
-        $this->load->model('Stocks_model');
     }
 
     public function update_companyDetails() {
@@ -58,7 +57,7 @@ class VendorDashboard extends MW_Controller {
                 $_FILES['companyLogo']['tmp_name'] = $_FILES['companyLogo']['tmp_name'];
                 $_FILES['companyLogo']['error'] = $_FILES['companyLogo']['error'];
                 $_FILES['companyLogo']['size'] = $_FILES['companyLogo']['size'];
-                $config['upload_path'] = 'uploads/vendor/logo/';
+                $config['upload_path'] = FCPATH.'assets/img/logos/';
                 $config['allowed_types'] = 'gif|jpg|png|jpeg';
                 $config['max_size'] = 1024;
                 $config['remove_spaces'] = true;
@@ -68,7 +67,9 @@ class VendorDashboard extends MW_Controller {
                 $this->load->library('upload', $config);
                 $this->upload->initialize($config);
                 if (!$this->upload->do_upload('companyLogo')) {
-                    $this->session->set_flashdata('error', 'The uploaded file exceeds the maximum allowed size (1MB)');
+                     $error = $this->upload->display_errors();
+                $this->session->set_flashdata('error', 'File upload failed: ' . $error);
+                    // $this->session->set_flashdata('error', 'The uploaded file exceeds the maximum allowed size (1MB)');
                 } else {
                     $image_uploaded = $this->upload->data();
 
@@ -98,6 +99,8 @@ class VendorDashboard extends MW_Controller {
                     }
                 }
             }
+                $this->session->set_flashdata('success', 'Update Successfull.');
+
             header('Location: vendor-settings-dashboard');
         } else {
             $this->session->set_flashdata('error', 'Please contact Vendor to update vendor details.');
@@ -186,11 +189,13 @@ class VendorDashboard extends MW_Controller {
 
                 $vendor_products = $this->Vendor_model->searchProducts($vendor_id, $search, $order_by, $data['limit'], $offset);
                 // Debugger::debug($vendor_products);
+
                 $resultsCount = $this->Vendor_model->getSearchTotalCount($vendor_id, $search, $order_by);
             } else {
                 $data['search'] = "";
 
                 $vendor_products = $this->Vendor_model->loadProducts($vendor_id, $promos, $Category_select, $productStatus, $order_by, $data['limit'], $offset, null, $siteId);
+
                 Debugger::debug($vendor_products, $siteId);
                 if (($Category_select != null) || ($promos != null) || ($productStatus != null)) {
                     if ($Category_select != null && $Category_select != "") {
@@ -307,9 +312,15 @@ class VendorDashboard extends MW_Controller {
                     $data['productName']->product_image = "";
                     if ($data['productName'] != null) {
                         $product_images = $this->Images_model->get_by(array('model_name' => 'products', 'image_type' => 'mainimg', 'model_id' => $data['productPricing']->product_id));
-                        if ($product_images != null) {
+                        if ($product_images != null) {                           
                             $data['productName']->product_image = $product_images;
                         }
+                    }
+                    $productSkus = $this->Product_varients->skubyProductId($data['productName']->matix_id);
+                    $data['productSkus']= '';
+                    if(!empty($productSkus))
+                    {
+                        $data['productSkus']=$productSkus;
                     }
                     //  2. Getting the Promo_codes for the Particular Product based on Vendor.
                     $data['promoCodes'] = $this->Promo_codes_model->get_by(array('product_id' => $data['productPricing']->product_id, 'vendor_id' => $vendor_id));
@@ -321,9 +332,6 @@ class VendorDashboard extends MW_Controller {
                             $data['promoCodes']->free_product_name = $data['freeproductName']->name;
                         }
                     }
-
-                    $product_id = $data['productPricing']->product_id;
-                    $data['stocks'] = $this->Stocks_model->get_stock_by_product($product_id);
 
                     $data['My_vendor_users'] = "";
                     $data['vendor_shipping'] = "";    // Defined for the #edit-user.php Modal
@@ -1853,72 +1861,46 @@ class VendorDashboard extends MW_Controller {
     //2025
     public function productPriceStocksupdate() {
         $vendor_roles = unserialize(ROLES_VENDORS);
- 
+        $sku = $this->input->post('sku');
+        //    
         if (isset($_SESSION['user_id']) && isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], $vendor_roles)) {
             $productPricing_id = $this->input->post('productPricing_id');
- 
-            if ($productPricing_id != null) {
-                $sku = $this->input->post('sku');
+            if ($sku != null) {
                 $new_stock = (int) $this->input->post('stocks');
  
-                $this->db->where('id', $productPricing_id);
+                $this->db->where('sku', $sku);
                 $productPricing = $this->db->get('product_pricings')->row();
- 
                 if ($productPricing) {
-                    $product_id = $productPricing->product_id;
-                    $vendor_id = $productPricing->vendor_product_id;
- 
-           
-                    $this->db->where('id', $productPricing_id);
-                    $this->db->update('product_pricings', [
-                        'sku' => $sku,
-                        'updated_at' => date('Y-m-d H:i:s')
-                    ]);
- 
-                   
-                    $this->db->where('id', $product_id);
-                    $this->db->update('products', [
-                        'sku' => $sku,
-                        'updated_at' => date('Y-m-d H:i:s')
-                    ]);
- 
-                   
-                    $this->db->where('products_id', $product_id);
+                    $product_id = $productPricing->sku;
+                    $vendor_id = $productPricing->vendor_product_id;     
+                                     
+                    $this->db->where('products_id', $sku);
                     $this->db->where('vendor_id', $vendor_id);
                     $existing_stock = $this->db->get('stocks')->row();
  
                     $current_stock = $existing_stock ? (int) $existing_stock->stocks : 0;
                     $credit_stocks = 0;
                     $debit_stocks = 0;
- 
+                    
+                    // Update stock_quantity in skus table for selected sku_code
+                    $this->db->where('sku_code', $sku);
+                    $this->db->update('skus', [
+                        'stock_quantity' => $new_stock,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+
                    
                     if ($new_stock > $current_stock) {
                         $credit_stocks = $new_stock - $current_stock;
                     } elseif ($new_stock < $current_stock) {
                         $debit_stocks = $current_stock - $new_stock;
                     }
- 
                    
-                    if ($existing_stock) {
-                        $this->db->where('id', $existing_stock->id);
-                        $this->db->update('stocks', [
-                            'stocks' => $new_stock,
-                            'updated_at' => date('Y-m-d H:i:s')
-                        ]);
-                    } else {
-                        $this->db->insert('stocks', [
-                            'products_id' => $product_id,
-                            'vendor_id' => $vendor_id,
-                            'stocks' => $new_stock,
-                            'created_at' => date('Y-m-d H:i:s'),
-                            'updated_at' => date('Y-m-d H:i:s')
-                        ]);
-                    }
- 
+                   
                    
                     if ($credit_stocks > 0 || $debit_stocks > 0) {
                         $this->db->insert('stock_history', [
-                            'products_id' => $product_id,
+                            'products_id' => $sku,
                             'vendor_id' => $vendor_id,
                             'credit_stocks' => $credit_stocks,
                             'debit_stocks' => $debit_stocks,
@@ -1928,7 +1910,7 @@ class VendorDashboard extends MW_Controller {
                     }
                 }
  
-                $this->session->set_flashdata('success', 'Stocks and Custom SKU for the Products are updated');
+                $this->session->set_flashdata('success', 'Stocks updated for product: '.$sku);
                 header("Location: product-pricing-vendorEdit?productPrice_id=" . $productPricing_id);
                 exit;
             }

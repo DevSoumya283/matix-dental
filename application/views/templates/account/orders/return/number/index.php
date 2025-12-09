@@ -90,7 +90,7 @@
                                         <!-- Product -->
                                         <div class="product product--s row multi--vendor req--license padding--xxs">
                                             <div class="product__image col col--2-of-8 col--am">
-                                                <div class="product__thumb" style="background-image:url('<?php echo image_url(); ?>assets/img/product-image.png');">
+                                                <div class="product__thumb" style="background-image:url('<?php echo base_url(); ?>assets/img/product-image.png');">
                                                 </div>
                                             </div>
                                             <div class="product__data col col--6-of-8 col--am">

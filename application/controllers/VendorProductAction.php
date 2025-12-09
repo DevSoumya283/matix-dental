@@ -33,6 +33,7 @@ class VendorProductAction extends MW_Controller {
         $this->load->model('Order_promotion_model');
         $this->load->model('Vendor_order_notes_model');
         $this->load->model('Vendor_order_activities_model');
+        $this->load->model('Product_varients');
         $this->load->model('Order_item_return_model');
         $this->load->model('Location_inventories_model');
         $this->load->helper('MY_privilege_helper');
@@ -310,21 +311,41 @@ class VendorProductAction extends MW_Controller {
                         }
                     }
 
-                    if ($payment_method != null) {
-                        $cardUser = $this->User_model->get_by(array('id' => $payment_method->user_id));
-                        $customer = $this->stripe->getCustomer($cardUser->stripe_id);
-                        // Payment method
-                        $payment_method = $customer->sources->retrieve($payment_method->token);
+                   if (isset($payment_method)) {
+                        $cardUser = $this->User_model->get_by(array('id' => isset($payment_method->user_id) ? $payment_method->user_id : null));
 
+                        $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+                        $customer = null;
+                        $pm_source = null; // don't overwrite incoming $payment_method
 
-                        $data['order_details']->payment_type = $payment_method->object;
-                        $data['order_details']->card_type = $payment_method->brand;
-                        $data['order_details']->exp_month = $payment_method->exp_month;
-                        $data['order_details']->exp_year = $payment_method->exp_year;
-                        $data['order_details']->cc_number  = $payment_method->last4;
-                        $data['order_details']->cc_name = $payment_method->name;
-                        $data['order_details']->bank_name = $payment_method->bank_name;
+                        if (
+                            $stripe_enabled &&
+                            isset($this->stripe) &&
+                            method_exists($this->stripe, 'getCustomer') &&
+                            isset($cardUser->stripe_id)
+                        ) {
+                            $customer = $this->stripe->getCustomer($cardUser->stripe_id);
+
+                            if (
+                                isset($customer->sources) &&
+                                method_exists($customer->sources, 'retrieve') &&
+                                isset($payment_method->token)
+                            ) {
+                                $pm_source = $customer->sources->retrieve($payment_method->token);
+                            }
+                        }
+
+                        if (isset($data['order_details'])) {
+                            $data['order_details']->payment_type = isset($pm_source->object) ? $pm_source->object : null;
+                            $data['order_details']->card_type    = isset($pm_source->brand) ? $pm_source->brand : null;
+                            $data['order_details']->exp_month    = isset($pm_source->exp_month) ? $pm_source->exp_month : null;
+                            $data['order_details']->exp_year     = isset($pm_source->exp_year) ? $pm_source->exp_year : null;
+                            $data['order_details']->cc_number    = isset($pm_source->last4) ? $pm_source->last4 : null;
+                            $data['order_details']->cc_name      = isset($pm_source->name) ? $pm_source->name : null;
+                            $data['order_details']->bank_name    = isset($pm_source->bank_name) ? $pm_source->bank_name : null;
+                        }
                     }
+
 
 
                     //  Order Address
@@ -335,8 +356,17 @@ class VendorProductAction extends MW_Controller {
                         $promocode = $this->Promo_codes_model->get_by(array('id' => $data['promos'][$i]->promo_id));
                         $data['promos'][$i]->promocode = $promocode;
                     }
-                    $query = "SELECT a.id,b.id as orderItem_id,b.promo_code_id,c.title,e.name,e.mpn,d.price,d.retail_price,d.vendor_product_id,b.price as product_order_price,b.picked,b.quantity FROM orders a  inner join order_items b on b.order_id=a.id and a.restricted_order='0' left join promo_codes c on c.id=b.promo_code_id INNER JOIN product_pricings d on d.product_id=b.product_id INNER JOIN products e on e.id=b.product_id WHERE a.id=$order_id and a.vendor_id=$vendor_id group by b.id";
-                    $data['purchased_product'] = $this->db->query($query)->result();
+                    // $query = "SELECT a.id,b.id as orderItem_id,b.promo_code_id,c.title,e.name,e.mpn,d.price,d.retail_price,d.vendor_product_id,b.price as product_order_price,b.picked,b.quantity FROM orders a  inner join order_items b on b.order_id=a.id and a.restricted_order='0' left join promo_codes c on c.id=b.promo_code_id INNER JOIN product_pricings d on d.product_id=b.product_id INNER JOIN products e on e.id=b.product_id WHERE a.id=$order_id and a.vendor_id=$vendor_id group by b.id";
+                    // $data['purchased_product'] = $this->db->query($query)->result();
+                    
+                    $data['purchased_product']  = $this->Order_model->getOrderItems($order_id, $vendor_id);
+
+                    foreach($data['purchased_product'] as $item){
+                         $skuDetails = $this->Product_varients->skuDetails($item->sku_id);
+                         $optionsList = convert_options_to_list($skuDetails['options']);  
+                         $optionCode = implode('-', $optionsList); 
+                         $item->optionCode= $optionCode;
+                    }
 
 
                     // Calculation Section
@@ -582,31 +612,71 @@ class VendorProductAction extends MW_Controller {
                     $data['orderUser'] = $orderUser;
 
                     $data['payment_details'] = "";
-                    if ($data['order_details'] != null) {
+                    if (!empty($data['order_details'])) {
+
+                        $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+                        $data['payment_details'] = [];
+
                         for ($i = 0; $i < count($data['order_details']); $i++) {
 
-                            $user_payment = $this->User_payment_option_model->get_by(array('id' => $data['order_details'][$i]->payment_id));
+                            $payment_id = isset($data['order_details'][$i]->payment_id)
+                                ? $data['order_details'][$i]->payment_id
+                                : null;
 
-                            $user = $this->User_model->get_by(array('id' => $user_payment->user_id));
+                            if (empty($payment_id)) {
+                                continue;
+                            }
 
-                            $customer = $this->stripe->getCustomer($user->stripe_id);
-                            // Payment method
+                            // Get user payment and user
+                            $user_payment = $this->User_payment_option_model->get_by(['id' => $payment_id]);
+                            if (empty($user_payment)) {
+                                continue;
+                            }
 
-                            $payment_method = $customer->sources->retrieve($user_payment->token);
+                            $user = $this->User_model->get_by(['id' => isset($user_payment->user_id) ? $user_payment->user_id : null]);
+                            if (empty($user)) {
+                                continue;
+                            }
+
+                            $customer = null;
+                            $payment_method = null;
+
+                            // Stripe call only if enabled and valid
+                            if (
+                                $stripe_enabled &&
+                                isset($this->stripe) &&
+                                method_exists($this->stripe, 'getCustomer') &&
+                                isset($user->stripe_id)
+                            ) {
+                                $customer = $this->stripe->getCustomer($user->stripe_id);
+
+                                if (
+                                    isset($customer->sources) &&
+                                    method_exists($customer->sources, 'retrieve') &&
+                                    isset($user_payment->token)
+                                ) {
+                                    $payment_method = $customer->sources->retrieve($user_payment->token);
+                                }
+                            }
+
+                            // Build safe object
                             $users_payment_obj = new stdClass();
-                            $users_payment_obj->id = $user_payment->id;
-                            $users_payment_obj->token = $user_payment->token;
-                            $users_payment_obj->payment_type = $payment_method->object;
-                            $users_payment_obj->card_type = $payment_method->brand;
-                            $users_payment_obj->cc_number = $payment_method->last4;
-                            $users_payment_obj->cc_name = $payment_method->name;
-                            $users_payment_obj->bank_name = $payment_method->bank_name;
-                            $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                            $users_payment_obj->ba_account_number = $payment_method->last4;
-                            $data['users_payments'][] = $users_payment_obj;
+                            $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                            $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                            $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                            $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                            $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                            $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                            $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                            $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                            $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+
+                            $data['payment_details'][] = $users_payment_obj;
                             unset($users_payment_obj);
                         }
                     }
+
+
                     // Order Items and Details
                     $query = "SELECT a.id,b.total,d.retail_price,b.promo_code_id,c.title,e.name,e.mpn,d.price,b.picked as quantity,e.manufacturer FROM orders a  inner join order_items b on b.order_id=a.id left join promo_codes c on c.id=b.promo_code_id INNER JOIN product_pricings d on d.product_id=b.product_id  INNER JOIN products e on e.id=b.product_id  WHERE a.id=$order_id and a.restricted_order='0' and a.vendor_id=$vendor_id group by b.id";
 //                $query = "SELECT b.mpn,b.name,a.total,a.quantity FROM order_items a INNER JOIN products b on b.id =a.product_id where a.order_id=$order_id and a.vendor_id=".$vendor_id;
@@ -663,7 +733,10 @@ class VendorProductAction extends MW_Controller {
             $data['promoCodes_active'] = "";
             $data['NorderCount'] = order_count(); // To Get the Latest Order Count.
             $data['ReturnCount'] = return_count();
+            $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/orders/o/complete/index.php', $data);
+            $this->load->view('/templates/_inc/header-vendor.php');
+
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
@@ -774,6 +847,8 @@ class VendorProductAction extends MW_Controller {
                 $data['orders'] = $this->Order_model->get($order_id);
                 $data['order_details'] = $this->Order_items_model->get_many_by(array('order_id' => $order_id, 'restricted_order' => '0'));
                 $data['user_details'] = $this->User_model->get($data['orders']->user_id);
+
+               
                 if ($data['order_details'] != null) {
                     for ($n = 0; $n < count($data['order_details']); $n++) {
                         $quantityCount = $data['order_details'][$n]->quantity;
@@ -781,8 +856,36 @@ class VendorProductAction extends MW_Controller {
                         if ($quantityCount != $pickedCount) {
                             $data['order_details'][$n]->quantity = $pickedCount;
                         }
+                       
+                        $payment_id = isset($data['orders']->payment_id)
+                            ? $data['orders']->payment_id
+                            : null;
+
+                        if (empty($payment_id)) {
+                            continue;
+                        }
+
+                        // Get user payment and user
+                        $user_payment = $this->User_payment_option_model->get_by(['id' => $payment_id]);
+                       
+                        $data['order_details'][$n]->optionCode='';
+                        // 11-11-25
+                        $sku_code=isset($data['order_details'][$n]->sku_id)?$data['order_details'][$n]->sku_id: null;
+                        if($sku_code!=null){
+                            $sku = trim($sku_code);                     
+                            $optionCode = '';
+                           
+                            $skuDetails = $this->Product_varients->skuDetails($sku);
+                            $optionsList = convert_options_to_list($skuDetails['options']);  
+                            $optionCode = implode('-', $optionsList); 
+                            $data['order_details'][$n]->optionCode=$optionCode;
+                           
+                        $deductStock=$this->Order_model->deductQty($sku_code,$pickedCount);
+                        }
+
                     }
                 }
+               
                 //$data['orders'] = $this->Order_model->get($order_id);
                 if ($data['orders'] != null) {
                     $data['orders']->package_id1 = "";
@@ -801,19 +904,24 @@ class VendorProductAction extends MW_Controller {
                 }
                 $location_id = $data['orders']->location_id;
                 $payment_method = $this->User_payment_option_model->get_by(array('id' => $data['orders']->payment_id));
-
-
+                $customer = null;
+                $payment_method = null;
                 if ($user_payment != null) {
                     $customer = $this->stripe->getCustomer($data['user_details']->stripe_id);
                     // Payment method
-                    $payment_method = $customer->sources->retrieve($user_payment->token);
-                    $data['payment_method']->payment_type = $payment_method->object;
-                    $data['payment_method']->card_type = $payment_method->brand;
-                    $data['payment_method']->exp_month = $payment_method->exp_month;
-                    $data['payment_method']->exp_year = $payment_method->exp_year;
-                    $data['payment_method']->cc_number  = $payment_method->last4;
-                    $data['payment_method']->cc_name = $payment_method->name;
-                    $data['payment_method']->bank_name = $payment_method->bank_name;
+
+                     if (isset($customer->sources) && method_exists($customer->sources, 'retrieve') ) 
+                        {
+                            $payment_method = $customer->sources->retrieve($user_payment->token);
+                        }
+                    $data['payment_method']->payment_type = isset($payment_method->object) ? $payment_method->object : '';
+                    $data['payment_method']->card_type = isset($payment_method->brand) ? $payment_method->brand : '';
+                    $data['payment_method']->exp_month = isset($payment_method->exp_month) ? $payment_method->exp_month : '';
+                    $data['payment_method']->exp_year = isset($payment_method->exp_year) ? $payment_method->exp_year : '';
+                    $data['payment_method']->cc_number = isset($payment_method->last4) ? $payment_method->last4 : '';
+                    $data['payment_method']->cc_name = isset($payment_method->name) ? $payment_method->name : '';
+                    $data['payment_method']->bank_name = isset($payment_method->bank_name) ? $payment_method->bank_name : '';
+
                 }
 
 
@@ -944,30 +1052,70 @@ class VendorProductAction extends MW_Controller {
                 $query = "SELECT a.payment_id,a.id,a.created_at,a.user_id,b.shipping_type,a.shipped_date,a.total from orders a LEFT JOIN shipping_options b on b.id=a.shipment_id LEFT JOIN user_locations c on c.id=a.location_id LEFT JOIN organization_locations d on d.id=c.organization_location_id  WHERE a.id=$order_id and a.restricted_order='0' and a.vendor_id=$vendor_id";
                 $data['order_details'] = $this->db->query($query)->result();
                 $data['payment_details'] = [];
-                if ($data['order_details'] != null) {
+                if (!empty($data['order_details'])) {
+
+                    $stripe_enabled = (bool) $this->config->item('stripe_enabled');
+                    $data['payment_details'] = [];
+
                     for ($i = 0; $i < count($data['order_details']); $i++) {
-                        $user_payment = $this->User_payment_option_model->get_by(array('id' => $data['order_details'][$i]->payment_id));
-                        $user = $this->User_model->get_by(array('id' => $user_payment->user_id));
-                        $customer = $this->stripe->getCustomer($user->stripe_id);
-                        // Payment method
 
-                        $payment_method = $customer->sources->retrieve($user_payment->token);
+                        $payment_id = isset($data['order_report']->payment_id)
+                            ? $data['order_details'][$i]->payment_id
+                            : null;
 
+                        if (empty($payment_id)) {
+                            continue;
+                        }
+
+                        // Get user payment and user
+                        $user_payment = $this->User_payment_option_model->get_by(['id' => $payment_id]);
+                        if (empty($user_payment)) {
+                            continue;
+                        }
+
+                        $user = $this->User_model->get_by(['id' => isset($user_payment->user_id) ? $user_payment->user_id : null]);
+                        if (empty($user)) {
+                            continue;
+                        }
+
+                        $customer = null;
+                        $payment_method = null;
+
+                        // Stripe call only if enabled and valid
+                        if (
+                            $stripe_enabled &&
+                            isset($this->stripe) &&
+                            method_exists($this->stripe, 'getCustomer') &&
+                            isset($user->stripe_id)
+                        ) {
+                            $customer = $this->stripe->getCustomer($user->stripe_id);
+
+                            if (
+                                isset($customer->sources) &&
+                                method_exists($customer->sources, 'retrieve') &&
+                                isset($user_payment->token)
+                            ) {
+                                $payment_method = $customer->sources->retrieve($user_payment->token);
+                            }
+                        }
+
+                        // Build safe object
                         $users_payment_obj = new stdClass();
-                        $users_payment_obj->id = $user_payment->id;
-                        $users_payment_obj->token = $user_payment->token;
-                        $users_payment_obj->payment_type = $payment_method->object;
-                        $users_payment_obj->card_type = $payment_method->brand;
-                        $users_payment_obj->cc_number = $payment_method->last4;
-                        $users_payment_obj->cc_name = $payment_method->name;
-                        $users_payment_obj->bank_name = $payment_method->bank_name;
-                        $users_payment_obj->ba_routing_number = $payment_method->routing_number;
-                        $users_payment_obj->ba_account_number = $payment_method->last4;
+                        $users_payment_obj->id                 = isset($user_payment->id) ? $user_payment->id : null;
+                        $users_payment_obj->token              = isset($user_payment->token) ? $user_payment->token : null;
+                        $users_payment_obj->payment_type       = isset($payment_method->object) ? $payment_method->object : null;
+                        $users_payment_obj->card_type          = isset($payment_method->brand) ? $payment_method->brand : null;
+                        $users_payment_obj->cc_number          = isset($payment_method->last4) ? $payment_method->last4 : null;
+                        $users_payment_obj->cc_name            = isset($payment_method->name) ? $payment_method->name : null;
+                        $users_payment_obj->bank_name          = isset($payment_method->bank_name) ? $payment_method->bank_name : null;
+                        $users_payment_obj->ba_routing_number  = isset($payment_method->routing_number) ? $payment_method->routing_number : null;
+                        $users_payment_obj->ba_account_number  = isset($payment_method->last4) ? $payment_method->last4 : null;
+
                         $data['payment_details'][] = $users_payment_obj;
                         unset($users_payment_obj);
-
                     }
                 }
+
                 // Order Items and Details
                 $query = "SELECT a.id,b.total,d.retail_price,b.promo_code_id,c.title,e.name,e.mpn,d.price,b.picked as quantity,e.manufacturer FROM orders a  inner join order_items b on b.order_id=a.id left join promo_codes c on c.id=b.promo_code_id INNER JOIN product_pricings d on d.product_id=b.product_id  INNER JOIN products e on e.id=b.product_id  WHERE a.id=$order_id and a.restricted_order='0' and a.vendor_id=$vendor_id group by b.id";
                 $data['order_items'] = $this->db->query($query)->result();
@@ -1000,7 +1148,10 @@ class VendorProductAction extends MW_Controller {
                 $data['promoCodes_active'] = "";
                 $data['NorderCount'] = order_count(); // To Get the Latest Order Count.
                 $data['ReturnCount'] = return_count();
+                $this->load->view('/templates/_inc/header-vendor.php');
                 $this->load->view('/templates/vendor-admin/orders/o/processed/index.php', $data);
+                $this->load->view('/templates/_inc/footer-vendor.php');
+                
             }
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');

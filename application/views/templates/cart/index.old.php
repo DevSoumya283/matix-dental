@@ -834,8 +834,7 @@ $order_count = $independent_count + $matix_count;
 
     <!-- Scripts & Libraries -->
     <!--payment-->
-    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-    <script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
+    <!-- <script type="text/javascript" src="https://js.stripe.com/v2/"></script> -->    <script src="https://cdn.plaid.com/link/stable/link-initialize.js"></script>
     <!--payment-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/jquery.detect-card.js"></script>
