@@ -322,7 +322,7 @@ class CartCheckout extends MW_Controller {
 
                 if ($orderFlag) {
                     for ($i = 0; $i < $cart_total_orders; $i++) {
-                        if (!(in_array($i, $aLicenExpiry))) {
+                        //if (!(in_array($i, $aLicenExpiry))) { live
                             $vendor = $this->Vendor_model->get($order_vendor_id[$i]);
 
                             Debugger::debug($vendor, '$vendor');
@@ -384,15 +384,18 @@ class CartCheckout extends MW_Controller {
                                 }
                                 $order_total = ($subtotal + $order_tax + $products->shipping_price) - $products->promo_discount;
                                 if ($order_total > 0) {
+
+                                    
                                     $vendor_token = $this->stripe->createToken(
                                         ["customer" => $payment_owner->stripe_id],
                                         ["stripe_account" => $vendor->payment_id]
-                                    );
+                                    ); 
 
                                     $payment_cost = round($order_total * 100);
                                     $payment_data = [
                                         'amount' => $payment_cost,
                                         'source' => $vendor_token->id,
+                                        // 'source' => 'fssdsf44656',
                                         'description' => $description
                                     ];
 
@@ -402,7 +405,7 @@ class CartCheckout extends MW_Controller {
                                         $chargeOptions = ['stripe_account' => $vendor->payment_id];
                                     }
 
-                                    $this->stripe->addCharge($payment_data, $chargeOptions);
+                                   // $this->stripe->addCharge($payment_data, $chargeOptions); live
                                     $this->session->set_flashdata('success', 'Payment Success!');
                                     $insert_data = array(
                                         'site_id' => ((!empty(config_item('whitelabel'))) ? config_item('whitelabel')->id : null),
@@ -663,10 +666,10 @@ class CartCheckout extends MW_Controller {
                                 $matixVendorFlag = FALSE;
                             }
                             $data['success_order'][] = $this->Order_model->get_by(array('id' => $insert_id));
-                        } else { //user don't have licence or expired
-                            $bLicenceFlag = FALSE;
-                            $unLicence_vendors[] = $vendor_id[$i];
-                        }
+                        // } else { //user don't have licence or expired
+                        //     $bLicenceFlag = FALSE;
+                        //     $unLicence_vendors[] = $vendor_id[$i];
+                        // }
                     }
                 }
                 if (!($bLicenceFlag)) { // Display a message,if the user done have licence or expired
