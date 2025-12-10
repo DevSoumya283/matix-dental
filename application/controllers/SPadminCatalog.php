@@ -47,7 +47,8 @@ class SPadminCatalog extends MW_Controller {
             if ($delete_id != null) {
                 for ($i = 0; $i < count($delete_id); $i++) {
                     // Delete from database.
-                    $success = $this->Product_pricing_model->deactivateProduct($delete_id[$i], $vendorId);
+                    // $success = $this->Product_pricing_model->deactivateProduct($delete_id[$i], $vendorId);
+                    $success = $this->Product_pricing_model->deactivateProduct($delete_id[$i]);
                 }
                 if($success){
                     $this->session->set_flashdata('success', 'Product deactivated successfully..');

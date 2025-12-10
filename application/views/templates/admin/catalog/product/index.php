@@ -782,5 +782,4 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
-<?php
-include(INCLUDE_PATH . '/_inc/shared/modals/delete-product.php');
+<?php $this->load->view('templates/_inc/shared/modals/delete-product.php'); ?>

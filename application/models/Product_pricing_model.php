@@ -230,4 +230,12 @@ class Product_pricing_model extends MY_Model {
     {
 
     }
+
+    public function deactivateProduct($id){
+        $this->db->where('id', $id);
+        $deleted = $this->db->delete('products');
+
+        return $deleted; 
+    }
+
 }
