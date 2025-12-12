@@ -599,8 +599,9 @@ class Home extends MW_Controller {
         $user_id = $_SESSION['user_id'];
         $data['locations'] = $this->User_location_model->get_many_by(array('user_id' => $user_id));
         $organization = $this->Organization_groups_model->get_by(array('user_id' => $user_id));
-        $organization_licenses = $this->User_licenses_model->get_many_by(['organization_id' => 28, 'user_id' => $user_id]);
-        
+
+        $organization_licenses = $this->User_licenses_model->get_many_by(['organization_id' => $organization->organization_id, 'user_id' => $user_id]);
+
         for ($i = 0; $i < count($data['locations']); $i++) {
             $organization_location = $this->Organization_location_model->get_by(array('id' => $data['locations'][$i]->organization_location_id));
 
