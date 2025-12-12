@@ -77,7 +77,7 @@ class CartCheckout extends MW_Controller {
             $matixVendorFlag = FALSE;
             $independentVendorFlag = FALSE;
             $data['cart'] = $this->cart->contents();
-          
+
             foreach ($data['cart'] as $row) {
                 
                 if(isset($row['sku']) && !empty($row['sku'])){
@@ -268,7 +268,7 @@ class CartCheckout extends MW_Controller {
                                         'tax' => $item_tax,
                                         'quantity' => $item['qty'],
                                         'picked' => $item['qty'],
-                                        'sku_id' => isset($item['sku'])?$item['sku']:null,
+                                        'product_name' => $item['name'],
                                         'total' => $item['subtotal'],
                                         'restricted_order' => '1',
                                         'created_at' => date('Y-m-d H:i:s'),
@@ -472,6 +472,7 @@ class CartCheckout extends MW_Controller {
                                             'shipping_price' => round($products->shipping_price, 2),
                                             'product_id' => $item['pro_id'],
                                             'sku_id' => isset($item['sku'])?$item['sku']:null,
+                                            'product_name' => $item['name'],
                                             'vendor_id' => $independentVendorId,
                                             'price' => $item['price'],
                                             'tax' => $item_tax,
@@ -631,6 +632,7 @@ class CartCheckout extends MW_Controller {
                                                 'shipping_price' => round($products->shipping_price, 2),
                                                 'product_id' => $item['pro_id'],
                                                 'sku_id' => isset($item['sku'])?$item['sku']:null,
+                                                'product_name' => $item['name'],
                                                 'vendor_id' => $matixVendorId,
                                                 'price' => $item['price'],
                                                 'tax' => $item_tax,
