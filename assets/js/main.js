@@ -3066,14 +3066,16 @@ console.log("Color:", p_color, "Price:", p_price, "SKU:", p_sku);  var vendor_id
             } else {
               cart_lists += "<td>-</td><td>-</td>";
             }
-
+            
             if (
               license_required == "Yes" &&
               data.user_locations[i].license != undefined
             ) {
               var license_expiration = new Date(
-                data.user_locations[i].license.expire_date
+                data.user_locations[i].license[i].expire_date
               );
+              
+              console.log( data.user_locations[i].license[i]);
               if (license_expiration >= date) {
                 cart_lists +=
                   "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' data-p_id=" +

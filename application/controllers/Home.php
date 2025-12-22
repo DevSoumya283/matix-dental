@@ -116,7 +116,7 @@ class Home extends MW_Controller {
         $this->load->view('/templates/_inc/footer');
     }
 
-    public function static_home() { 
+    public function static_home() {
         $data['letters'] = $this->getManufacturerLetters();
         $this->load->view('/templates/_inc/header', $data);
         if($this->config->item('whitelabel')){
@@ -600,19 +600,28 @@ class Home extends MW_Controller {
         $data['locations'] = $this->User_location_model->get_many_by(array('user_id' => $user_id));
         $organization = $this->Organization_groups_model->get_by(array('user_id' => $user_id));
 
-        $organization_licenses = $this->User_licenses_model->get_many_by(['organization_id' => $organization->organization_id, 'user_id' => $user_id]);
+        // $organization_licenses = $this->User_licenses_model->get_many_by(['organization_id' => $organization->organization_id, 'user_id' => $user_id]);
+        $organization_licenses = $this->User_licenses_model->loadValidLicenses($user_id, 1);
 
         for ($i = 0; $i < count($data['locations']); $i++) {
             $organization_location = $this->Organization_location_model->get_by(array('id' => $data['locations'][$i]->organization_location_id));
+            
+            // foreach ($organization_licenses as $organization_license){
+            //     echo"<pre>";print_r($organization_licenses);die();
+            //   $organization_location->licences = $organization_license[$organization_location->state];
 
-            foreach ($organization_licenses as $organization_license){
-                if ($organization_license->state == $organization_location->state &&
-                    $organization_license->approved == 1 &&
-                    $organization_license->expire_date >= date('Y-m-d')){
-                    $organization_location->license = $organization_license;
-                    break;
-                }
-            }
+
+            //     // if ($organization_license->state == $organization_location->state &&
+            //     //     $organization_license->approved == 1 &&
+            //     //     $organization_license->expire_date >= date('Y-m-d')){
+
+            //     //     $organization_location->license = $organization_license;
+            //     //     break;
+            //     // }
+            // }
+            $organization_licenses=
+            $organization_location->license = $organization_licenses[$organization_location->state];
+
 
             $data['user_locations'][] = $organization_location;
         }
