@@ -474,27 +474,27 @@
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="view-category" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="view-category" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #fff;">
                                 Category
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="view-procedure" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="view-procedure" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #fff;">
                                 Procedure
                             </a>
                         </li>
                         <li class="nav-item ">
-                            <a class="view-vendor" href="#" data-toggle="dropdown">
+                            <a class="view-vendor" href="#" data-toggle="dropdown" style="color: #fff;">
                                 Vendor
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="view-mfc" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="view-mfc" href="#"  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #fff;">
                                 Manufacturer
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="view-pro-list" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="view-pro-list" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #fff;">
                                 Product List
                             </a>
                         </li>

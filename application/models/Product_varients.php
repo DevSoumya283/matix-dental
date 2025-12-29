@@ -24,6 +24,58 @@ class Product_varients extends MY_Model
         return $query->result();  
     }
 
+    public function get_highest_quantity_skus_new($products)
+    {
+        if (empty($products)) {
+            return [];
+        }
+
+        // Normalize products input
+        if (isset($products[0]) && is_array($products[0])) {
+            $products = array_column($products, 'id');
+        }
+
+        // Fetch matix_ids (STRING values)
+        $matix_ids = $this->db
+            ->select('matix_id')
+            ->from('products')
+            ->where_in('id', $products)
+            ->get()
+            ->result_array();
+
+        $matix_ids = array_column($matix_ids, 'matix_id');
+
+        if (empty($matix_ids)) {
+            return [];
+        }
+
+        // Properly quote string IDs
+        $quoted_ids = array_map(function ($id) {
+            return $this->db->escape($id);
+        }, $matix_ids);
+
+        $subquery = "
+            SELECT product_id, MAX(stock_quantity) AS max_quantity
+            FROM skus
+            WHERE product_id IN (" . implode(',', $quoted_ids) . ")
+            GROUP BY product_id
+        ";
+
+        $this->db->select('s.sku_code, s.stock_quantity, s.product_id');
+        $this->db->from('skus s');
+        $this->db->join(
+            "($subquery) max_skus",
+            's.product_id = max_skus.product_id
+            AND s.stock_quantity = max_skus.max_quantity',
+            'inner'
+        );
+        $this->db->where_in('s.product_id', $matix_ids);
+
+        return $this->db->get()->result();
+    }
+
+
+
 
     public function skuDetails($sku_code = '')
     {

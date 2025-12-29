@@ -113,6 +113,15 @@ class RequestLists extends MW_Controller {
             $l_id = explode(",", $location_id);
             $qty = $this->input->post('qty');
             $sku = $this->input->post('sku');
+           
+            if(!$sku){
+                $sku = $this->Product_varients->get_highest_quantity_skus_new($product_id);
+            }
+            if (!empty($sku)) {
+                $sku = $sku[0]->sku_code;
+            } else {
+                $sku = null;
+            }
             if ($requests_data != null) {
                 foreach ($requests_data as $key) {
                     for ($i = 0; $i < count($l_id); $i++) {
@@ -927,7 +936,6 @@ class RequestLists extends MW_Controller {
             //live $pricings = $this->Product_pricing_model->get_by(array('product_id' => $request->product_id, 'vendor_id' => $request->vendor_id));
             
             $pricings = $this->Product_pricing_model->getPricebySku($request->product_id,$request->sku_id)->row();
-            
             if ($pricings->retail_price > 0) {
                 $pro_price = $pricings->retail_price;
 
