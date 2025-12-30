@@ -11,4 +11,16 @@ class Order_items_model extends MY_Model {
         parent::__construct();
     }
 
+    public function get_product_order_stats($product_id)
+    {
+        $this->db->select('COUNT(*) as total, MAX(created_at) as last_order_date');
+        $this->db->where('product_id', $product_id);
+        $query = $this->db->get('order_items')->row();
+
+        return [
+            'total' => (int) $query->total,
+            'last_order_date' => $query->last_order_date
+        ];
+    }
+
 }

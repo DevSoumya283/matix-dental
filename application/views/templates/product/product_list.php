@@ -125,6 +125,35 @@
                                                 <div class="stars" data-rating="<?php echo $ratings; ?>" style="width: <?php echo $ratings; ?>%"></div>
                                             </div>
                                         </div>
+                                        <div class="col-md-12">
+                                            <?php
+                                                $CI =& get_instance();
+                                                $CI->load->model('Order_items_model');
+
+                                                $stats = $CI->Order_items_model
+                                                    ->get_product_order_stats($products[$i]->id);
+
+                                                $order_count = $stats['total'];
+                                                $last_date   = $stats['last_order_date'];
+
+                                                $text = 'No recent orders';
+
+                                                if ($order_count > 0 && $last_date) {
+                                                    $days = floor((time() - strtotime($last_date)) / 86400);
+
+                                                    if ($days <= 15) {
+                                                        $text = 'Ordered in last 15 days';
+                                                    } elseif ($days <= 30) {
+                                                        $text = 'Ordered in last 1 month';
+                                                    } elseif ($days <= 90) {
+                                                        $text = 'Ordered in last 3 months';
+                                                    } else {
+                                                        $text = 'Ordered before 3 months';
+                                                    }
+                                                }
+                                                echo $order_count . ' ' . $text;
+                                            ?>
+                                        </div>
                                     </div>
 
                                             </div>

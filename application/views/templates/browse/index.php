@@ -338,39 +338,67 @@
                                                     }
                                                 }
                                                 ?>
+                                                <div class="row d-none d-sm-block">
+                                                    <?php if(empty($this->config->item('whitelabel'))){ ?>
+                                                        <div class="product__vendor-range col-md-12">
+                                                                                <?php
+                                                                                $p_count = count($products[$i]->price);
+                                                                                if (isset($products[$i]->price[0])) {
+                                                                                    if ($products[$i]->price[0]->min_value != null) {
+                                                                                        echo "$" . $products[$i]->price[0]->min_value;
+                                                                                    } elseif ($products[$i]->price[0]->minprice_value != null) {
+                                                                                        echo "$" . $products[$i]->price[0]->minprice_value;
+                                                                                    } else {
+                                                                                        echo "$" . $products[$i]->price[0]->max_value;
+                                                                                    }
+                                                                                }
+                                                                                if ($p_count > 1) {
+                                                                                    $total = $p_count - 1;
+                                                                                    if ($products[$i]->price[$total]->max_value != null) {
+                                                                                        echo " &ndash;  $" . $products[$i]->price[$total]->max_value;
+                                                                                    }
+                                                                                } else {
+                                                                                    echo "";
+                                                                                }
+                                                                                ?> (<?php echo $products[$i]->vendor_count; ?> Vendors)
+                                                                            </div>
+                                                    <?php } ?>
+                                                    <div class="ratings__wrapper show--qty col-md-12" data-raters="<?php echo $user_count; ?>">
+                                                        <div class="ratings">
+                                                            <div class="stars" data-rating="<?php echo $ratings; ?>" style="width: <?php echo $ratings; ?>%"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <?php
+                                                            $CI =& get_instance();
+                                                            $CI->load->model('Order_items_model');
 
-                                                   <div class="row d-none d-sm-block">
-                                        <?php if(empty($this->config->item('whitelabel'))){ ?>
-                                            <div class="product__vendor-range col-md-12">
-                                                                    <?php
-                                                                    $p_count = count($products[$i]->price);
-                                                                    if (isset($products[$i]->price[0])) {
-                                                                        if ($products[$i]->price[0]->min_value != null) {
-                                                                            echo "$" . $products[$i]->price[0]->min_value;
-                                                                        } elseif ($products[$i]->price[0]->minprice_value != null) {
-                                                                            echo "$" . $products[$i]->price[0]->minprice_value;
-                                                                        } else {
-                                                                            echo "$" . $products[$i]->price[0]->max_value;
-                                                                        }
-                                                                    }
-                                                                    if ($p_count > 1) {
-                                                                        $total = $p_count - 1;
-                                                                        if ($products[$i]->price[$total]->max_value != null) {
-                                                                            echo " &ndash;  $" . $products[$i]->price[$total]->max_value;
-                                                                        }
-                                                                    } else {
-                                                                        echo "";
-                                                                    }
-                                                                    ?> (<?php echo $products[$i]->vendor_count; ?> Vendors)
-                                                                </div>
-                                        <?php } ?>
-                                        <div class="ratings__wrapper show--qty col-md-12" data-raters="<?php echo $user_count; ?>">
-                                            <div class="ratings">
-                                                <div class="stars" data-rating="<?php echo $ratings; ?>" style="width: <?php echo $ratings; ?>%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                                            $stats = $CI->Order_items_model
+                                                                ->get_product_order_stats($products[$i]->id);
 
+                                                            $order_count = $stats['total'];
+                                                            $last_date   = $stats['last_order_date'];
+
+                                                            $text = 'No recent orders';
+
+                                                            if ($order_count > 0 && $last_date) {
+                                                                $days = floor((time() - strtotime($last_date)) / 86400);
+
+                                                                if ($days <= 15) {
+                                                                    $text = 'Ordered in last 15 days';
+                                                                } elseif ($days <= 30) {
+                                                                    $text = 'Ordered in last 1 month';
+                                                                } elseif ($days <= 90) {
+                                                                    $text = 'Ordered in last 3 months';
+                                                                } else {
+                                                                    $text = 'Ordered before 3 months';
+                                                                }
+                                                            }
+                                                            echo $order_count . ' ' . $text;
+                                                        ?>
+
+                                                    </div>
+                                                </div>
                                             </div>
                                             <?php
                                             $tier_1_2_roles = unserialize(ROLES_TIER1_2);

@@ -916,4 +916,4 @@
 </script>
 
 <?php //include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?>
-<?php $this->load->view('templates/_inc/footer-vendor.php'); ?>
+<?php //$this->load->view('templates/_inc/footer-vendor.php'); ?>

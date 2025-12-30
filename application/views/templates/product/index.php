@@ -219,6 +219,35 @@
                                         </div>
                                         <a class="link" href="#reviews">Read customer reviews</a>
                                     </div>
+                                    <div class="col-md-12 p-0">
+                                        <?php
+                                            $CI =& get_instance();
+                                            $CI->load->model('Order_items_model');
+
+                                            $stats = $CI->Order_items_model
+                                                ->get_product_order_stats($product->id);
+
+                                            $order_count = $stats['total'];
+                                            $last_date   = $stats['last_order_date'];
+
+                                            $text = 'No recent orders';
+
+                                            if ($order_count > 0 && $last_date) {
+                                                $days = floor((time() - strtotime($last_date)) / 86400);
+
+                                                if ($days <= 15) {
+                                                    $text = 'Ordered in last 15 days';
+                                                } elseif ($days <= 30) {
+                                                    $text = 'Ordered in last 1 month';
+                                                } elseif ($days <= 90) {
+                                                    $text = 'Ordered in last 3 months';
+                                                } else {
+                                                    $text = 'Ordered before 3 months';
+                                                }
+                                            }
+                                            echo $order_count . ' ' . $text;
+                                        ?>
+                                    </div>
                                     <br>
                                     <div id="list_price" hidden><?php echo $retail_price; ?></div>
                                     <!-- <button class="btn btn--tertiary btn--s modal--toggle" data-target="#chooseVariationModal">More Options Available</button> -->
