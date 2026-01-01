@@ -574,7 +574,10 @@ class VendorProductAction extends MW_Controller {
             $data['My_vendor_users'] = "";
             $data['vendor_shipping'] = "";
             $data['promoCodes_active'] = "";
+             $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/orders/index.php', $data);
+                $this->load->view('/templates/_inc/footer-vendor.php');
+
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
@@ -735,7 +738,9 @@ class VendorProductAction extends MW_Controller {
             $data['ReturnCount'] = return_count();
             $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/orders/o/complete/index.php', $data);
-            $this->load->view('/templates/_inc/header-vendor.php');
+            // $this->load->view('/templates/_inc/header-vendor.php');
+            $this->load->view('/templates/_inc/footer-vendor.php');
+
 
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');

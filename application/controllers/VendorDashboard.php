@@ -1231,7 +1231,7 @@ class VendorDashboard extends MW_Controller {
 
             $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('templates/vendor-admin/customers/c/number/index.php', $data);
-            $this->load->view('/templates/_inc/footer-vendor.php');
+            // $this->load->view('/templates/_inc/footer-vendor.php');
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
