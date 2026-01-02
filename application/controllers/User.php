@@ -404,7 +404,7 @@ class User extends MW_Controller {
         $vendor_id = $vendor_detail->vendor_id;
         $_SESSION['vendor_id'] = $vendor_id;
 
-        header('Location: vendors-dashboard');
+        header('Location: vendor-dashboard');
         exit;
     }
 
