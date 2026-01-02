@@ -175,14 +175,72 @@ class VendorProductAction extends MW_Controller {
             $vendor_id = $vendor_detail->vendor_id;
             if ($vendor_id != null) {
                 $search = $this->input->post('search');
-                if ($search != null) {
-                    $input_date = date('Y-m-d', strtotime($search));
-                    $query = "SELECT o.id,o.total,o.order_status,q.first_name,o.created_at,p.delivery_time FROM orders o LEFT JOIN shipping_options p on o.shipment_id = p.id  LEFT JOIN users q on o.user_id = q.id where (o.id like '%$search%' or q.first_name like '%$search%' or (o.created_at >='$input_date 00:00:00' and o.created_at <='$input_date 23:59:59')) and o.vendor_id=$vendor_id  and o.restricted_order='0' ";
-                    $data['orders_received'] = $this->db->query($query)->result();
+                if (!empty($search)) {
+
+                    $inputTs = strtotime($search);
+
+                    if ($inputTs !== false) {
+                        $input_date = date('Y-m-d', $inputTs);
+
+                        $query = "
+                            SELECT o.id, o.total, o.order_status, q.first_name, o.created_at, p.delivery_time
+                            FROM orders o
+                            LEFT JOIN shipping_options p ON o.shipment_id = p.id
+                            LEFT JOIN users q ON o.user_id = q.id
+                            WHERE (
+                                o.id LIKE ? OR
+                                q.first_name LIKE ? OR
+                                (o.created_at >= ? AND o.created_at <= ?)
+                            )
+                            AND o.vendor_id = ?
+                            AND o.restricted_order = '0'
+                            ORDER BY o.id DESC
+                        ";
+
+                        $data['orders_received'] = $this->db->query($query, [
+                            "%{$search}%",
+                            "%{$search}%",
+                            "{$input_date} 00:00:00",
+                            "{$input_date} 23:59:59",
+                            (int)$vendor_id
+                        ])->result();
+
+                    } else {
+
+                        $query = "
+                            SELECT o.id, o.total, o.order_status, q.first_name, o.created_at, p.delivery_time
+                            FROM orders o
+                            LEFT JOIN shipping_options p ON o.shipment_id = p.id
+                            LEFT JOIN users q ON o.user_id = q.id
+                            WHERE (o.id LIKE ? OR q.first_name LIKE ?)
+                            AND o.vendor_id = ?
+                            AND o.restricted_order = '0'
+                            ORDER BY o.id DESC
+                        ";
+
+                        $data['orders_received'] = $this->db->query($query, [
+                            "%{$search}%",
+                            "%{$search}%",
+                            (int)$vendor_id
+                        ])->result();
+                    }
+
                 } else {
-                    $query = "SELECT o.id,o.total,o.order_status,q.first_name,o.created_at,p.delivery_time FROM orders o LEFT JOIN shipping_options p on o.shipment_id = p.id LEFT JOIN users q on o.user_id = q.id where o.vendor_id=$vendor_id and o.order_status !='Cancelled' and o.order_status !='Shipped' and o.order_status !='Delivered' and o.restricted_order='0' group by o.id";
-                    $data['orders_received'] = $this->db->query($query)->result();
+
+                    $query = "
+                        SELECT o.id, o.total, o.order_status, q.first_name, o.created_at, p.delivery_time
+                        FROM orders o
+                        LEFT JOIN shipping_options p ON o.shipment_id = p.id
+                        LEFT JOIN users q ON o.user_id = q.id
+                        WHERE o.vendor_id = ?
+                        AND o.order_status NOT IN ('Cancelled', 'Shipped', 'Delivered')
+                        AND o.restricted_order = '0'
+                        ORDER BY o.id DESC
+                    ";
+
+                    $data['orders_received'] = $this->db->query($query, [(int)$vendor_id])->result();
                 }
+
 
                 if ($data['orders_received'] != null) {
                     $date = date("Y-m-d");
@@ -574,11 +632,11 @@ class VendorProductAction extends MW_Controller {
             $data['My_vendor_users'] = "";
             $data['vendor_shipping'] = "";
             $data['promoCodes_active'] = "";
-             $this->load->view('/templates/_inc/header-vendor.php');
+            $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/orders/index.php', $data);
-                $this->load->view('/templates/_inc/footer-vendor.php');
-
-        } else {
+            $this->load->view('/templates/_inc/footer-vendor.php');        
+           
+        }    else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
         }
@@ -738,15 +796,13 @@ class VendorProductAction extends MW_Controller {
             $data['ReturnCount'] = return_count();
             $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/vendor-admin/orders/o/complete/index.php', $data);
-            // $this->load->view('/templates/_inc/header-vendor.php');
             $this->load->view('/templates/_inc/footer-vendor.php');
-
-
         } else {
             $this->session->set_flashdata('error', 'Please login with authorized account.');
             header('Location: login');
         }
     }
+
 
     public function order_processed() {
         $admin_roles = unserialize(ROLES_VENDORS);
@@ -757,11 +813,41 @@ class VendorProductAction extends MW_Controller {
             $order_id = $this->input->post('order_id');
             $shipped_date = date('Y-m-d', strtotime($this->input->post('shipDate')));
             if ($order_id != null) {
+                    $data['order_details'] = $this->Order_items_model->get_many_by(array('order_id' => $order_id));
+
+                    foreach ($data['order_details'] as $item) {
+                        $needQty = (int)(!empty($item->picked) ? $item->picked : $item->quantity);
+                        if ($needQty <= 0) {
+                            continue;
+                        }
+
+                        if (!empty($item->sku_id)) {
+                            $sku = trim($item->sku_id);
+                            $skuDetails = $this->Product_varients->skuDetails($sku);
+
+                            $availableQty = (int)($skuDetails['stock_quantity'] ?? 0);
+
+                            $optionCode = '';
+                            if (!empty($skuDetails) && isset($skuDetails['options'])) {
+                                $optionsList = convert_options_to_list($skuDetails['options']);
+                                $optionCode = !empty($optionsList) ? implode('-', $optionsList) : '';
+                            }
+
+                            if ($availableQty <= 0 || $needQty > $availableQty) {
+                                $productName = !empty($item->product_name) ? $item->product_name : 'Product';
+                                $label = $optionCode ? " ({$optionCode})" : '';
+                                $this->session->set_flashdata('error', "{$productName}{$label} not available!");
+                                header("Location: vendor-order-details?order_id=" . $order_id);
+                                exit;
+                            }
+                        }
+                    }
                 $update_data = array(
                     'shipped_date' => $shipped_date,
                     'order_status' => '3',
                     'updated_at' => date('Y-m-d H:i:s'),
                 );
+           
                 if ($update_data != null) {
                     $this->Order_model->update($order_id, $update_data);
                     $activity_insert = array(
@@ -799,7 +885,6 @@ class VendorProductAction extends MW_Controller {
                     $location_id = $data['orders']->location_id;//  Order Address
                     $orderAddress = $this->Organization_location_model->get($location_id);
                     $location_inventory = $this->Location_inventories_model->get_many_by(array('location_id' => $location_id));
-                    $data['order_details'] = $this->Order_items_model->get_many_by(array('order_id' => $order_id));
                     Debugger::debug($data['order_details']);
                     // $product_count = count($data['order_details']);
                     $orderUser = $this->User_model->get_by(array('id' => $data['orders']->user_id));
