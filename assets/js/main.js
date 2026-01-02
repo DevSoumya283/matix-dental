@@ -3028,7 +3028,7 @@ $(document).on("click", ".add_single_cart", function () {
   const p_color = parseFloat($this.attr("data-procolor")) || $this.data("procolor");
   const p_price = parseFloat($this.attr("data-price")) || $this.data("price");
   const p_sku = $this.attr("data-sku") || $this.data("sku");
-console.log("Color:", p_color, "Price:", p_price, "SKU:", p_sku);  var vendor_id = $('input[name="vendor"]:checked').val();
+  //console.log("Color:", p_color, "Price:", p_price, "SKU:", p_sku);  var vendor_id = $('input[name="vendor"]:checked').val();
 
   var date = new Date();
   $.ajax({
@@ -3068,36 +3068,31 @@ console.log("Color:", p_color, "Price:", p_price, "SKU:", p_sku);  var vendor_id
             }
             
             if (
-              license_required == "Yes" &&
-              data.user_locations[i].license != undefined
+              license_required === "Yes" &&
+              Array.isArray(data.user_locations[i].license) &&
+              data.user_locations[i].license.length > 0
             ) {
               var license_expiration = new Date(
-                data.user_locations[i].license[i].expire_date
+                data.user_locations[i].license[0].expire_date
               );
-              
-              console.log( data.user_locations[i].license[i]);
+
               if (license_expiration >= date) {
                 cart_lists +=
-                  "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' data-p_id=" +
-                  product_id +
-                  " data-qty= " +
-                  pqty +
-                  " data-pname=" +
-                  pro_name +
-                  " data-aprice=" +
-                  p_price +
-                  " data-location_id=" +
-                  data.user_locations[i].id +
-                  "  data-vendors= " +
-                  vendor_id +
-                 "  data-pcolor='" + p_color + "' " +
-                  "  data-sku='" + p_sku + "' " +
-                  " data-replace='&#10003; Added'>+ Add to cart</button> </td>";
-
+                  "<td><button class='btn btn--s btn--tertiary btn--confirm btn--block select_button addcart' " +
+                  "data-p_id='" + product_id + "' " +
+                  "data-qty='" + pqty + "' " +
+                  "data-pname='" + pro_name + "' " +
+                  "data-aprice='" + p_price + "' " +
+                  "data-location_id='" + data.user_locations[i].id + "' " +
+                  "data-vendors='" + vendor_id + "' " +
+                  "data-pcolor='" + p_color + "' " +
+                  "data-sku='" + p_sku + "'>" +
+                  "+ Add to cart</button></td>";
               }
             } else {
-              cart_lists += "<td><span>License Required</span></td> ";
+              cart_lists += "<td><span>License Required</span></td>";
             }
+
 
             cart_lists += "</tr>";
           }
