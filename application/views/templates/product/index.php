@@ -767,7 +767,12 @@
                                         <td id="tax_per_state"><?php echo $product->tax_per_state; ?></td>
                                     </tr>
                                 <?php } ?>
-
+                                <?php if (!empty($product->stock_quantity)) { ?>
+                                    <tr>
+                                        <td>Stock Quantity</td>
+                                        <td id="stock_quantity"><?php echo $product->stock_quantity; ?></td>
+                                    </tr>
+                                <?php } ?>
                                 <?php
                                 if (!empty($custom_fields)) {
                                     for ($i = 0; $i < count($custom_fields); $i++) {
@@ -789,7 +794,7 @@
                                     <td>Sku</td>
                                     <td id="selectedSku1"><?php echo $product->sku; ?></td>
                                 </tr>
-                                <?php } ?>
+                            <?php } ?>
 
                             </tbody>
 
@@ -1737,6 +1742,7 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
       }  
       if (typeof data.quantity !== 'undefined' && data.quantity !== null) {
             $('.sqty').attr('max', data.quantity);
+            $('#stock_quantity').text(data.quantity);
       } else{
             $('.sqty').attr('value', 0);
       }
