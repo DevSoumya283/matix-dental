@@ -318,7 +318,7 @@ class Products_model extends MY_Model {
 
         // 1) Only these columns from products
         $this->db->from('products');
-        $this->db->select('id, matix_id, mpn, item_code, name, description, extended_description, manufacturer, shipping_restrictions, brand, license_required, category_id,base_price,returnable');
+        $this->db->select('id, matix_id, mpn, item_code, name, description, extended_description, manufacturer, shipping_restrictions, brand, license_required, category_id,base_price,returnable, quantity_per_box');
         if (ctype_digit((string)$productIdOrMatixId)) {
             $this->db->where('id', (int)$productIdOrMatixId);
         } else {
@@ -344,7 +344,8 @@ class Products_model extends MY_Model {
 
         if ($sku) {
             $product->sku = $sku->sku_code;
-            $product->quantity_per_box = $sku->stock_quantity;
+            $product->quantity_per_box = $product->quantity_per_box;
+            $product->stock_quantity = $sku->stock_quantity;
             
             // 3) Now get the option values for this SKU
             $this->db->select('sov.value_id, pov.value, po.option_type, po.option_code');
@@ -375,8 +376,12 @@ class Products_model extends MY_Model {
             
             if ($sku_fallback) {
                 $product->sku = $sku_fallback->sku_code;
-                $product->quantity_per_box = $sku_fallback->stock_quantity;
-                
+                // $product->quantity_per_box = $sku_fallback->stock_quantity;
+                // $product->quantity_per_box = $sku_fallback->stock_quantity;
+
+                $product->quantity_per_box = $sku_fallback->quantity_per_box;
+                $product->stock_quantity = $sku_fallback->stock_quantity;
+
                 // Get option values for fallback SKU
                 $this->db->select('sov.value_id, pov.value, po.option_type, po.option_code');
                 $this->db->from('sku_option_values sov');

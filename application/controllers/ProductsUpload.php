@@ -269,6 +269,8 @@ class ProductsUpload extends MW_Controller {
                 'category_id' => $categories,
                 'base_price' => $row[13],
                 'active' => $row[14],
+                'returnable' => $row[15],
+                'quantity_per_box' => $row[16],
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 

@@ -585,8 +585,8 @@ class NewProduct extends MW_Controller
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id', 'left');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id', 'left');
         $this->db->join('product_options po', 'pov.option_id = po.option_id', 'left');
-        $this->db->order_by('p.id', 'ASC');
-        $this->db->order_by('s.sku_id', 'ASC');
+        $this->db->order_by('p.id', 'DESC');
+        $this->db->order_by('s.sku_id', 'DESC');
 
         $query = $this->db->get();
 
@@ -721,6 +721,7 @@ class NewProduct extends MW_Controller
             ->get()->result(); 
 
         $this->db->from('products'); 
+        $this->db->order_by('created_at', 'DESC');
         if (!empty($search)) { 
             $this->db->group_start(); 
             $this->db->like('name', $search); 
