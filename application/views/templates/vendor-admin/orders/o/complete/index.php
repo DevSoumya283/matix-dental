@@ -354,8 +354,10 @@
 <!-- /Content Section -->
 
 <!-- Modals -->
-<?php include(INCLUDE_PATH . '/_inc/shared/modals/process-order.php'); ?>
-<?php include(INCLUDE_PATH . '/_inc/shared/modals/add-note.php'); ?>
+<?php //include(INCLUDE_PATH . '/_inc/shared/modals/process-order.php'); ?>
+<?php //include(INCLUDE_PATH . '/_inc/shared/modals/add-note.php'); ?>
+<?= $this->load->view('templates/_inc/shared/modals/add-note.php'); ?>
+<?= $this->load->view('templates/_inc/shared/modals/process-order.php'); ?>
 
 <?php
-include(INCLUDE_PATH . '/_inc/footer-vendor.php');
+include(INCLUDE_PATH . '/_inc/footer-vendor.php'); ?>

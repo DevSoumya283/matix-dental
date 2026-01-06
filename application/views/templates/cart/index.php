@@ -460,7 +460,7 @@
                                                             <input type="hidden" name="vendor_id[<?php echo $i ?>]" value="<?php echo $matix[$keys[$i]][$j]->cart['ven_id']; ?>">
 
                                                             <?php if ($matix[$keys[$i]][$j]->cart['price'] != 0) { ?>
-                                                                <input type="number" name="qty[<?php echo $i ?>][]" class="input input--qty input--s cart-qty"  min="1" value="<?php echo $matix[$keys[$i]][$j]->cart['qty']; ?>" >
+                                                                <input type="number" name="qty[<?php echo $i ?>][]" class="input input--qty input--s cart-qty"  min="1" value="<?php echo $matix[$keys[$i]][$j]->cart['qty']; ?>" max="<?php echo $cart[$key[$i]][$j]->max_qty; ?>"  oninput="if (this.value > this.max) this.value = this.max;" >
                                                                 <a class="link delete--row fontSize--l fontWeight--2 cart-delete" data-rowid="<?php echo $matix[$keys[$i]][$j]->cart['rowid']; ?>" style="transform:translateY(2px); margin-left:6px;">×</a>
                                                             <?php } else { ?>
                                                             <?php } ?>
@@ -721,12 +721,12 @@
                                                         <input type="hidden" name="vendor_id[<?php echo $i ?>]" value="<?php echo $cart[$key[$i]][$j]->cart['ven_id']; ?>">
 
                                                         <?php if ($cart[$key[$i]][$j]->cart['price'] != 0) { ?>
-                                                            <input type="number" name="qty[<?php echo $i ?>][]" class="input input--qty input--s cart-qty"  min="1" value="<?php echo $cart[$key[$i]][$j]->cart['qty']; ?>" >
+                                                            <input type="number" name="qty[<?php echo $i ?>][]" class="input input--qty input--s cart-qty"  min="1" value="<?php echo $cart[$key[$i]][$j]->cart['qty']; ?>" max="<?php echo $cart[$key[$i]][$j]->max_qty; ?>" oninput="if (this.value > this.max) this.value = this.max;">
                                                             <a class="link delete--row fontSize--l fontWeight--2 cart-delete" data-rowid="<?php echo $cart[$key[$i]][$j]->cart['rowid']; ?>" style="transform:translateY(2px); margin-left:6px;">×</a>
                                                         <?php } else { ?>
                                                         <?php } ?>
                                                     </td>
-                                                </tr >
+                                                </tr>
 
                                                 <?php
                                                 $ven_id = $cart[$key[$i]][$j]->cart['ven_id'];
@@ -991,5 +991,14 @@ $order_count = $independent_count + $matix_count;
     <script src="<?php echo base_url(); ?>assets/js/main.js"></script>
     <script src="<?php echo base_url(); ?>assets/js/awesome.min.js"></script>
     <!-- endbuild -->
+    <script>
+        $(document).on('input', '.cart-qty', function () {
+            let max = parseInt($(this).attr('max'));
+            let val = parseInt($(this).val());
 
+            if (val > max) {
+                $(this).val(max);
+            }
+        });
+    </script>
 </html>

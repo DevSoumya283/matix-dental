@@ -14,6 +14,7 @@ class Product_varients extends MY_Model
         $this->load->model('Memc');
         $this->load->model('PDOhandler');
     }
+
     public function skubyProductId($productId = '')
     {
         $this->db->select('*');
@@ -74,7 +75,15 @@ class Product_varients extends MY_Model
         return $this->db->get()->result();
     }
 
-
+    public function get_quantity_by_sku($sku='')
+    {
+        return $this->db
+            ->select('stock_quantity')
+            ->from('skus')
+            ->where('sku_code', $sku)
+            ->get()
+            ->row();
+    }
 
 
     public function skuDetails($sku_code = '')

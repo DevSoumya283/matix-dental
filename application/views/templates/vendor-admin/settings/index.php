@@ -29,7 +29,7 @@
                             <div class="accordion__content">
                                 <div class="accordion__preview">
                                     <div class="entity__group">
-                                        <div class="vendor__logo" style="width:160px;">
+                                        <div class="vendor__logo">
                                             <?php if ($company_logo != null && $company_logo != "") { ?>
                                                 <img src="<?php echo base_url(); ?>assets/img/logos/<?php echo $company_logo->photo; ?>" alt="<?php echo $company_logo->photo; ?>">
                                             <?php } else { ?>

@@ -31,6 +31,8 @@ class Cart extends MW_Controller {
         $this->load->library('email');
         $this->load->library('stripe');
         $this->load->helper('my_email_helper');
+        $this->load->model('Product_varients');
+
     }
 
     public function cart_view() {
@@ -167,6 +169,13 @@ class Cart extends MW_Controller {
                             $data['matix_vendor'][$matix_cart_keys[$m]][$i]->products = $products;
                             $data['matix_vendor'][$matix_cart_keys[$m]][$i]->price = $price;
                             $data['matix_vendor'][$matix_cart_keys[$m]][$i]->cart = $row[$i];
+
+                            $sku = $row[$i]['sku'];
+                            $stockRow = $this->Product_varients->get_quantity_by_sku($sku);
+
+                            $data['matix_vendor'][$matix_cart_keys[$m]][$i]->max_qty =
+                                $stockRow ? (int)$stockRow->stock_quantity : 0;
+
                             $subtotal = $data['matix_vendor'][$matix_cart_keys[$m]][$i]->cart['subtotal'];
                             if ($data['tax_details'] != null) {
                                 $tax = $subtotal * $data['tax_details']->EstimatedCombinedRate;
@@ -188,6 +197,12 @@ class Cart extends MW_Controller {
                             $data['cart_details'][$array_keys_cart[$k]][$i]->products = $products;
                             $data['cart_details'][$array_keys_cart[$k]][$i]->price = $price;
                             $data['cart_details'][$array_keys_cart[$k]][$i]->cart = $row[$i];
+                            
+                            $sku = $row[$i]['sku'];
+                            $stockRow = $this->Product_varients->get_quantity_by_sku($sku);
+                           
+                            $data['cart_details'][$array_keys_cart[$k]][$i]->max_qty =
+                                $stockRow ? (int)$stockRow->stock_quantity : 0;
 
                             $subtotal = $data['cart_details'][$array_keys_cart[$k]][$i]->cart['subtotal'];
                             if ($data['tax_details'] != null) {

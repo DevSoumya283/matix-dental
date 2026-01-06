@@ -261,7 +261,7 @@
                     <div class="sidebar__group mb-3">
                         <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
-                            <input type="number" name="quantity" id="quantity1"class="input input--qty not--empty width--50 sqty" min="1" max="" value="1">
+                            <input type="number" name="quantity" id="quantity1"class="input input--qty not--empty width--50 sqty" min="1" maxlength="10" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
@@ -1231,7 +1231,7 @@
                     <div class="sidebar__group mt-4 mb-3">
                         <h4>Choose Qty:<?php // echo $regular_price; ?></h4>
                         <div class="row no--margin-l">
-                            <input type="number" name="quantity" id="quantity2" class="input input--qty not--empty width--50 sqty" min="1" max="" value="1">
+                            <input type="number" name="quantity" id="quantity2" class="input input--qty not--empty width--50 sqty" min="1" max="10" value="1">
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
@@ -1739,7 +1739,6 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
             $('.sqty').attr('max', data.quantity);
       } else{
             $('.sqty').attr('value', 0);
-
       }
       if(data.vendor){               
         $('.vendor_ratings').text(data.vendor.name);
@@ -1749,11 +1748,32 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
         .attr('data-retail-price', data.vendor.retail_price)
         .text('$' +data.vendor.price);
       }
+
+      $('.sqty').val(1);
+
     } else {
       $('#skuRow').hide();
       $('#selectedSku1').text('');
     }
   }
+    $(document).on('input change', '.sqty', function () {
+        const max = parseInt($(this).attr('max'), 10);
+        const min = parseInt($(this).attr('min'), 10) || 1;
+        let val = parseInt($(this).val(), 10);
+
+        if (isNaN(val)) {
+            $(this).val(min);
+            return;
+        }
+
+        if (val > max) {
+            $(this).val(max);
+        }
+
+        if (val < min) {
+            $(this).val(min);
+        }
+    });
 
   $(function(){
     $.ajax({
