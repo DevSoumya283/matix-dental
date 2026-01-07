@@ -254,10 +254,10 @@ class ProductsUpload extends MW_Controller {
             $categories_list = array_unique($categories_list);
             $categories = !empty($categories_list) ? '"' . implode('","', $categories_list) . '"' : null;
 
-            $random_number =  rand(1111111, 9999999);
+            // $random_number =  rand(1111111, 9999999);
             $product_data = [
                 'item_code' => $row[3],
-                'matix_id' => 'p-'.$random_number,
+                // 'matix_id' => 'p-'.$random_number,
                 'name' => $row[4],
                 'description' => $row[5],
                 'extended_description' => $row[6],
@@ -276,6 +276,10 @@ class ProductsUpload extends MW_Controller {
 
             // Only set these on insert
             if (!$existing_product) {
+
+                $random_number = rand(1111111, 9999999);
+
+                $product_data['matix_id'] = 'p-' . $random_number;
                 $product_data['mpn'] = $mpn;
                 $product_data['created_at'] = date('Y-m-d H:i:s');
                 $new_product_array[] = $product_data;
