@@ -1755,12 +1755,14 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
 
         if (bestPrice !== null && bestPrice !== '' && !isNaN(bestPrice)) {
             $('.retail-price').text('$' + price.toFixed(2));
-            $('.club--price').text('$' + parseFloat(retail_price).toFixed(2));
+            $('.sale-price').text('$' + parseFloat(retail_price).toFixed(2));
+            // $('.club--price').text('$' + parseFloat(retail_price).toFixed(2));
             $('.add_single_cart').attr('data-price', retail_price);
             $('.has--promoclub--price').text(retail_price);
         } else {
             $('.retail-price').text('$' + price.toFixed(2));
-            $('.club--price').text('$' + retail_price.toFixed(2));
+            // $('.club--price').text('$' + retail_price.toFixed(2));
+            $('.sale-price').text('$' + retail_price.toFixed(2));
             $('.add_single_cart').attr('data-price', retail_price);
             $('.has--promoclub--price').text('');
         }
