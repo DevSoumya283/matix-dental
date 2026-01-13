@@ -52,9 +52,9 @@
                 <input type="file" id="baseExcel2" class="form-control mb-3">
 
 
-                <select class="form-select" aria-label="Default select example" id="vendor_id" name="vendor_id" required>
+                <!-- <select class="form-select" aria-label="Default select example" id="vendor_id" name="vendor_id" required>
                     <option value="">Loading vendors...</option>
-                </select>
+                </select> -->
 
 
                 <button id="saveToDb2" class="btn btn-success my-3">Upload Options</button>
@@ -84,15 +84,25 @@
                 <table id="variantProductsTable" class="table table-bordered w-100">
                     <thead>
                         <tr>
+                            <th>
+                                <input type="checkbox" id="selectAllVariantProducts">
+                            </th>
                             <th>Matix ID</th>
                             <th>Name</th>
                             <th>MPN</th>
-                            <th>Parent Product</th>
-                            <th>Variants</th>
+                            <!-- <th>Parent Product</th> -->
+                            <!-- <th>Variants</th> -->
                         </tr>
                     </thead>
                 </table>
-                 </div>
+                <div class="mb-2">
+                    <button id="downloadExcelVariant"
+                            class="btn btn-success"
+                            disabled>
+                        Download Excel
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -409,43 +419,43 @@
         });
 
         // venodr Load
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch("<?php echo base_url('ajax_get_vendors'); ?>")
-                .then(res => res.json())
-                .then(vendors => {
-                    let vendorSelect = document.getElementById("vendor_id");
-                    vendorSelect.innerHTML = '<option value="">-- Select Vendor --</option>';
-                    vendors.forEach(v => {
-                        let opt = document.createElement("option");
-                        opt.value = v.id;
-                        opt.textContent = v.name;
-                        vendorSelect.appendChild(opt);
-                    });
-                })
-                .catch(() => {
-                    alert("Failed to load vendors.");
-                });
-        });
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     fetch("<?php echo base_url('ajax_get_vendors'); ?>")
+        //         .then(res => res.json())
+        //         .then(vendors => {
+        //             let vendorSelect = document.getElementById("vendor_id");
+        //             vendorSelect.innerHTML = '<option value="">-- Select Vendor --</option>';
+        //             vendors.forEach(v => {
+        //                 let opt = document.createElement("option");
+        //                 opt.value = v.id;
+        //                 opt.textContent = v.name;
+        //                 vendorSelect.appendChild(opt);
+        //             });
+        //         })
+        //         .catch(() => {
+        //             alert("Failed to load vendors.");
+        //         });
+        // });
 
         document.getElementById('saveToDb2').addEventListener('click', function() {
             let rows = this.dataset.rows;
-            let vendor_id = document.getElementById('vendor_id').value;
+            // let vendor_id = document.getElementById('vendor_id').value;
 
             if (!rows) {
                 showAlert('warning', 'Please upload an Excel file first.');
                 return;
             }
-            if (!vendor_id) {
-                showAlert('warning', 'Please select a vendor.');
-                return;
-            }
+            // if (!vendor_id) {
+            //     showAlert('warning', 'Please select a vendor.');
+            //     return;
+            // } + "&vendor_id=" + encodeURIComponent(vendor_id)
 
             fetch("<?php echo base_url('save_options_excel'); ?>", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded"
                     },
-                    body: "rows=" + encodeURIComponent(rows) + "&vendor_id=" + encodeURIComponent(vendor_id)
+                    body: "rows=" + encodeURIComponent(rows) 
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -466,56 +476,116 @@
 
 
 
-        // 3rd tab 
+        // 4th tab 
 
-        document.querySelector('[data-bs-target="#showtoption"]').addEventListener('shown.bs.tab', function() {
+        document.querySelector('[data-bs-target="#showtoption"]').addEventListener('shown.bs.tab', function () {
+
             fetch("<?= base_url('get_all_products_with_options'); ?>")
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success' && data.data.length > 0) {
-                        let html = `
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Product ID</th>
-                                <th>Product Name</th>
-                                <th>MPN</th>
-                                <th>SKU</th>
-                                <th>Option Id</th>
-                                <th>Option Type</th>
-                                <th>Option Code</th>
-                                <th>Option Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
 
-                        data.data.forEach(row => {
-                            html += `
-                        <tr>
-                            <td>${row.product_id}</td>
-                            <td>${row.name}</td>
-                            <td>${row.mpn}</td>
-                            <td>${row.sku_code}</td>
-                            <td>${row.option_id}</td>
-                            <td>${row.option_name}</td>
-                            <td>${row.option_code}</td>
-                            <td>${row.option_value}</td>
-                        </tr>
-                    `;
-                        });
-
-                        html += "</tbody></table>";
-                        document.getElementById('optionPreview').innerHTML = html;
-                    } else {
-                        document.getElementById('optionPreview').innerHTML = "<div class='alert alert-warning'>No data found.</div>";
+                    if (data.status !== 'success' || data.data.length === 0) {
+                        document.getElementById('optionPreview').innerHTML =
+                            "<div class='alert alert-warning'>No data found.</div>";
+                        return;
                     }
+
+                    let html = `
+                        <table id="optionTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product ID</th>
+                                    <th>Product Name</th>
+                                    <th>MPN</th>
+                                    <th>SKU</th>
+                                    <th>Option ID</th>
+                                    <th>Option Type</th>
+                                    <th>Option Code</th>
+                                    <th>Option Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.data.forEach(row => {
+                        html += `
+                            <tr>
+                                <td>${row.product_id ?? ''}</td>
+                                <td>${row.name ?? ''}</td>
+                                <td>${row.mpn ?? ''}</td>
+                                <td>${row.sku_code ?? ''}</td>
+                                <td>${row.option_id ?? ''}</td>
+                                <td>${row.option_name ?? ''}</td>
+                                <td>${row.option_code ?? ''}</td>
+                                <td>${row.option_value ?? ''}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table>`;
+
+                    document.getElementById('optionPreview').innerHTML = html;
+
+                    if ($.fn.DataTable.isDataTable('#optionTable')) {
+                        $('#optionTable').DataTable().destroy();
+                    }
+
+                    // ✅ Initialize DataTable
+                    $('#optionTable').DataTable({
+                        pageLength: 10,
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[4, 'desc']],
+                        scrollX: true
+                    });
                 });
         });
 
 
 
         // update price tab 
+
+        document.querySelector('[data-bs-target="#updateprice"]').addEventListener('shown.bs.tab', function () {
+
+            fetch("<?= base_url('get_vendors_list') ?>")
+                .then(res => res.json())
+                .then(response => {
+
+                    if (response.status !== 'success') {
+                        document.getElementById('previewupdateprice').innerHTML =
+                            '<div class="alert alert-danger">Failed to load vendors</div>';
+                        return;
+                    }
+
+                    let html = `
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Vendor ID</th>
+                                    <th>Vendor Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    response.data.forEach(v => {
+                        html += `
+                            <tr>
+                                <td>${v.id}</td>
+                                <td>${v.name}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table>`;
+
+                    document.getElementById('previewupdateprice').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('previewupdateprice').innerHTML =
+                        '<div class="alert alert-danger">Something went wrong</div>';
+                });
+
+        });
 
         let updatePriceRows = [];
 
@@ -594,6 +664,7 @@
         // For Varient Product 
 
         var parentProducts = {};
+        var selectedVariantProducts = {};
 
         $(document).ready(function() {
             var table = $('#variantProductsTable').DataTable({
@@ -684,6 +755,54 @@
                 }
             });
         });
+        $(document).on('change', '.variant-product-checkbox', function () {
+            let id = $(this).val();
+
+            if ($(this).is(':checked')) {
+                selectedVariantProducts[id] = true;
+            } else {
+                delete selectedVariantProducts[id];
+            }
+
+            $('#downloadExcelVariant').prop(
+                'disabled',
+                Object.keys(selectedVariantProducts).length === 0
+            );
+        });
+
+        // Select all
+        $('#selectAllVariantProducts').on('change', function () {
+            $('.variant-product-checkbox')
+                .prop('checked', this.checked)
+                .trigger('change');
+        });
+
+        // download excel button
+        $('#downloadExcelVariant').on('click', function () {
+
+            let ids = Object.keys(selectedVariantProducts);
+            if (ids.length === 0) return;
+
+            let form = $('<form>', {
+                method: 'POST',
+                action: "<?= base_url('download-variant-sku-excel') ?>"
+            });
+
+            ids.forEach(id => {
+                form.append(
+                    $('<input>', {
+                        type: 'hidden',
+                        name: 'matix_ids[]',
+                        value: id
+                    })
+                );
+            });
+
+            $('body').append(form);
+            form.submit();
+            form.remove();
+        });
+
     </script>
 </body>
 

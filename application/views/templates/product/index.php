@@ -298,7 +298,7 @@
                                                         <input type="radio" name="vendor" class="vendor_id" id="vendor_id_<?php echo $i; ?>"  value="<?php echo $vendors[$i]->vendor_id; ?>" <?php echo $i == 0 ? 'checked' : ''; ?> >
 
                                                         <div class="control__indicator"></div>
-                                                        <div class="control__text text__group">
+                                                        <div class="control__text text__group" style="width: 80%;">
                                                             <span class="line--main vendor_ratings "></span>
                                                             <?php if ($vendors[$i]->promo_title != "") { ?>
                                                                 <span class="line--sub"><?php echo $vendors[$i]->promo_title; ?> </span>
@@ -1240,8 +1240,8 @@
                             <input type="hidden" name="p_id" class="p_id" value="<?php echo $product->id; ?>">
                         </div>
                     </div>
-                    <?php // Initial dropdowns – pass $options from get_product_options($product_id) ?>
-                        <?php if (!empty($options)): ?>
+                    <?php // Initial dropdowns – pass $options from get_product_options($product_id) new ?>
+                        <?php if (!empty($options)): ?> 
                         <?php foreach ($options as $type => $values): ?>
                             <div class="sidebar__group mb-3">
                             <h4>Choose <?php echo $type; ?>:</h4>
@@ -1661,107 +1661,214 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
     return vals;
   }
 
-  function rebuildSelect(selectEl, type, allList, validList, preselectedId = null) {
-    const prev = preselectedId ? String(preselectedId) : (selectEl.val() ? String(selectEl.val()) : '');
-    selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
+    function rebuildSelect(selectEl, type, allList, validList, preselectedId = null) {
+        const prev = preselectedId ? String(preselectedId) : (selectEl.val() ? String(selectEl.val()) : '');
+        selectEl.empty().append('<option value="">-- Select '+type+' --</option>');
 
-    const validIds = new Set((validList || []).map(o => String(o.value_id)));
-    const allIds   = new Set((allList || []).map(o => String(o.value_id)));
+        const validIds = new Set((validList || []).map(o => String(o.value_id)));
+        const allIds   = new Set((allList || []).map(o => String(o.value_id)));
 
-    (allList || []).forEach(function(opt) {
-      const id = String(opt.value_id);
-      const isValid = validIds.has(id);
-      let text = opt.value;
+        (allList || []).forEach(function(opt) {
+        const id = String(opt.value_id);
+        const isValid = validIds.has(id);
+        let text = opt.value;
 
-      if (!isValid || opt.stock === 0 || opt.stock === null) {
-        text += ' (Stock Not Available)';
-      }
-
-      const $o = $('<option>', { value: id, text: text });
-      if (!isValid || opt.stock === 0 || opt.stock === null) {
-        $o.prop('disabled', true).css('color','red');
-      }
-      selectEl.append($o);
-    });
-
-    if (prev && allIds.has(prev)) {
-      selectEl.val(prev);
-    } else {
-      selectEl.val('');
-    }
-  }
-
-  function updateUI(data, preselect = false) {
-    if (data.available) {
-      const all   = data.available.all || {};
-      const valid = data.available.valid || {};
-
-      $('.variantSelect').each(function() {
-        const type = $(this).data('type');
-        let preselectedId = null;
-
-        if (preselect && valid[type] && valid[type].length > 0) {
-          preselectedId = valid[type][0].value_id;
+        if (!isValid || opt.stock === 0 || opt.stock === null) {
+            text += ' (Stock Not Available)';
         }
 
-        rebuildSelect($(this), type, all[type] || [], valid[type] || [], preselectedId);
-      });
+        const $o = $('<option>', { value: id, text: text });
+        if (!isValid || opt.stock === 0 || opt.stock === null) {
+            $o.prop('disabled', true).css('color','red');
+        }
+        selectEl.append($o);
+        });
+
+        if (prev && allIds.has(prev)) {
+        selectEl.val(prev);
+        } else {
+        selectEl.val('');
+        }
     }
 
-    // SKU + price
-    if (data.sku) {
-      $('#skuRow').show();
-      $('#selectedSku1').text(data.sku);
-	 $.each(data.options, function (key, option) {
-        const id = key.toLowerCase().replace(/\s+/g, '_');
-        $('#' + id).text(option.value);
-    });      
-    if(typeof data.bestPrice !== 'undefined' && data.bestPrice !== null) {
+    function rebuildVendorList(vendors) {
+        
+        const $ul = $('#vendor_list_container ul.list');
+        $ul.empty();
 
-        $('.retail-price').text('$' + data.price);
-        $('.club--price').text('$' + data.bestPrice);
-        $('.add_single_cart').attr('data-price', data.bestPrice);
-        $('.has--promoclub--price').text(data.bestPrice);
-      }else{
-        $('.retail-price').text('$' + data.price);
-        $('.club--price').text('$' + data.retail_price);
-        $('.add_single_cart').attr('data-price', data.retail_price);
-        $('.has--promoclub--price').text(data.bestPrice);
+        if (!Array.isArray(vendors) || vendors.length === 0) {
+            return;
+        }
 
-      }
-      
-      if (typeof data.vendor !== 'undefined' && data.vendor !== null) {
-        $('.add_single_cart').attr('data-vendor_id', data.vendor.vendor_id);
-      }  
+        vendors.forEach(function(v, i) {
 
-      if (typeof data.options.Color !== 'undefined' && data.options.Color !== null) {
-        $('.add_single_cart').attr('data-procolor', data.options.Color.value);
-      } 
-      if (typeof data.sku !== 'undefined' && data.sku !== null) {
-        $('.add_single_cart').attr('data-sku', data.sku);
-      }  
-      if (typeof data.quantity !== 'undefined' && data.quantity !== null) {
-            $('.sqty').attr('max', data.quantity);
-            $('#stock_quantity').text(data.quantity);
-      } else{
-            $('.sqty').attr('value', 0);
-      }
-      if(data.vendor){               
-        $('.vendor_ratings').text(data.vendor.name);
-        $('.v_id').html(data.vendor.vendor_id);
-        $('.v_price')
-        .attr('data-price', data.vendor.price)
-        .attr('data-retail-price', data.vendor.retail_price)
-        .text('$' +data.vendor.price);
-      }
+            const price = parseFloat(v.price).toFixed(2);
+            const retail = parseFloat(v.retail_price).toFixed(2);
+          
+            
+            const li = `
+            <li class="item">
+                <div class="wrapper">
+                <div class="wrapper__inner">
+                    <label class="control control__radio mdisplayblock">
+                    <input type="radio" name="vendor" class="vendor_id"
+                            value="${v.vendor_id}" ${i === 0 ? 'checked' : ''} data-quantity="${v.quantity}">
 
-      $('.sqty').val(1);
+                    <div class="control__indicator"></div>
 
-    } else {
-      $('#skuRow').hide();
-      $('#selectedSku1').text('');
+                    <div class="control__text text__group" style="width: min-content;">
+                        <span class="line--main vendor_ratings">${v.name}</span>
+                        <span class="line--sub">Regular Price</span>
+                        <input type="hidden" class="v_id" value="${v.vendor_id}">
+                    </div>
+                    </label>
+                </div>
+
+                <div class="wrapper__inner align--right">
+                    <div class="text__group">
+                    <span class="line--main v_price"
+                            data-price="${price}"
+                            data-retail-price="${retail}">
+                        $${retail}
+                    </span>
+                    <span class="line--sub">${v.policy_name ?? ''}</span>
+                    </div>
+                </div>
+                </div>
+            </li>
+            `;
+
+            $ul.append(li);
+        });
+
+        // default vendor → cart
+        $('.add_single_cart').attr('data-vendor_id', vendors[0].vendor_id);
+        setTimeout(function () {
+         $('.vendor_id:checked').trigger('change');
+        }, 0);
     }
-  }
+
+    function applyTopPrice(price, retail_price, bestPrice = null) {
+
+        price = parseFloat(price);
+        retail_price = parseFloat(retail_price);
+
+        if (bestPrice !== null && bestPrice !== '' && !isNaN(bestPrice)) {
+            $('.retail-price').text('$' + price.toFixed(2));
+            $('.club--price').text('$' + parseFloat(retail_price).toFixed(2));
+            $('.add_single_cart').attr('data-price', retail_price);
+            $('.has--promoclub--price').text(retail_price);
+        } else {
+            $('.retail-price').text('$' + price.toFixed(2));
+            $('.club--price').text('$' + retail_price.toFixed(2));
+            $('.add_single_cart').attr('data-price', retail_price);
+            $('.has--promoclub--price').text('');
+        }
+        
+    }
+
+    function updateUI(data, preselect = false) {
+        if (data.available) {
+            const all   = data.available.all || {};
+            const valid = data.available.valid || {};
+
+            $('.variantSelect').each(function() {
+                const type = $(this).data('type');
+                let preselectedId = null;
+
+                if (preselect && valid[type] && valid[type].length > 0) {
+                preselectedId = valid[type][0].value_id;
+                }
+
+                rebuildSelect($(this), type, all[type] || [], valid[type] || [], preselectedId);
+            });
+        }
+
+        // SKU + price
+        if (data.sku) {
+            $('#skuRow').show();
+            $('#selectedSku1').text(data.sku);
+            $.each(data.options, function (key, option) {
+                const id = key.toLowerCase().replace(/\s+/g, '_');
+                $('#' + id).text(option.value);
+            });   
+        }
+        // if(typeof data.bestPrice !== 'undefined' && data.bestPrice !== null) {
+
+        //     $('.retail-price').text('$' + data.price);
+        //     $('.club--price').text('$' + data.bestPrice);
+        //     $('.add_single_cart').attr('data-price', data.bestPrice);
+        //     $('.has--promoclub--price').text(data.bestPrice);
+        // }else{
+        //     $('.retail-price').text('$' + data.price);
+        //     $('.club--price').text('$' + data.retail_price);
+        //     $('.add_single_cart').attr('data-price', data.retail_price);
+        //     $('.has--promoclub--price').text(data.bestPrice);
+
+        // }
+
+        applyTopPrice(data.price, data.retail_price, data.bestPrice);
+
+        //   if (typeof data.vendor !== 'undefined' && data.vendor !== null) {
+        //     $('.add_single_cart').attr('data-vendor_id', data.vendor.vendor_id);
+        //   }  
+
+        // if (typeof data.options.Color !== 'undefined' && data.options.Color !== null) {
+        //     $('.add_single_cart').attr('data-procolor', data.options.Color.value);
+        // } 
+        if (typeof data.sku !== 'undefined' && data.sku !== null) {
+            $('.add_single_cart').attr('data-sku', data.sku);
+        }
+
+        // if (typeof data.quantity !== 'undefined' && data.quantity !== null) {
+        //         $('.sqty').attr('max', data.quantity);
+        //         $('#stock_quantity').text(data.quantity);
+        // } else{
+        //         $('.sqty').attr('value', 0);
+        // }
+        
+        //   if(data.vendor){               
+        //     $('.vendor_ratings').text(data.vendor.name);
+        //     $('.v_id').html(data.vendor.vendor_id);
+        //     $('.v_price')
+        //     .attr('data-price', data.vendor.price)
+        //     .attr('data-retail-price', data.vendor.retail_price)
+        //     .text('$' +data.vendor.price);
+        //   }
+        // } else {
+        // $('#skuRow').hide();
+        // $('#selectedSku1').text('');
+        // }
+
+        if (Array.isArray(data.vendor)) {
+            rebuildVendorList(data.vendor);
+        }
+
+        $('.sqty').val(1);
+
+        
+    }
+
+    $(document).on('change', '.vendor_id', function () {
+
+        const $item = $(this).closest('.item');
+        const price = $item.find('.v_price').data('price');
+        const retail = $item.find('.v_price').data('retail-price');
+        const vendorQty = parseInt($(this).data('quantity'), 10) || 0;
+
+        // vendor change → NO club price
+        applyTopPrice(price, retail, null);
+
+        $('.sqty').attr('max', vendorQty);
+        $('#stock_quantity').text(vendorQty);
+
+        // reset qty safely
+        $('.sqty').val(vendorQty > 0 ? 1 : 0);
+        // update cart vendor
+        $('.add_single_cart').attr('data-vendor_id', $(this).val());
+    });
+
+
     $(document).on('input change', '.sqty', function () {
         const max = parseInt($(this).attr('max'), 10);
         const min = parseInt($(this).attr('min'), 10) || 1;
@@ -1781,67 +1888,67 @@ $('#avgrating').jsRapStar({colorFront:'#FFBC00',length:5,starHeight:28,step:fals
         }
     });
 
-  $(function(){
-    $.ajax({
-      url: "<?php echo base_url('get_sku_by_options'); ?>",
-      type: "POST",
-      dataType: "json",
-      data: {
-        values: [], // no selection initially
-        product_id: "<?php echo $product_id; ?>"
-      },
-      success: function(res){
-        updateUI(res, true); // true = preselect first valid SKU
+    $(function(){
+        $.ajax({
+        url: "<?php echo base_url('get_sku_by_options'); ?>",
+        type: "POST",
+        dataType: "json",
+        data: {
+            values: [], // no selection initially
+            product_id: "<?php echo $product_id; ?>"
+        },
+        success: function(res){
+            updateUI(res, true); // true = preselect first valid SKU
 
-        const values = collectSelected();
-        if (values.length > 0) {
-          $.ajax({
-            url: "<?php echo base_url('get_sku_by_options'); ?>",
-            type: "POST",
-            dataType: "json",
-            data: {
-              values: values,
-              product_id: "<?php echo $product_id; ?>"
-            },
-            success: function(res2){
-                 var photoUrl = res2.sku_image
-              ? image_url + 'uploads/products/new-vol-data/' + res2.sku_image
-              : base_url + 'assets/img/product-image.png';
-            console.log(photoUrl);
-            $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
+            const values = collectSelected();
+            if (values.length > 0) {
+            $.ajax({
+                url: "<?php echo base_url('get_sku_by_options'); ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                values: values,
+                product_id: "<?php echo $product_id; ?>"
+                },
+                success: function(res2){
+                    var photoUrl = res2.sku_image
+                ? image_url + 'uploads/products/new-vol-data/' + res2.sku_image
+                : base_url + 'assets/img/product-image.png';
+                console.log(photoUrl);
+                $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
 
-              updateUI(res2, false);
+                updateUI(res2, false);
+                }
+            });
             }
-          });
         }
-      }
+        });
     });
-  });
 
-  // ✅ Trigger AJAX refresh on change
-  $(document).on('change', '.variantSelect', function(){
-    const values = collectSelected();
+    // ✅ Trigger AJAX refresh on change
+    $(document).on('change', '.variantSelect', function(){
+        const values = collectSelected();
 
-    $.ajax({
-      url: "<?php echo base_url('get_sku_by_options'); ?>",
-      type: "POST",
-      dataType: "json",
-      data: {
-        values: values,
-        product_id: "<?php echo $product_id; ?>"
-      },
-      success: function(res){
-         var photoUrl = res.sku_image
-              ? image_url + 'uploads/products/new-vol-data/' + res.sku_image
-              : base_url + 'assets/img/product-image.png';
-            console.log(photoUrl);
-            $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
+        $.ajax({
+        url: "<?php echo base_url('get_sku_by_options'); ?>",
+        type: "POST",
+        dataType: "json",
+        data: {
+            values: values,
+            product_id: "<?php echo $product_id; ?>"
+        },
+        success: function(res){
+            var photoUrl = res.sku_image
+                ? image_url + 'uploads/products/new-vol-data/' + res.sku_image
+                : base_url + 'assets/img/product-image.png';
+                console.log(photoUrl);
+                $('.product__thumb').css('background-image', 'url("' + photoUrl + '")');
 
-        updateUI(res);
-      }
+            updateUI(res);
+        }
+        });
     });
-  });
-
+    
 })(jQuery);
 </script>
 <script>

@@ -315,8 +315,9 @@ class Products extends MW_Controller {
                 $data['four_star'] = $this->Review_model->get_many_by(array('model_name' => 'products', 'model_id' => $product_id, 'rating' => '4'));
                 $data['five_star'] = $this->Review_model->get_many_by(array('model_name' => 'products', 'model_id' => $product_id, 'rating' => '5'));
 
-                $data['vendors'] = $this->Vendor_model->loadVendorPricings($product_id);
-               
+                // $data['vendors'] = $this->Vendor_model->loadVendorPricings($product_id);
+                $data['vendors'] = $this->Vendor_model->loadVendorPricings($data['product']->sku);
+   
                 if ($data['vendors'] != null) { //get active vendors ,shipping and promo details
                     for ($i = 0; $i < count($data['vendors']); $i++) {
                         $data['vendors'][$i]->promo_title = "";
@@ -479,7 +480,9 @@ class Products extends MW_Controller {
                 $data['options'] = $this->Product_varients->get_product_options($product_id);
 
 
-
+                // echo "<pre>";
+                // print_r($data['vendors']);
+                // die();
             
 
                 $this->load->view('/templates/_inc/header', $data);
@@ -535,9 +538,10 @@ class Products extends MW_Controller {
             'quantity'     => $sku ? $sku->stock_quantity : null,
             'price'        => $sku ? $sku->price : null,
             'retail_price' => $sku ? $sku->retail_price : null,
-            'bestPrice'    => isset($bestPrice) ? number_format($bestPrice, 2, '.', '') : null,            'options'      => $sku ? $sku->options : null,
+            'bestPrice'    => isset($bestPrice) ? number_format($bestPrice, 2, '.', '') : null,           
+            'options'      => $sku ? $sku->options : null,
             'sku_image'    => $sku ? $sku->image  : null,
-            'vendor'       => !empty($vendor)?$vendor[0]: null,
+            'vendor'       => !empty($vendor)?$vendor: null,
             'available'    => $availableOptions  // { all: {...}, valid: {...} }
         ]);
     }

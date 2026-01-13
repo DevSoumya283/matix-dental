@@ -147,13 +147,19 @@ class Product_varients extends MY_Model
 
         $matix_id = $product->matix_id;
 
-        $this->db->select('po.option_type, po.option_code, pov.value_id, pov.value, s.stock_quantity');
+        $this->db->select('po.option_type, po.option_code, pov.value_id, pov.value, IFNULL(MAX(pp.quantity),0) AS stock_quantity');
         $this->db->from('skus s');
+        $this->db->join(
+            'product_pricings pp',
+            'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+            'left'
+        );
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
         $this->db->join('product_options po', 'pov.option_id = po.option_id');
         $this->db->where('s.product_id', $matix_id);
-        $this->db->order_by('po.option_type, pov.value');
+        // $this->db->order_by('po.option_type, pov.value');
+        $this->db->group_by('po.option_type, pov.value_id');
         $rows = $this->db->get()->result();
 
         $options = [];
@@ -197,7 +203,8 @@ class Product_varients extends MY_Model
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->join('product_pricings pp', 'pp.sku = s.sku_code AND pp.matix_id = s.product_id', 'left');
         $this->db->where('s.product_id', $matix_id);
-        $this->db->where('s.stock_quantity >', 0);
+        // $this->db->where('s.stock_quantity >', 0);
+        $this->db->where('pp.quantity >', 0);
         $this->db->where_in('sov.value_id', $values);
         $this->db->group_by('s.sku_id');
 
@@ -242,13 +249,25 @@ class Product_varients extends MY_Model
         $matix_id = $product->matix_id;
 
         // 2) ALL values for the product family (used to always show all options)
-        $this->db->select('po.option_type, pov.value_id, pov.value');
+        // $this->db->select('po.option_type, pov.value_id, pov.value');
+        $this->db->select('
+            po.option_type,
+            pov.value_id,
+            pov.value,
+            IFNULL(MAX(pp.quantity), 0) AS stock
+        ');
         $this->db->from('skus s');
+        $this->db->join(
+            'product_pricings pp',
+            'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+            'left'
+        );
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
         $this->db->join('product_options po', 'pov.option_id = po.option_id');
-        $this->db->where('s.product_id', $matix_id);
+        // $this->db->where('s.product_id', $matix_id);
         $this->db->order_by('po.option_type, pov.value');
+        $this->db->group_by('po.option_type, pov.value_id');
         $rows_all = $this->db->get()->result();
 
         $all = [];
@@ -306,8 +325,15 @@ class Product_varients extends MY_Model
             $this->db->select('s.sku_id');
             $this->db->from('skus s');
             $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id');
+            $this->db->join(
+            'product_pricings pp',
+            'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+            'inner'
+            );
+
             $this->db->where('s.product_id', $matix_id);
-            $this->db->where('s.stock_quantity >', 0);
+            // $this->db->where('s.stock_quantity >', 0);
+            $this->db->where('pp.quantity >', 0);
 
             if (!empty($filter_values)) {
                 $this->db->where_in('sov.value_id', $filter_values);
@@ -327,14 +353,26 @@ class Product_varients extends MY_Model
             $sku_ids = array_column($skuRows, 'sku_id');
 
             // collect values for this option_type from those SKUs
-            $this->db->select('DISTINCT pov.value_id, pov.value', FALSE);
+            // $this->db->select('DISTINCT pov.value_id, pov.value', FALSE);
+            $this->db->select('
+                pov.value_id,
+                pov.value,
+                MAX(pp.quantity) AS stock
+            ', FALSE);
             $this->db->from('sku_option_values sov');
             $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id');
             $this->db->join('product_options po', 'pov.option_id = po.option_id');
             $this->db->join('skus s', 'sov.sku_id = s.sku_id');
+            $this->db->join(
+            'product_pricings pp',
+            'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+            'inner'
+            );
             $this->db->where_in('sov.sku_id', $sku_ids);
             $this->db->where('po.option_type', $type);
-            $this->db->where('s.stock_quantity >', 0);
+            // $this->db->where('s.stock_quantity >', 0);
+            $this->db->where('pp.quantity >', 0);
+            $this->db->group_by('pov.value_id');
             $this->db->order_by('s.sku_id');
             $rows2 = $this->db->get()->result();
 

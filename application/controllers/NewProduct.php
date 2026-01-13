@@ -434,28 +434,28 @@ class NewProduct extends MW_Controller
                     }
 
                     // Insert into product_pricings
-                    $vendor_id = $this->input->post('vendor_id');
-                    $this->db->insert('product_pricings', [
-                        'product_id'        => $product->id,
-                        'sku'               => $sku_code,
-                        'vendor_product_id' => $product->mpn,
-                        'matix_id'          => $product->matix_id,
-                        'minimum_threshold' => 0,
-                        'vendor_id'         => $vendor_id,
-                        'price'             => null,
-                        'retail_price'      => null,
-                        'active'            => 1,
-                        'quantity'          => null,
-                        'exclude_from_marketplace' => 0,
-                        'exclude_from_whitelabels_1' => 0,
-                        'exclude_from_whitelabels_2' => 0,
-                        'created_at'        => date('Y-m-d H:i:s'),
-                        'updated_at'        => date('Y-m-d H:i:s'),
-                    ]);
+                    // $vendor_id = $this->input->post('vendor_id');
+                    // $this->db->insert('product_pricings', [
+                    //     'product_id'        => $product->id,
+                    //     'sku'               => $sku_code,
+                    //     'vendor_product_id' => $product->mpn,
+                    //     'matix_id'          => $product->matix_id,
+                    //     'minimum_threshold' => 0,
+                    //     'vendor_id'         => $vendor_id,
+                    //     'price'             => null,
+                    //     'retail_price'      => null,
+                    //     'active'            => 1,
+                    //     'quantity'          => null,
+                    //     'exclude_from_marketplace' => 0,
+                    //     'exclude_from_whitelabels_1' => 0,
+                    //     'exclude_from_whitelabels_2' => 0,
+                    //     'created_at'        => date('Y-m-d H:i:s'),
+                    //     'updated_at'        => date('Y-m-d H:i:s'),
+                    // ]);
                 }
             }
         }
-
+                       
         $this->db->trans_complete();
 
         $response = [
@@ -585,7 +585,7 @@ class NewProduct extends MW_Controller
         $this->db->join('sku_option_values sov', 's.sku_id = sov.sku_id', 'left');
         $this->db->join('product_option_values pov', 'sov.value_id = pov.value_id', 'left');
         $this->db->join('product_options po', 'pov.option_id = po.option_id', 'left');
-        $this->db->order_by('p.id', 'DESC');
+        // $this->db->order_by('p.id', 'DESC');
         $this->db->order_by('s.sku_id', 'DESC');
 
         $query = $this->db->get();
@@ -609,75 +609,230 @@ class NewProduct extends MW_Controller
 
     // Update Price tab 
 
+    public function get_vendors_list()
+    {
+        $vendors = $this->db
+            ->select('id, name')
+            ->from('vendors')
+            ->order_by('name', 'ASC')
+            ->get()
+            ->result();
+
+        echo json_encode([
+            'status' => 'success',
+            'data'   => $vendors
+        ]);
+    }
+
+
+    // public function updateskuprice()
+    // {
+    //     $json = json_decode(file_get_contents("php://input"), true);
+
+    //     if (!$json || !isset($json['rows']) || count($json['rows']) < 2) {
+    //         echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
+    //         return;
+    //     }
+
+    //     $rows = $json['rows'];
+    //     $headers = array_map('strtolower', $rows[0]); // lowercase headers
+    //     array_shift($rows); // remove header row
+
+    //     foreach ($rows as $row) {
+    //         $rowData = [];
+    //         foreach ($headers as $i => $h) {
+    //             if (!empty($h) && isset($row[$i])) {
+    //                 $rowData[$h] = trim($row[$i]);
+    //             }
+    //         }
+
+    //         if (empty($rowData['product_sku'])) continue;
+    //         $sku = $rowData['Product_sku'];
+
+    //         // Prepare update data only if provided
+    //         $skuUpdate = [];
+    //         $pricingUpdate = [];
+
+    //         if (isset($rowData['Quantity'])) {
+    //             $skuUpdate['stock_quantity'] = $rowData['Quantity'];
+    //             $pricingUpdate['quantity']   = $rowData['Quantity'];
+    //         }
+    //         if (isset($rowData['Price'])) {
+    //             $skuUpdate['price'] = $rowData['Price'];
+    //             $pricingUpdate['price'] = $rowData['Price'];
+    //         }
+    //         if (isset($rowData['Retail_price'])) {
+    //             $skuUpdate['retail_price'] = $rowData['Retail_price'];
+    //             $pricingUpdate['retail_price'] = $rowData['Retail_price'];
+    //         }
+    //         if (isset($rowData['image'])) {
+    //             $skuUpdate['image'] = $rowData['image'];
+    //         }
+
+    //         // 🔹 SKUs table
+    //         $q = $this->db->get_where('skus', ['sku_code' => $sku]);
+    //         if ($q->num_rows() > 0) {
+    //             if (!empty($skuUpdate)) {
+    //                 $this->db->where('sku_code', $sku)->update('skus', $skuUpdate);
+    //             }
+    //         } else {
+    //             $skuUpdate['sku_code'] = $sku;
+    //             $this->db->insert('skus', $skuUpdate);
+    //         }
+
+    //         // 🔹 Product Pricings table
+    //         $q2 = $this->db->get_where('product_pricings', ['sku' => $sku]);
+    //         if ($q2->num_rows() > 0) {
+    //             if (!empty($pricingUpdate)) {
+    //                 $this->db->where('sku', $sku)->update('product_pricings', $pricingUpdate);
+    //             }
+    //         } else {
+    //             $pricingUpdate['sku'] = $sku;
+    //             $this->db->insert('product_pricings', $pricingUpdate);
+    //         }
+    //     }
+
+    //     echo json_encode(['status' => 'success', 'message' => 'Prices updated successfully']);
+    // }
+
     public function updateskuprice()
     {
-        $json = json_decode(file_get_contents("php://input"), true);
+        try {
 
-        if (!$json || !isset($json['rows']) || count($json['rows']) < 2) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid data']);
-            return;
+            $this->db->trans_start();
+
+            $json = json_decode(file_get_contents("php://input"), true);
+
+            if (!$json || !isset($json['rows']) || count($json['rows']) < 2) {
+                throw new Exception('Invalid data format');
+            }
+
+            $rows = $json['rows'];
+            $headers = array_map('strtolower', $rows[0]);
+            array_shift($rows);
+
+            foreach ($rows as $row) {
+
+                $rowData = [];
+                foreach ($headers as $i => $h) {
+                    if (!empty($h) && isset($row[$i])) {
+                        $rowData[$h] = trim($row[$i]);
+                    }
+                }
+
+                if (empty($rowData['product_sku']) || empty($rowData['vendor_id'])) {
+                    throw new Exception('product_sku or vendor_id missing');
+                }
+
+                $sku       = $rowData['product_sku'];
+                $vendor_id = $rowData['vendor_id'];
+
+                /* ---------- SKU IMAGE UPDATE ---------- */
+                if (!empty($rowData['image'])) {
+                    if (!$this->db->where('sku_code', $sku)->update('skus', ['image' => $rowData['image']])) {
+                        throw new Exception('Failed to update SKU image for ' . $sku);
+                    }
+                }
+
+                /* ---------- GET PRODUCT DATA ---------- */
+                $skuRow = $this->db->get_where('skus', ['sku_code' => $sku])->row();
+                if (!$skuRow) {
+                    throw new Exception('SKU not found: ' . $sku);
+                }
+
+                $product = $this->db->get_where('products', ['matix_id' => $skuRow->product_id])->row();
+                if (!$product) {
+                    throw new Exception('Product not found for SKU: ' . $sku);
+                }
+
+                $vendor_sku = $sku . '-' . $vendor_id;
+
+                $pricingData = [
+                    'product_id'        => $product->id,
+                    'sku'               => $sku,
+                    'vendor_sku'        => $vendor_sku,
+                    'vendor_product_id' => $product->mpn,
+                    'matix_id'          => $product->matix_id,
+                    'vendor_id'         => $vendor_id,
+                    'price'             => $rowData['price'] ?? 0,
+                    'retail_price'      => $rowData['retail_price'] ?? 0,
+                    'quantity'          => $rowData['quantity'] ?? 0,
+                    'ammended_mpn'      => $rowData['ammended_mpn'] ?? null,
+                    'active'            => 1
+                ];
+
+                /* ---------- PRODUCT_PRICINGS ---------- */
+                $exists = $this->db->get_where('product_pricings', [
+                    'sku'       => $sku,
+                    'vendor_id' => $vendor_id
+                ])->row();
+
+                if ($exists) {
+                    if (!$this->db->where('sku', $sku)->where('vendor_id', $vendor_id)
+                        ->update('product_pricings', $pricingData)) {
+                        throw new Exception('Failed updating product_pricings for ' . $sku);
+                    }
+                } else {
+                    if (!$this->db->insert('product_pricings', $pricingData)) {
+                        throw new Exception('Failed inserting product_pricings for ' . $sku);
+                    }
+                }
+
+                /* ---------- VENDOR_PRICINGS ---------- */
+                $vendorPricingData = [
+                    'sku'          => $sku,
+                    'vendor_sku'   => $vendor_sku,
+                    'vendor_id'    => $vendor_id,
+                    'matix_id'     => $product->matix_id,
+                    'price'        => $pricingData['price'],
+                    'retail_price' => $pricingData['retail_price'],
+                    'quantity'     => $pricingData['quantity'],
+                    'ammended_mpn' => $rowData['ammended_mpn'] ?? null,
+                ];
+
+                $existsVendor = $this->db->get_where('vendor_pricings', [
+                    'sku'       => $sku,
+                    'vendor_id' => $vendor_id
+                ])->row();
+
+                if ($existsVendor) {
+                    if (!$this->db->where('sku', $sku)->where('vendor_id', $vendor_id)
+                        ->update('vendor_pricings', $vendorPricingData)) {
+                        throw new Exception('Failed updating vendor_pricings for ' . $sku);
+                    }
+                } else {
+                    if (!$this->db->insert('vendor_pricings', $vendorPricingData)) {
+                        throw new Exception('Failed inserting vendor_pricings for ' . $sku);
+                    }
+                }
+            }
+
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                throw new Exception('Database transaction failed');
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'SKU pricing updated successfully'
+            ]);
+
+        } catch (Exception $e) {
+
+            $this->db->trans_rollback();
+
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+                'db_error'=> $this->db->error()
+            ]);
         }
-
-        $rows = $json['rows'];
-        $headers = array_map('strtolower', $rows[0]); // lowercase headers
-        array_shift($rows); // remove header row
-
-        foreach ($rows as $row) {
-            $rowData = [];
-            foreach ($headers as $i => $h) {
-                if (!empty($h) && isset($row[$i])) {
-                    $rowData[$h] = trim($row[$i]);
-                }
-            }
-
-            if (empty($rowData['product_sku'])) continue;
-            $sku = $rowData['product_sku'];
-
-            // Prepare update data only if provided
-            $skuUpdate = [];
-            $pricingUpdate = [];
-
-            if (isset($rowData['quantity'])) {
-                $skuUpdate['stock_quantity'] = $rowData['quantity'];
-                $pricingUpdate['quantity']   = $rowData['quantity'];
-            }
-            if (isset($rowData['price'])) {
-                $skuUpdate['price'] = $rowData['price'];
-                $pricingUpdate['price'] = $rowData['price'];
-            }
-            if (isset($rowData['retail_price'])) {
-                $skuUpdate['retail_price'] = $rowData['retail_price'];
-                $pricingUpdate['retail_price'] = $rowData['retail_price'];
-            }
-            if (isset($rowData['image'])) {
-                $skuUpdate['image'] = $rowData['image'];
-            }
-
-            // 🔹 SKUs table
-            $q = $this->db->get_where('skus', ['sku_code' => $sku]);
-            if ($q->num_rows() > 0) {
-                if (!empty($skuUpdate)) {
-                    $this->db->where('sku_code', $sku)->update('skus', $skuUpdate);
-                }
-            } else {
-                $skuUpdate['sku_code'] = $sku;
-                $this->db->insert('skus', $skuUpdate);
-            }
-
-            // 🔹 Product Pricings table
-            $q2 = $this->db->get_where('product_pricings', ['sku' => $sku]);
-            if ($q2->num_rows() > 0) {
-                if (!empty($pricingUpdate)) {
-                    $this->db->where('sku', $sku)->update('product_pricings', $pricingUpdate);
-                }
-            } else {
-                $pricingUpdate['sku'] = $sku;
-                $this->db->insert('product_pricings', $pricingUpdate);
-            }
-        }
-
-        echo json_encode(['status' => 'success', 'message' => 'Prices updated successfully']);
     }
+
+
 
     public function normalize_products()
     {
@@ -746,6 +901,7 @@ class NewProduct extends MW_Controller
             $isVariant = !empty($selectedParentId); // Check if this product is a variant
 
             $row = [ 
+                '<input type="checkbox" class="variant-product-checkbox" value="'.$p->matix_id.'">',
                 $p->matix_id, 
                 $p->name, 
                 $p->mpn 
@@ -857,5 +1013,60 @@ class NewProduct extends MW_Controller
             echo json_encode(['status' => 'error', 'message' => $e->getMessage()]); 
         } 
     }
+
+    public function download_variant_sku_excel()
+    {
+        $matixIds = $this->input->post('matix_ids');
+        if (empty($matixIds)) {
+            show_error('No products selected');
+            return;
+        }
+
+        // Fetch SKUs
+        $skus = $this->db
+            ->select('sku_code')
+            ->from('skus')
+            ->where_in('product_id', $matixIds)
+            ->order_by('sku_code', 'ASC')
+            ->get()
+            ->result_array();
+
+        // File name
+        $filename = 'variant_product_skus_' . date('Ymd_His') . '.csv';
+
+        // CSV headers
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="'.$filename.'"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+
+        // EXACT headers as screenshot
+        fputcsv($output, [
+            'Product_sku',
+            'Quantity',
+            'Price',
+            'Retail_price',
+            'Vendor_Id',
+            'Ammended_Mpn'
+        ]);
+
+        // Data rows (only Product_sku filled)
+        foreach ($skus as $sku) {
+            fputcsv($output, [
+                $sku['sku_code'],
+                '',
+                '',
+                '',
+                '',
+                ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
 
 }

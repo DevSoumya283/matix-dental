@@ -319,6 +319,7 @@ class Products_model extends MY_Model {
         // 1) Only these columns from products
         $this->db->from('products');
         $this->db->select('id, matix_id, mpn, item_code, name, description, extended_description, manufacturer, shipping_restrictions, brand, license_required, category_id,base_price,returnable, quantity_per_box');
+        
         if (ctype_digit((string)$productIdOrMatixId)) {
             $this->db->where('id', (int)$productIdOrMatixId);
         } else {
@@ -332,14 +333,29 @@ class Products_model extends MY_Model {
         $matix_id = $product->matix_id;
 
                 // 2) First find available SKUs with stock for this product
-        $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+        // $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+        $this->db->select('
+            s.sku_id,
+            s.sku_code,
+            MAX(pp.quantity) AS stock_quantity
+        ');
         $this->db->from('skus s');
-        $this->db->where('s.product_id', $matix_id);
-        $this->db->where('s.stock_quantity >', 0);
-        $this->db->where('s.stock_quantity IS NOT NULL');
-        $this->db->order_by('s.stock_quantity DESC, s.sku_id ASC'); // Prioritize highest stock
-        $this->db->limit(1);
+        $this->db->join(
+            'product_pricings pp',
+            'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+            'inner'
+        );
+        // $this->db->where('s.product_id', $matix_id);
+        // $this->db->where('s.stock_quantity >', 0);
+        // $this->db->where('s.stock_quantity IS NOT NULL');
+        // $this->db->order_by('s.stock_quantity DESC, s.sku_id ASC'); // Prioritize highest stock
+        // $this->db->limit(1);
 
+        $this->db->where('s.product_id', $matix_id);
+        $this->db->where('pp.quantity >', 0);
+        $this->db->group_by('s.sku_id');
+        $this->db->order_by('stock_quantity DESC, s.sku_id ASC');
+        $this->db->limit(1);
         $sku = $this->db->get()->row();
 
         if ($sku) {
@@ -365,12 +381,29 @@ class Products_model extends MY_Model {
             
         } else {
             // Fallback: Try to find ANY SKU for this product (even with 0 stock)
-            $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+            // $this->db->select('s.sku_id, s.sku_code, s.stock_quantity');
+            // $this->db->from('skus s');
+            // $this->db->where('s.product_id', $matix_id);
+            // $this->db->where('s.stock_quantity IS NOT NULL');
+            // $this->db->order_by('s.sku_id ASC');
+            // $this->db->limit(1);
+
+            $this->db->select('
+                s.sku_id,
+                s.sku_code,
+                MAX(pp.quantity) AS stock_quantity
+            ');
             $this->db->from('skus s');
+            $this->db->join(
+                'product_pricings pp',
+                'pp.sku = s.sku_code AND pp.matix_id = s.product_id AND pp.active = 1',
+                'left'
+            );
             $this->db->where('s.product_id', $matix_id);
-            $this->db->where('s.stock_quantity IS NOT NULL');
+            $this->db->group_by('s.sku_id');
             $this->db->order_by('s.sku_id ASC');
             $this->db->limit(1);
+
             
             $sku_fallback = $this->db->get()->row();
             
